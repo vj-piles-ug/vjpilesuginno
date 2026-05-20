@@ -1,45 +1,54 @@
-# [Project name]
+# VJ Piles UG
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+A serverless movie/series/animation streaming platform powered entirely by Firebase — no backend server.
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
+- `PORT=5000 BASE_PATH=/ pnpm --filter @workspace/omnisave run dev` — run the Vue frontend (port 5000)
 - `pnpm run typecheck` — full typecheck across all packages
-- `pnpm run build` — typecheck + build all packages
-- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
 
 ## Stack
 
 - pnpm workspaces, Node.js 24, TypeScript 5.9
-- API: Express 5
-- DB: PostgreSQL + Drizzle ORM
-- Validation: Zod (`zod/v4`), `drizzle-zod`
-- API codegen: Orval (from OpenAPI spec)
-- Build: esbuild (CJS bundle)
+- Frontend: Vue 3 + Vue Router + Vite
+- Styling: Tailwind CSS v4
+- Backend: **Firebase only** (Auth + Realtime Database + Storage)
+- **No Express server. No PostgreSQL. Fully serverless.**
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/omnisave/` — the Vue 3 frontend (the entire app)
+- `artifacts/omnisave/src/lib/firebase.ts` — Firebase initialization (hardcoded config)
+- `artifacts/omnisave/src/store/db.ts` — all Firebase Realtime Database listeners & CRUD
+- `artifacts/omnisave/src/store/auth.ts` — Firebase Auth (email/password + Google)
+- `artifacts/omnisave/src/views/` — page views (Home, Movies, Series, Animation, Admin)
+- `artifacts/omnisave/src/views/admin/` — admin dashboard tabs
+
+## Firebase data paths
+
+- `/movies` — movie catalog
+- `/series` — TV series with nested episodes
+- `/animation` — animation content
+- `/carousel` — homepage hero carousel slides
+- `/users` — user profiles (name/displayName, email, joinedAt, lastLogin)
+- `/subscriptions` — active user subscription plans
+- `/paymentLogs` — payment transaction history
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- **Firebase Realtime Database only** — no Firestore, no PostgreSQL, no backend API
+- **Serverless** — the Vue app runs in the browser and talks directly to Firebase
+- **Firebase config hardcoded** in `firebase.ts` (client-side keys, safe by design)
+- `db.ts` uses `onValue` for real-time listeners; exports reactive Vue `ref`s consumed by all views
+- Transactions tab merges `/paymentLogs` + `/subscriptions` to show all payment activity
+- Status normalization: Firebase may store `completed`/`success`/`successful` — all normalized to `Successful`
 
-## Product
+## Admin access
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- Admin check: `currentUser.email === 'okotstephen57@gmail.com'`
+- Route: `/admin`
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
-
-## Gotchas
-
-_Populate as you build — sharp edges, "always run X before Y" rules._
-
-## Pointers
-
-- See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details
+- Firebase config must remain hardcoded (not env vars) — Vite does not expose env vars correctly at runtime in this setup
+- No backend server — keep everything serverless/Firebase-only
