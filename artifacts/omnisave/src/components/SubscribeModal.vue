@@ -2,8 +2,8 @@
   <Teleport to="body">
     <Transition name="modal">
       <div v-if="open" class="modal-backdrop" @click.self="maybeClose">
-        <div class="modal-box" :class="{ 'modal-box--wide': step === 'paying' }">
-          <button class="modal-close" @click="maybeClose">
+        <div class="modal-box" :class="{ 'modal-box--paying': step === 'paying' }">
+          <button v-if="step !== 'paying'" class="modal-close" @click="maybeClose">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
           </button>
 
@@ -65,11 +65,14 @@
 
           <!-- STEP: PesaPal payment iframe -->
           <template v-else-if="step === 'paying'">
-            <div class="iframe-header">
-              <p class="iframe-plan-info">{{ activePlan?.name }} — {{ activePlan?.price.toLocaleString() }} UGX</p>
-              <div class="polling-badge">
-                <div class="pulse-dot"></div>
-                Waiting for payment…
+            <div class="pp-header">
+              <button class="pp-back-btn" @click="maybeClose">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+                Back
+              </button>
+              <div class="pp-secure-label">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                Secure Payment
               </div>
             </div>
             <iframe
@@ -80,6 +83,14 @@
               allow="payment"
               scrolling="yes"
             ></iframe>
+            <div class="pp-status-bar">
+              <div class="pp-waiting">
+                <div class="pulse-dot"></div>
+                Waiting for payment…
+              </div>
+              <div class="pp-plan-label">{{ activePlan?.name }}</div>
+              <div class="pp-amount">UGX {{ activePlan?.price.toLocaleString() }}</div>
+            </div>
           </template>
 
           <!-- STEP: success -->
@@ -182,6 +193,14 @@ function retry() {
   iframeUrl.value = ''
 }
 
+function normalizePhone(raw: string): string {
+  const cleaned = raw.replace(/[\s\-()]/g, '')
+  if (cleaned.startsWith('+256')) return cleaned
+  if (cleaned.startsWith('256')) return '+' + cleaned
+  if (cleaned.startsWith('0')) return '+256' + cleaned.slice(1)
+  return '+256' + cleaned
+}
+
 async function startPayment() {
   if (!phoneInput.value.trim() || !activePlan.value) return
   const plan = activePlan.value
@@ -190,6 +209,8 @@ async function startPayment() {
 
   step.value = 'loading'
   errMsg.value = ''
+
+  const normalizedPhone = normalizePhone(phoneInput.value.trim())
 
   try {
     const token = await pesapalGetToken()
@@ -205,7 +226,7 @@ async function startPayment() {
       amount: plan.price,
       description: `VJ PILES UG - ${plan.name}`,
       email: user.email || '',
-      phone: phoneInput.value.trim(),
+      phone: normalizedPhone,
       firstName: user.displayName?.split(' ')[0] || 'Customer',
       callbackUrl: `${origin}/?pp_done=1`,
       cancellationUrl: `${origin}/`,
@@ -214,10 +235,13 @@ async function startPayment() {
 
     trackingId = order.orderTrackingId
 
+    // Save phone to user profile so wallet page can detect it
+    await dbSet(dbRef(db, `users/${user.uid}/phone`), normalizedPhone)
+
     await dbPush(dbRef(db, 'paymentLogs'), {
       userId: user.uid,
       email: user.email || '',
-      phone: phoneInput.value.trim(),
+      phone: normalizedPhone,
       planName: plan.name,
       planId: plan.id,
       amount: plan.price,
@@ -307,7 +331,12 @@ function stopPolling() {
   max-height: 90vh; overflow-y: auto;
   transition: max-width 0.3s ease;
 }
-.modal-box--wide { max-width: 520px; }
+.modal-box--paying {
+  max-width: 360px;
+  padding: 0;
+  overflow: hidden;
+  border-radius: 16px;
+}
 
 .modal-close {
   position: absolute; top: 12px; right: 12px;
@@ -393,13 +422,48 @@ function stopPolling() {
 .mt-1 { margin-top: 4px; }
 .mt-3 { margin-top: 10px; }
 
-/* iframe payment step */
-.iframe-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; flex-wrap: wrap; gap: 6px; }
-.iframe-plan-info { font-size: 0.75rem; font-weight: 700; color: #fff; }
-.polling-badge { display: flex; align-items: center; gap: 5px; font-size: 0.6rem; color: rgba(0,255,157,0.7); font-weight: 600; }
-.pulse-dot { width: 7px; height: 7px; border-radius: 50%; background: #00ff9d; animation: pulse 1.4s ease-in-out infinite; }
+/* Payment iframe step */
+.pp-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 12px 8px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  background: rgba(8,14,12,0.98);
+}
+.pp-back-btn {
+  display: flex; align-items: center; gap: 4px;
+  background: none; border: none; color: rgba(255,255,255,0.45);
+  font-size: 0.68rem; cursor: pointer; padding: 0;
+  transition: color 0.15s;
+}
+.pp-back-btn:hover { color: rgba(255,255,255,0.8); }
+.pp-secure-label {
+  display: flex; align-items: center; gap: 4px;
+  font-size: 0.62rem; font-weight: 600;
+  color: rgba(0,255,157,0.75); letter-spacing: 0.03em;
+}
+.pay-iframe {
+  width: 100%; height: 420px;
+  border: none; background: #fff; display: block;
+}
+.pp-status-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 12px; gap: 8px;
+  background: rgba(8,14,12,0.98);
+  border-top: 1px solid rgba(255,255,255,0.07);
+}
+.pp-waiting {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 0.6rem; color: rgba(0,255,157,0.75); font-weight: 600; white-space: nowrap;
+}
+.pp-plan-label {
+  font-size: 0.6rem; color: rgba(255,255,255,0.4);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; text-align: center;
+}
+.pp-amount {
+  font-size: 0.68rem; font-weight: 800; color: #fff; white-space: nowrap;
+}
+.pulse-dot { width: 7px; height: 7px; border-radius: 50%; background: #00ff9d; animation: pulse 1.4s ease-in-out infinite; flex-shrink: 0; }
 @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
-.pay-iframe { width: 100%; height: 500px; border: none; border-radius: 10px; background: #fff; display: block; }
 
 /* Success / failure icons */
 .success-icon { width: 56px; height: 56px; border-radius: 50%; background: rgba(0,255,157,0.1); border: 2px solid rgba(0,255,157,0.3); display: flex; align-items: center; justify-content: center; }
