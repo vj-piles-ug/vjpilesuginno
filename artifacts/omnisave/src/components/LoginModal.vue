@@ -10,8 +10,10 @@
           <!-- STEP 1: LOGIN / REGISTER -->
           <template v-if="step === 1">
             <div class="modal-brand">
-              <div class="brand-icon"><svg width="11" height="11" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg></div>
-              <span class="brand-name">VJ PILES UG<span class="brand-dot">.COM</span></span>
+              <img src="/logo.png" alt="VJ Piles UG" class="modal-logo" />
+              <div class="brand-text-block">
+                <span class="brand-name">VJ PILES UG<span class="brand-dot">.COM</span></span>
+              </div>
             </div>
             <h2 class="modal-heading">{{ isRegister ? 'Create Account' : 'Sign in' }}</h2>
             <p class="modal-sub">{{ isRegister ? 'Join to access downloads & subscription' : 'Access downloads & subscription' }}</p>
@@ -54,8 +56,10 @@
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
               </button>
               <div class="modal-brand" style="margin-bottom:0">
-                <div class="brand-icon"><svg width="11" height="11" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg></div>
-                <span class="brand-name">VJ PILES UG<span class="brand-dot">.COM</span></span>
+                <img src="/logo.png" alt="VJ Piles UG" class="modal-logo" />
+                <div class="brand-text-block">
+                  <span class="brand-name">VJ PILES UG<span class="brand-dot">.COM</span></span>
+                </div>
               </div>
             </div>
             <h2 class="modal-heading" style="margin-top:10px">Choose a Plan</h2>
@@ -204,8 +208,9 @@ function friendlyError(code: string): string {
   display: flex; align-items: center; justify-content: center;
   color: rgba(255,255,255,0.5); cursor: pointer;
 }
-.modal-brand { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; }
-.brand-icon { width: 20px; height: 20px; border-radius: 5px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #00ff9d, #00c8b8, #00d4ff); }
+.modal-brand { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.modal-logo { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+.brand-text-block { display: flex; flex-direction: column; }
 .brand-name { font-size: 0.72rem; font-weight: 800; color: #fff; }
 .brand-dot { color: #00ff9d; }
 .modal-heading { font-size: 0.98rem; font-weight: 800; color: #fff; margin-bottom: 3px; }

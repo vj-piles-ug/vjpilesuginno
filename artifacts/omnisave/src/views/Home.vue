@@ -61,6 +61,17 @@
       </div>
     </section>
 
+    <!-- MOBILE SEARCH BAR (below carousel, hidden on desktop) -->
+    <div class="mobile-search-bar">
+      <form class="mobile-search-form" @submit.prevent="doMobileSearch">
+        <svg class="ms-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+        <input v-model="mobileSearch" type="text" placeholder="Search movies, series, anime..." class="ms-input" @keyup.enter="doMobileSearch" />
+        <button type="submit" class="ms-btn">GO</button>
+      </form>
+    </div>
+
     <!-- CONTENT GRIDS -->
     <div class="content-wrap">
 
@@ -138,14 +149,22 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import MovieCard from '../components/MovieCard.vue'
 import DownloadModal from '../components/DownloadModal.vue'
 import type { Movie } from '../data/movies'
 import { publicAll, dbLoading, dbCarousel } from '../store/db'
 
 const route = useRoute()
+const router = useRouter()
 const externalQuery = computed(() => (route.query.q as string) || '')
+
+const mobileSearch = ref('')
+function doMobileSearch() {
+  if (mobileSearch.value.trim()) {
+    router.push({ path: '/', query: { q: mobileSearch.value.trim() } })
+  }
+}
 
 const searchResults = computed(() => {
   if (!externalQuery.value) return []
@@ -197,6 +216,15 @@ function particleStyle(n: number) {
 </script>
 
 <style scoped>
+/* Mobile search bar — shown only below 640px */
+.mobile-search-bar { display: block; padding: 8px 10px 4px; }
+@media (min-width: 640px) { .mobile-search-bar { display: none; } }
+.mobile-search-form { display: flex; align-items: center; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12); border-radius: 9999px; overflow: hidden; height: 36px; width: 100%; box-sizing: border-box; }
+.ms-icon { width: 14px; height: 14px; flex-shrink: 0; margin-left: 10px; color: rgba(255,255,255,0.4); }
+.ms-input { flex: 1; background: transparent; border: none; outline: none; color: #fff; font-size: 0.8rem; padding: 0 8px; min-width: 0; }
+.ms-input::placeholder { color: rgba(255,255,255,0.3); font-size: 0.75rem; }
+.ms-btn { flex-shrink: 0; margin: 3px; padding: 0 14px; height: 28px; border-radius: 9999px; background: linear-gradient(135deg, #00ff9d, #00c8b8, #00d4ff); color: #021a10; font-size: 0.62rem; font-weight: 800; letter-spacing: 0.1em; border: none; cursor: pointer; }
+
 .hero-section { position: relative; display: flex; flex-direction: column; overflow: hidden; height: 200px; }
 @media (min-width: 480px) { .hero-section { height: 260px; } }
 @media (min-width: 768px) { .hero-section { height: 360px; } }

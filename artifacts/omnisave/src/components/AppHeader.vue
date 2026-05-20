@@ -180,7 +180,7 @@ function doSearch() {
 
 /* ── Brand ──────────────────────────────────────────────────── */
 .brand-link { display: flex; align-items: center; gap: 7px; text-decoration: none; flex-shrink: 0; }
-.brand-logo { height: 30px; width: 30px; object-fit: cover; border-radius: 50%; display: block; flex-shrink: 0; }
+.brand-logo { height: 40px; width: 40px; object-fit: cover; border-radius: 50%; display: block; flex-shrink: 0; }
 .brand-text { display: none; align-items: baseline; gap: 1px; }
 @media (min-width: 480px) { .brand-text { display: flex; } }
 .brand-name { font-size: 0.82rem; font-weight: 800; letter-spacing: 0.05em; color: #fff; white-space: nowrap; }
@@ -195,15 +195,9 @@ function doSearch() {
 .nav-item--admin.nav-item--active { color: #ffa600; background: rgba(255,166,0,0.1); border-color: rgba(255,166,0,0.25); }
 
 /* ── Search bar ─────────────────────────────────────────────── */
-.header-search {
-  flex: 1; min-width: 0; max-width: 440px; display: flex; align-items: center;
-  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 9999px; overflow: hidden; height: 28px;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-@media (min-width: 360px) { .header-search { height: 30px; } }
-@media (min-width: 480px) { .header-search { height: 32px; } }
-.header-search:focus-within { border-color: rgba(0,255,157,0.35); box-shadow: 0 0 0 3px rgba(0,255,157,0.08); }
+.header-search { display: none; }
+@media (min-width: 640px) { .header-search { flex: 1; min-width: 0; max-width: 440px; display: flex; align-items: center; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 9999px; overflow: hidden; height: 32px; transition: border-color 0.2s, box-shadow 0.2s; } }
+@media (min-width: 640px) { .header-search:focus-within { border-color: rgba(0,255,157,0.35); box-shadow: 0 0 0 3px rgba(0,255,157,0.08); } }
 .hs-icon { width: 11px; height: 11px; flex-shrink: 0; margin-left: 7px; color: rgba(255,255,255,0.35); }
 @media (min-width: 360px) { .hs-icon { width: 13px; height: 13px; margin-left: 10px; } }
 .hs-input { flex: 1; background: transparent; border: none; outline: none; color: #fff; font-size: 0.7rem; padding: 0 4px; min-width: 0; }
