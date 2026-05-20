@@ -28,6 +28,14 @@
         <!-- Right actions -->
         <div class="flex items-center gap-2 shrink-0">
 
+          <!-- Install App -->
+          <button v-if="isInstallable" class="btn-install" @click="promptInstall" title="Install App">
+            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+            </svg>
+            <span class="install-label">INSTALL</span>
+          </button>
+
           <!-- Subscribe -->
           <button class="btn-subscribe" @click="handleSubscribeClick">
             <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M2 19h20v2H2v-2zm2-3l3-8 5 4 4-6 3 10H4z"/></svg>
@@ -104,12 +112,14 @@ import { ref, computed } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { useAuth } from '../store/auth'
 import { loginOpen, subscribeOpen } from '../store/ui'
+import { usePWAInstall } from '../composables/usePWAInstall'
 
 const router = useRouter()
 const menuOpen = ref(false)
 const searchQuery = ref('')
 
 const { currentUser, isLoggedIn, isAdmin, logOut } = useAuth()
+const { isInstallable, promptInstall } = usePWAInstall()
 
 const userInitial = computed(() => {
   const name = currentUser.value?.displayName || currentUser.value?.email || '?'
@@ -191,6 +201,21 @@ function doSearch() {
 .hs-input::placeholder { color: rgba(255,255,255,0.3); }
 .hs-btn { flex-shrink: 0; margin: 3px; padding: 0 12px; height: 24px; border-radius: 9999px; background: linear-gradient(135deg, #00ff9d, #00c8b8, #00d4ff); color: #021a10; font-size: 0.62rem; font-weight: 800; letter-spacing: 0.1em; border: none; cursor: pointer; transition: filter 0.2s; }
 .hs-btn:hover { filter: brightness(1.06); }
+
+/* ── Install App button ─────────────────────────────────────── */
+.btn-install {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 5px 11px; border-radius: 9999px;
+  border: 1px solid rgba(0,255,157,0.35);
+  background: rgba(0,255,157,0.1);
+  color: #00ff9d; font-size: 0.65rem; font-weight: 700;
+  letter-spacing: 0.08em; cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+  white-space: nowrap; flex-shrink: 0;
+}
+.btn-install:hover { background: rgba(0,255,157,0.18); border-color: rgba(0,255,157,0.55); }
+.install-label { display: none; }
+@media (min-width: 360px) { .install-label { display: inline; } }
 
 /* ── Subscribe button ───────────────────────────────────────── */
 .btn-subscribe {
