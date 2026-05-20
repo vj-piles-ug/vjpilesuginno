@@ -1,260 +1,340 @@
 <template>
-  <div class="min-h-screen" style="background-color: #0d1117; color: #e6edf3; font-family: 'Inter', sans-serif;">
-    <!-- Header -->
-    <header class="header sticky top-0 z-50" style="background-color: #0d1117; border-bottom: 1px solid #21262d;">
-      <div class="header-inner" style="max-width: 1280px; margin: 0 auto; padding: 0 16px; display: flex; align-items: center; height: 56px; gap: 12px;">
-        <!-- Logo -->
-        <div class="logo" style="display: flex; align-items: center; gap: 8px; flex-shrink: 0; margin-right: 8px;">
-          <div style="width: 28px; height: 28px; background: linear-gradient(135deg, #00e5cc, #0099ff); border-radius: 6px; display: flex; align-items: center; justify-content: center;">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>
-          </div>
-          <span style="font-weight: 700; font-size: 15px; color: #e6edf3; white-space: nowrap;">OmniSave</span>
+  <div class="min-h-screen flex flex-col">
+
+    <!-- ===== HEADER ===== -->
+    <header class="sticky top-0 z-50">
+      <div class="relative border-b border-white/[0.06] bg-black/20 backdrop-blur-2xl">
+        <div class="pointer-events-none absolute inset-0 overflow-hidden">
+          <div class="absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.1),transparent)]"></div>
         </div>
-
-        <!-- Nav pills -->
-        <nav class="nav-pills" style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
-          <button
-            v-for="pill in navPills"
-            :key="pill"
-            @click="activeNav = pill"
-            :style="{
-              padding: '5px 12px',
-              borderRadius: '20px',
-              fontSize: '12px',
-              fontWeight: '500',
-              border: '1px solid',
-              cursor: 'pointer',
-              transition: 'all 0.15s',
-              background: activeNav === pill ? 'rgba(0,229,204,0.12)' : 'transparent',
-              borderColor: activeNav === pill ? '#00e5cc' : '#30363d',
-              color: activeNav === pill ? '#00e5cc' : '#8b949e',
-              whiteSpace: 'nowrap'
-            }"
-          >{{ pill }}</button>
-        </nav>
-
-        <div style="flex: 1;" />
-
-        <!-- Downloaders badge -->
-        <div style="display: flex; align-items: center; gap: 6px; padding: '4px 10px'; background: rgba(255,255,255,0.05); border-radius: 20px; border: 1px solid #30363d; padding: 4px 10px; flex-shrink: 0;">
-          <span style="font-size: 11px; color: #8b949e; white-space: nowrap;">Downloaders</span>
-          <div style="display: flex; gap: -4px;">
-            <div v-for="i in 4" :key="i" :style="{ width: '18px', height: '18px', borderRadius: '50%', background: `hsl(${i * 60}, 70%, 50%)`, border: '2px solid #0d1117', marginLeft: i > 1 ? '-6px' : '0' }" />
-          </div>
-        </div>
-
-        <!-- App button -->
-        <button style="padding: 6px 14px; background: #00e5cc; color: #0d1117; border: none; border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; flex-shrink: 0; white-space: nowrap;">
-          App
-        </button>
-
-        <!-- Globe & Lang -->
-        <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
-          <button style="background: transparent; border: none; cursor: pointer; color: #8b949e;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-          </button>
-          <button style="background: transparent; border: 1px solid #30363d; border-radius: 4px; cursor: pointer; color: #8b949e; padding: 3px 8px; font-size: 12px; display: flex; align-items: center; gap: 4px;">
-            EN
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-          </button>
-        </div>
-      </div>
-    </header>
-
-    <!-- Hero -->
-    <section style="text-align: center; padding: 48px 16px 32px;">
-      <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 12px;">
-        <span style="font-size: 11px; color: #00e5cc; font-weight: 600; letter-spacing: 1px; text-transform: uppercase;">OMNISAVE</span>
-        <span style="color: #30363d;">•</span>
-        <span style="font-size: 11px; color: #8b949e; font-weight: 500; letter-spacing: 1px; text-transform: uppercase;">HD MP4</span>
-        <span style="color: #30363d;">•</span>
-        <span style="font-size: 11px; color: #8b949e; font-weight: 500; letter-spacing: 1px; text-transform: uppercase;">Subtitles</span>
-      </div>
-      <h1 style="font-size: clamp(24px, 4vw, 40px); font-weight: 700; color: #e6edf3; line-height: 1.2; margin-bottom: 12px;">
-        Free Online Video Downloader
-      </h1>
-      <p style="font-size: 13px; color: #8b949e; max-width: 480px; margin: 0 auto;">
-        Search movies, TV shows, and anime by title, then download HD MP4 videos with subtitle options.
-      </p>
-    </section>
-
-    <!-- Search Bar -->
-    <section style="max-width: 720px; margin: 0 auto; padding: 0 16px 40px;">
-      <div style="display: flex; align-items: center; background: #161b22; border: 1px solid #30363d; border-radius: 8px; overflow: hidden; transition: border-color 0.2s;"
-           :style="{ borderColor: searchFocused ? '#00e5cc' : '#30363d' }">
-        <div style="padding: 0 14px; color: #8b949e;">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        </div>
-        <input
-          v-model="query"
-          @focus="searchFocused = true"
-          @blur="searchFocused = false"
-          @keyup.enter="handleSearch"
-          type="text"
-          placeholder="The Expendables 2"
-          style="flex: 1; background: transparent; border: none; outline: none; color: #e6edf3; font-size: 14px; padding: 13px 8px;"
-        />
-        <button
-          @click="handleSearch"
-          style="padding: 13px 28px; background: #00e5cc; color: #0d1117; border: none; font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: background 0.15s;"
-          @mouseenter="(e) => (e.target as HTMLElement).style.background = '#00c4b0'"
-          @mouseleave="(e) => (e.target as HTMLElement).style.background = '#00e5cc'"
-        >
-          Search
-        </button>
-      </div>
-    </section>
-
-    <!-- Results Section -->
-    <section style="max-width: 1280px; margin: 0 auto; padding: 0 16px 48px;">
-      <!-- Result header -->
-      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
-        <span style="font-size: 11px; font-weight: 600; color: #8b949e; letter-spacing: 1px; text-transform: uppercase;">
-          MATCHING VIDEOS
-        </span>
-        <span style="font-size: 12px; color: #8b949e;" v-if="searchTerm">
-          Found {{ filteredMovies.length }} matching video resources
-        </span>
-      </div>
-
-      <!-- Grid -->
-      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px;">
-        <div
-          v-for="movie in filteredMovies"
-          :key="movie.id"
-          class="movie-card"
-          style="background: #161b22; border-radius: 8px; overflow: hidden; cursor: pointer; transition: transform 0.15s, box-shadow 0.15s; border: 1px solid #21262d;"
-          @mouseenter="hoveredId = movie.id"
-          @mouseleave="hoveredId = null"
-          :style="hoveredId === movie.id ? { transform: 'translateY(-2px)', boxShadow: '0 8px 24px rgba(0,0,0,0.4)', borderColor: '#30363d' } : {}"
-        >
-          <!-- Poster -->
-          <div style="position: relative; aspect-ratio: 2/3; overflow: hidden; background: #1c2128;">
-            <div
-              :style="{
-                width: '100%',
-                height: '100%',
-                background: `linear-gradient(160deg, ${movie.color} 0%, #0d1117 100%)`,
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: '12px',
-                textAlign: 'center',
-                gap: '8px'
-              }"
-            >
-              <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(0,229,204,0.15); display: flex; align-items: center; justify-content: center; border: 1px solid rgba(0,229,204,0.25);">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="rgba(0,229,204,0.7)"><path d="M8 5v14l11-7z"/></svg>
+        <div class="mx-auto flex w-full max-w-[1380px] flex-wrap items-center justify-between gap-2 px-4 py-2 sm:flex-nowrap sm:gap-4 sm:py-3 md:px-6 xl:px-8">
+          <!-- Left: Logo + Steps -->
+          <div class="flex min-w-0 items-center gap-3 sm:gap-4 lg:gap-5">
+            <a class="group inline-flex items-center gap-2.5" href="#">
+              <!-- Logo icon -->
+              <div class="block h-9 w-9 rounded-xl overflow-hidden flex-shrink-0" style="background: linear-gradient(135deg,#00ff9d,#00c8b8,#00d4ff);">
+                <div class="w-full h-full flex items-center justify-center">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>
+                </div>
               </div>
-              <span style="font-size: 10px; font-weight: 600; color: rgba(255,255,255,0.5); line-height: 1.3;">{{ movie.title }}</span>
-            </div>
-            <!-- Type badge -->
-            <div style="position: absolute; top: 8px; left: 8px;">
-              <span :style="{
-                fontSize: '9px',
-                fontWeight: '700',
-                padding: '2px 6px',
-                borderRadius: '3px',
-                letterSpacing: '0.5px',
-                background: movie.type === 'MOVIES' ? 'rgba(0,229,204,0.15)' : 'rgba(255,166,0,0.15)',
-                color: movie.type === 'MOVIES' ? '#00e5cc' : '#ffa600',
-                border: `1px solid ${movie.type === 'MOVIES' ? 'rgba(0,229,204,0.3)' : 'rgba(255,166,0,0.3)'}`,
-              }">{{ movie.type }}</span>
-            </div>
-            <!-- Rating badge -->
-            <div style="position: absolute; top: 8px; right: 8px; display: flex; align-items: center; gap: 3px; background: rgba(13,17,23,0.85); border-radius: 4px; padding: 3px 6px;">
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="#ffa600"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-              <span style="font-size: 10px; font-weight: 600; color: #e6edf3;">{{ movie.rating }}</span>
+              <span class="hidden text-lg font-semibold tracking-[0.01em] text-white sm:inline md:text-xl">OmniSave</span>
+            </a>
+            <!-- Step pills -->
+            <div class="hidden items-center gap-2 xl:flex">
+              <span class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-1.5">
+                <span class="rounded-full border border-white/12 bg-white/[0.06] px-2 py-0.5 font-mono text-[0.66rem] font-semibold tracking-[0.12em] text-white/70">01</span>
+                <span class="text-[0.86rem] font-medium text-white/80">Search</span>
+                <svg class="ml-0.5 h-3.5 w-3.5 text-white/30" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+              </span>
+              <span class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-1.5">
+                <span class="rounded-full border border-white/12 bg-white/[0.06] px-2 py-0.5 font-mono text-[0.66rem] font-semibold tracking-[0.12em] text-white/70">02</span>
+                <span class="text-[0.86rem] font-medium text-white/80">Pick quality</span>
+                <svg class="ml-0.5 h-3.5 w-3.5 text-white/30" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+              </span>
+              <span class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-1.5">
+                <span class="rounded-full border border-white/12 bg-white/[0.06] px-2 py-0.5 font-mono text-[0.66rem] font-semibold tracking-[0.12em] text-white/70">03</span>
+                <span class="text-[0.86rem] font-medium text-white/80">Download</span>
+              </span>
             </div>
           </div>
 
-          <!-- Info -->
-          <div style="padding: 10px;">
-            <div style="font-size: 13px; font-weight: 600; color: #e6edf3; margin-bottom: 4px; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-              {{ movie.title }}
-            </div>
-            <div style="font-size: 11px; color: #8b949e; margin-bottom: 8px;">{{ movie.date }}</div>
+          <!-- Right: Actions -->
+          <div class="flex items-center gap-2 sm:gap-2.5">
+            <!-- Downloaders button -->
+            <button class="button-secondary flex items-center gap-2 px-3 py-2 text-[13px] sm:px-4 sm:py-2.5">
+              <span class="hidden sm:inline text-white/80">Downloaders</span>
+              <span class="flex items-center gap-1.5">
+                <!-- YouTube -->
+                <svg class="h-3.5 w-3.5 opacity-60" viewBox="0 0 24 24" fill="#ff4444"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+                <!-- Facebook -->
+                <span class="inline-flex h-3.5 w-3.5 items-center justify-center rounded bg-[#1877f2] text-[0.45rem] font-bold text-white opacity-60">f</span>
+                <!-- Instagram -->
+                <span class="inline-flex h-3.5 w-3.5 items-center justify-center rounded bg-gradient-to-br from-yellow-400 via-pink-500 to-purple-500 text-[0.42rem] font-bold text-white opacity-60">IG</span>
+                <!-- TikTok -->
+                <span class="inline-flex h-3.5 w-3.5 items-center justify-center rounded bg-[#ff2442] text-[0.4rem] font-bold text-white opacity-60">TT</span>
+              </span>
+              <svg class="h-3.5 w-3.5 text-white/50" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+            </button>
 
-            <!-- Genre tags -->
-            <div style="display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 10px;">
-              <span
-                v-for="genre in movie.genres.slice(0, 3)"
-                :key="genre"
-                style="font-size: 10px; padding: 2px 6px; border-radius: 3px; background: rgba(48,54,61,0.7); color: #8b949e; border: 1px solid #30363d;"
-              >{{ genre }}</span>
-            </div>
+            <!-- App button -->
+            <button class="button-primary px-3 py-2 text-[13px] sm:px-4 sm:py-2.5">
+              <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+              <span class="hidden sm:inline">App</span>
+            </button>
 
-            <!-- Download button -->
-            <button
-              @click.stop="handleDownload(movie)"
-              style="width: 100%; padding: 7px 0; background: transparent; border: 1px solid #00e5cc; border-radius: 5px; color: #00e5cc; font-size: 11px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; transition: all 0.15s;"
-              @mouseenter="(e) => { (e.currentTarget as HTMLElement).style.background = 'rgba(0,229,204,0.1)' }"
-              @mouseleave="(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent' }"
-            >
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              Download
+            <!-- Google sign-in -->
+            <button title="Sign in with Google" class="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 transition-colors hover:border-white/20 hover:bg-white/[0.09]">
+              <svg class="h-4 w-4" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+              </svg>
+            </button>
+
+            <div class="hidden h-8 w-px bg-white/10 md:block"></div>
+
+            <!-- Language -->
+            <button class="group flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.05] px-2.5 py-2 text-sm font-medium text-white/80 transition-all hover:border-white/20 hover:bg-white/[0.08] sm:px-3">
+              <svg class="h-4 w-4 text-white/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>
+              <span class="hidden sm:inline">EN</span>
+              <svg class="hidden h-3 w-3 text-white/55 sm:block" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
             </button>
           </div>
         </div>
       </div>
+    </header>
 
-      <!-- Empty state -->
-      <div v-if="searchTerm && filteredMovies.length === 0" style="text-align: center; padding: 64px 16px;">
-        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#30363d" stroke-width="1.5" style="margin: 0 auto 16px;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <p style="color: #8b949e; font-size: 14px;">No results found for "{{ searchTerm }}"</p>
-        <p style="color: #30363d; font-size: 12px; margin-top: 6px;">Try a different search term</p>
-      </div>
-    </section>
+    <!-- ===== MAIN ===== -->
+    <div class="flex-1">
+      <main class="relative overflow-hidden">
+        <!-- Radial gradient background glow -->
+        <div class="pointer-events-none absolute inset-x-0 top-0 h-[38rem]" style="background: radial-gradient(circle at top, rgba(0,255,157,0.16), transparent 42%), radial-gradient(circle at top right, rgba(0,212,255,0.16), transparent 28%);"></div>
 
-    <!-- Download modal -->
-    <div
-      v-if="downloadTarget"
-      style="position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 16px;"
-      @click.self="downloadTarget = null"
-    >
-      <div style="background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 28px; max-width: 400px; width: 100%;">
-        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px;">
-          <img :src="downloadTarget.poster" style="width: 48px; height: 72px; object-fit: cover; border-radius: 4px;" />
-          <div>
-            <div style="font-size: 15px; font-weight: 700; color: #e6edf3; margin-bottom: 4px;">{{ downloadTarget.title }}</div>
-            <div style="font-size: 12px; color: #8b949e;">{{ downloadTarget.date }}</div>
+        <div class="relative mx-auto w-full max-w-[1380px] px-4 pb-12 pt-4 md:px-6 md:pb-16 md:pt-6 xl:px-8">
+
+          <!-- Hero section -->
+          <section class="mb-8 pt-6 text-center md:mb-10 md:pt-10">
+            <div class="mb-4 flex items-center justify-center gap-2">
+              <span class="glass-chip" style="letter-spacing:0.2em; text-transform:uppercase;">OmniSave</span>
+              <span class="glass-chip">HD MP4</span>
+              <span class="glass-chip">Subtitles</span>
+            </div>
+            <h1 class="text-balance text-2xl font-semibold leading-[1.08] text-white md:text-3xl lg:text-[3rem] xl:text-[3.35rem]">Free Online Video Downloader</h1>
+            <p class="mx-auto mt-3 max-w-2xl text-sm leading-7 text-white/60 md:text-base">Search movies, TV shows, and anime by title, then download HD MP4 videos with subtitle options.</p>
+          </section>
+
+          <!-- Search bar -->
+          <section class="relative z-40 mb-6 md:mb-10">
+            <form class="mx-auto w-full max-w-[1120px]" @submit.prevent="handleSearch">
+              <div class="relative">
+                <div class="pointer-events-none absolute left-5 top-1/2 z-10 -translate-y-1/2 text-white/50">
+                  <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                </div>
+                <input
+                  v-model="query"
+                  type="text"
+                  placeholder="Search video, movie, TV show, or anime title..."
+                  class="input-shell w-full py-4 text-sm font-medium text-white placeholder:text-white/44 focus:outline-none md:py-5 md:text-base"
+                  style="padding-left:56px; padding-right:140px;"
+                  autocomplete="off"
+                />
+                <button
+                  type="submit"
+                  class="absolute right-2.5 top-1/2 z-10 -translate-y-1/2 flex min-w-[100px] items-center justify-center rounded-[20px] border border-white/10 px-4 py-2 text-xs font-semibold text-[#021a10] md:min-w-[112px] md:px-5 md:py-2.5 md:text-sm"
+                  style="background: linear-gradient(135deg,#00ff9d 0%,#00c8b8 48%,#00d4ff 100%); box-shadow: 0 14px 34px rgba(0,255,157,0.22);"
+                >Search</button>
+              </div>
+            </form>
+          </section>
+
+          <!-- Results or Carousel -->
+          <div class="mb-8 md:mb-10">
+
+            <!-- When search is active and has results -->
+            <template v-if="searchTerm && filteredMovies.length > 0">
+              <div class="mb-4 flex items-center justify-between">
+                <span class="section-kicker">Matching Videos</span>
+                <span class="text-xs text-white/40">Found {{ filteredMovies.length }} matching video resources</span>
+              </div>
+              <div class="grid gap-4" style="grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));">
+                <div
+                  v-for="movie in filteredMovies"
+                  :key="movie.id"
+                  class="movie-card cursor-pointer"
+                  @click="openDownload(movie)"
+                >
+                  <MovieCard :movie="movie" />
+                </div>
+              </div>
+            </template>
+
+            <!-- When search returns no results -->
+            <template v-else-if="searchTerm && filteredMovies.length === 0">
+              <section class="w-full py-12 text-center md:py-16">
+                <div class="mb-5">
+                  <svg class="mx-auto h-20 w-20 text-white/18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </div>
+                <p class="section-kicker mb-3">Search</p>
+                <h3 class="mb-3 text-xl font-semibold text-white md:text-2xl">No results found</h3>
+                <p class="mb-2 text-sm text-white/68 md:text-base">Try using other keywords</p>
+              </section>
+            </template>
+
+            <!-- Default state: auto-sliding carousel -->
+            <template v-else>
+              <div class="mb-6">
+                <p class="section-kicker mb-1">Trending Now</p>
+                <h2 class="text-lg font-semibold text-white md:text-xl">Popular Movies &amp; Series</h2>
+              </div>
+
+              <!-- Row 1: slides left -->
+              <div class="relative mb-4 overflow-hidden" style="mask-image: linear-gradient(90deg, transparent, black 8%, black 92%, transparent); -webkit-mask-image: linear-gradient(90deg, transparent, black 8%, black 92%, transparent);">
+                <div class="marquee-track">
+                  <div v-for="movie in doubledMovies" :key="`r1-${movie.uid}`" class="movie-card mx-2 cursor-pointer" style="width:170px;" @click="openDownload(movie)">
+                    <MovieCard :movie="movie" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Row 2: slides right -->
+              <div class="relative overflow-hidden" style="mask-image: linear-gradient(90deg, transparent, black 8%, black 92%, transparent); -webkit-mask-image: linear-gradient(90deg, transparent, black 8%, black 92%, transparent);">
+                <div class="marquee-track-rev">
+                  <div v-for="movie in doubledMoviesRev" :key="`r2-${movie.uid}`" class="movie-card mx-2 cursor-pointer" style="width:170px;" @click="openDownload(movie)">
+                    <MovieCard :movie="movie" />
+                  </div>
+                </div>
+              </div>
+            </template>
+          </div>
+
+          <!-- FAQ -->
+          <section class="mt-10 w-full md:mt-12">
+            <div class="soft-divider mb-8 md:mb-10"></div>
+            <div class="mb-6 md:mb-8">
+              <h2 class="text-xl font-semibold text-white md:text-2xl">Frequently Asked Questions</h2>
+            </div>
+            <div class="space-y-3 md:space-y-4">
+              <div
+                v-for="(faq, i) in faqs"
+                :key="i"
+                class="faq-item"
+              >
+                <button
+                  class="relative flex w-full items-start justify-between gap-3 px-5 py-4 text-left md:px-6 md:py-5"
+                  @click="toggleFaq(i)"
+                >
+                  <div class="flex min-w-0 flex-1 items-start gap-3">
+                    <div class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl bg-white/[0.08] text-white/70">
+                      <span class="text-sm font-bold">Q</span>
+                    </div>
+                    <h3 class="pt-0.5 text-sm font-semibold leading-tight text-white md:text-base">{{ faq.q }}</h3>
+                  </div>
+                  <div class="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-white/[0.06]">
+                    <svg class="h-4 w-4 text-white/65 transition-transform duration-300" :style="{ transform: openFaq === i ? 'rotate(180deg)' : 'none' }" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                  </div>
+                </button>
+                <div class="faq-answer" :class="{ open: openFaq === i }">
+                  <div>
+                    <div class="px-5 pb-5 pt-1 md:px-6 md:pb-6">
+                      <div class="flex items-start gap-3">
+                        <div class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl bg-white/[0.08]">
+                          <span class="text-sm font-bold text-white/72">A</span>
+                        </div>
+                        <p class="whitespace-pre-line pt-1 text-sm leading-7 text-white/66">{{ faq.a }}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+        </div>
+      </main>
+    </div>
+
+    <!-- ===== FOOTER ===== -->
+    <footer class="relative mt-10 border-t border-white/[0.06] pb-7 pt-10 md:mt-12 md:pb-9 md:pt-12">
+      <div class="mx-auto w-full max-w-[1380px] px-4 md:px-6 xl:px-8">
+        <div class="flex flex-col items-start justify-between gap-8 md:flex-row md:items-center">
+          <div class="flex flex-col gap-3">
+            <div class="flex items-center gap-2.5">
+              <div class="h-8 w-8 rounded-xl flex items-center justify-center" style="background: linear-gradient(135deg,#00ff9d,#00c8b8,#00d4ff);">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>
+              </div>
+              <span class="text-base font-semibold text-white">OmniSave</span>
+            </div>
+            <p class="max-w-xs text-sm text-white/45">Free online video downloader. Search, pick quality, and download.</p>
+          </div>
+          <div class="flex flex-wrap gap-x-8 gap-y-3 text-sm text-white/50">
+            <a href="#" class="hover:text-white/80 transition-colors">Privacy Policy</a>
+            <a href="#" class="hover:text-white/80 transition-colors">Terms of Service</a>
+            <a href="#" class="hover:text-white/80 transition-colors">Contact</a>
           </div>
         </div>
-        <p style="font-size: 13px; color: #8b949e; margin-bottom: 20px;">Select quality and format to download:</p>
-        <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px;">
+        <div class="soft-divider my-7"></div>
+        <p class="text-center text-xs text-white/30">&copy; {{ new Date().getFullYear() }} OmniSave. All rights reserved.</p>
+      </div>
+    </footer>
+
+    <!-- ===== DOWNLOAD MODAL ===== -->
+    <div
+      v-if="downloadTarget"
+      class="fixed inset-0 z-[100] flex items-center justify-center p-4"
+      style="background: rgba(0,0,0,0.75); backdrop-filter: blur(8px);"
+      @click.self="downloadTarget = null"
+    >
+      <div class="w-full max-w-sm rounded-3xl border border-white/10 p-6" style="background: rgba(10,18,12,0.95);">
+        <div class="mb-5 flex items-start gap-4">
+          <!-- poster placeholder -->
+          <div class="h-[72px] w-12 flex-shrink-0 rounded-lg flex items-center justify-center" :style="{ background: `linear-gradient(160deg, ${downloadTarget.color}, #050c08)` }">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="rgba(0,255,157,0.6)"><path d="M8 5v14l11-7z"/></svg>
+          </div>
+          <div>
+            <p class="font-semibold text-white">{{ downloadTarget.title }}</p>
+            <p class="text-xs text-white/45 mt-0.5">{{ downloadTarget.date }}</p>
+            <div class="mt-1.5 flex flex-wrap gap-1">
+              <span v-for="g in downloadTarget.genres.slice(0,3)" :key="g" class="text-[10px] rounded px-1.5 py-0.5 text-white/50" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);">{{ g }}</span>
+            </div>
+          </div>
+        </div>
+        <p class="mb-3 text-xs font-semibold uppercase tracking-wider text-white/40">Select quality</p>
+        <div class="space-y-2 mb-4">
           <button
             v-for="opt in downloadOptions"
             :key="opt.label"
-            style="padding: 10px 16px; background: rgba(0,229,204,0.08); border: 1px solid rgba(0,229,204,0.25); border-radius: 6px; color: #00e5cc; font-size: 13px; font-weight: 500; cursor: pointer; text-align: left; transition: all 0.15s; display: flex; align-items: center; justify-content: space-between;"
-            @mouseenter="(e) => { (e.currentTarget as HTMLElement).style.background = 'rgba(0,229,204,0.15)' }"
-            @mouseleave="(e) => { (e.currentTarget as HTMLElement).style.background = 'rgba(0,229,204,0.08)' }"
+            class="w-full flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-left transition-all hover:border-white/20 hover:bg-white/[0.07]"
             @click="downloadTarget = null"
           >
-            <span>{{ opt.label }}</span>
-            <span style="font-size: 11px; color: #8b949e;">{{ opt.size }}</span>
+            <span class="text-sm font-medium text-white">{{ opt.label }}</span>
+            <span class="text-xs text-white/40">{{ opt.size }}</span>
           </button>
         </div>
-        <button @click="downloadTarget = null" style="width: 100%; padding: 10px; background: transparent; border: 1px solid #30363d; border-radius: 6px; color: #8b949e; font-size: 13px; cursor: pointer;">
-          Cancel
-        </button>
+        <button @click="downloadTarget = null" class="w-full rounded-2xl border border-white/10 bg-transparent py-2.5 text-sm text-white/50 hover:text-white/70 transition-colors">Cancel</button>
       </div>
     </div>
+
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import MovieCard from '../components/MovieCard.vue'
 import { allMovies, type Movie } from '../data/movies'
 
-const navPills = ['Search', 'Pick quality', 'Download']
-const activeNav = ref('Search')
-
-const query = ref('The Expendables')
-const searchTerm = ref('The Expendables')
-const searchFocused = ref(false)
-const hoveredId = ref<number | null>(null)
+const query = ref('')
+const searchTerm = ref('')
 const downloadTarget = ref<Movie | null>(null)
+const openFaq = ref<number | null>(null)
+
+// Search
+function handleSearch() {
+  searchTerm.value = query.value.trim()
+}
+const filteredMovies = computed(() => {
+  if (!searchTerm.value) return []
+  const q = searchTerm.value.toLowerCase()
+  return allMovies.filter(m => m.title.toLowerCase().includes(q))
+})
+
+// Carousel: duplicate movies for seamless infinite loop, attach unique uid
+const doubledMovies = computed(() =>
+  [...allMovies, ...allMovies].map((m, i) => ({ ...m, uid: `${m.id}-${i}` }))
+)
+const doubledMoviesRev = computed(() => {
+  const rev = [...allMovies].reverse()
+  return [...rev, ...rev].map((m, i) => ({ ...m, uid: `rev-${m.id}-${i}` }))
+})
+
+function openDownload(movie: Movie) {
+  downloadTarget.value = movie
+}
+
+// FAQ
+function toggleFaq(i: number) {
+  openFaq.value = openFaq.value === i ? null : i
+}
 
 const downloadOptions = [
   { label: '1080p Full HD — MP4', size: '~2.1 GB' },
@@ -263,18 +343,34 @@ const downloadOptions = [
   { label: '360p — MP4', size: '~210 MB' },
 ]
 
-const filteredMovies = computed(() => {
-  if (!searchTerm.value.trim()) return allMovies
-  const q = searchTerm.value.toLowerCase()
-  return allMovies.filter(m => m.title.toLowerCase().includes(q))
-})
-
-function handleSearch() {
-  searchTerm.value = query.value
-}
-
-function handleDownload(movie: Movie) {
-  downloadTarget.value = movie
-}
-
+const faqs = [
+  {
+    q: 'How does OmniSave work as a video downloader?',
+    a: `OmniSave uses a search-first workflow:\n1. Enter the title you want in the search bar\n2. Open the matching movie, TV show, or anime result\n3. Choose the available video quality and subtitle option if provided\n4. Start the download and save the files for offline viewing`,
+  },
+  {
+    q: 'Can I download videos with subtitles?',
+    a: 'Yes, supported results can include subtitle files in addition to the video file. When subtitles are available, choose the language you want and download the subtitle file separately from the video.',
+  },
+  {
+    q: 'What video qualities are available?',
+    a: 'OmniSave currently focuses on practical MP4 download options such as 480P, 720P, and 1080P when the source provides them. Available quality levels can vary by title and source.',
+  },
+  {
+    q: 'Do I need to paste a video link?',
+    a: 'No. The current OmniSave experience is optimized for searching by title instead of pasting a direct URL. You can find the video resource you want from search results and then open its download options.',
+  },
+  {
+    q: 'What kind of content can I search for right now?',
+    a: 'The current site experience is centered on searchable video resources for movies, TV shows, and anime. More source types and platform-based download flows are part of the next development phase.',
+  },
+  {
+    q: 'Where are downloaded files saved?',
+    a: "Downloaded files usually go to your browser's default download folder unless you changed that setting. Video files and subtitle files are downloaded separately, so check your recent browser downloads if you do not see them immediately.",
+  },
+  {
+    q: 'Is OmniSave free to use?',
+    a: 'Yes. OmniSave is a free online video downloader and does not require extra software for the web experience. Availability of files, subtitles, and quality options depends on the source attached to each result.',
+  },
+]
 </script>
