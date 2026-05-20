@@ -374,12 +374,15 @@ onMounted(() => {})
   user-select: none;
 }
 .viewer-modal {
-  width: 100%; max-width: 520px;
-  height: min(88vh, 620px);
-  border-radius: 22px;
+  width: 100%; max-width: 360px;
+  height: min(72vh, 420px);
+  border-radius: 16px;
   border: 1px solid rgba(255,255,255,0.1); background: rgba(8,16,12,0.98);
   box-shadow: 0 32px 70px rgba(0,0,0,0.65);
   display: flex; flex-direction: column; overflow: hidden;
+}
+@media (min-width: 640px) {
+  .viewer-modal { max-width: 460px; height: min(78vh, 500px); }
 }
 .viewer-bar {
   display: flex; align-items: center; justify-content: space-between; gap: 10px;

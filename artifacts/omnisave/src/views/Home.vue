@@ -250,8 +250,8 @@ function particleStyle(n: number) {
 .hero-content { width: 100%; padding: 10px 12px 12px; }
 @media (min-width: 768px) { .hero-content-wrap { align-items: center; } }
 @media (min-width: 768px) { .hero-content { padding: 36px 24px 32px; } }
-.hero-text-block { max-width: 540px; background: rgba(10,40,120,0.72); border-radius: 10px; padding: 8px 12px 6px; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
-@media (min-width: 768px) { .hero-text-block { background: transparent; border-radius: 0; padding: 0; backdrop-filter: none; -webkit-backdrop-filter: none; } }
+.hero-text-block { display: inline-block; max-width: 90%; background: rgba(10,40,120,0.72); border-radius: 10px; padding: 8px 12px 6px; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+@media (min-width: 768px) { .hero-text-block { display: block; max-width: 540px; background: transparent; border-radius: 0; padding: 0; backdrop-filter: none; -webkit-backdrop-filter: none; } }
 .hero-category { font-size: 0.58rem; font-weight: 800; letter-spacing: 0.2em; margin-bottom: 4px; text-transform: uppercase; }
 @media (min-width: 768px) { .hero-category { font-size: 0.7rem; margin-bottom: 10px; } }
 .hero-title { font-size: clamp(0.95rem, 3.5vw, 3.2rem); font-weight: 800; line-height: 1.1; color: #fff; margin-bottom: 6px; letter-spacing: -0.01em; }

@@ -251,22 +251,22 @@ function doSearch() {
 @media (min-width: 320px) { .login-label { display: inline; } }
 
 /* ── User menu ──────────────────────────────────────────────── */
-.user-menu { display: flex; align-items: center; gap: 6px; }
-.user-avatar-wrap { display: flex; align-items: center; gap: 6px; padding: 3px 7px 3px 3px; border-radius: 9999px; border: 1px solid rgba(0,255,157,0.25); background: rgba(0,255,157,0.07); }
-.user-avatar { width: 22px; height: 22px; border-radius: 50%; background: linear-gradient(135deg, #00ff9d, #00d4ff); display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: 800; color: #021a10; flex-shrink: 0; }
-.user-name-short { font-size: 0.67rem; font-weight: 600; color: rgba(255,255,255,0.8); max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.user-menu { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.user-avatar-wrap { display: flex; align-items: center; gap: 5px; padding: 2px 6px 2px 2px; border-radius: 9999px; border: 1px solid rgba(0,255,157,0.25); background: rgba(0,255,157,0.07); flex-shrink: 0; }
+.user-avatar { width: 20px; height: 20px; border-radius: 50%; background: linear-gradient(135deg, #00ff9d, #00d4ff); display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: 800; color: #021a10; flex-shrink: 0; }
+.user-name-short { font-size: 0.65rem; font-weight: 600; color: rgba(255,255,255,0.8); max-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .btn-logout {
-  display: inline-flex; align-items: center; gap: 4px;
-  padding: 4px 9px; border-radius: 9999px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 3px;
+  padding: 4px 7px; border-radius: 9999px; flex-shrink: 0;
   border: 1px solid rgba(248,113,113,0.35); background: rgba(248,113,113,0.1);
-  color: #f87171; font-size: 0.6rem; font-weight: 700;
-  letter-spacing: 0.08em; cursor: pointer; flex-shrink: 0;
+  color: #f87171; font-size: 0.58rem; font-weight: 700;
+  letter-spacing: 0.06em; cursor: pointer;
   transition: background 0.2s, border-color 0.2s;
   white-space: nowrap;
 }
 .btn-logout:hover { background: rgba(248,113,113,0.2); border-color: rgba(248,113,113,0.55); }
 .logout-label { display: none; }
-@media (min-width: 360px) { .logout-label { display: inline; } }
+@media (min-width: 480px) { .logout-label { display: inline; } }
 
 /* ── Mobile bottom navigation bar ──────────────────────────── */
 @media (min-width: 1024px) {
