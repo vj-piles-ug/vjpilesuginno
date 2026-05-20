@@ -124,6 +124,7 @@ onValue(dbRef(db, 'movies'), (snap) => {
       createdAt: d.createdAt || '',
     })
   })
+  list.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
   dbMovies.value = list
   checkLoaded('movies')
 }, () => { checkLoaded('movies') })
@@ -154,6 +155,7 @@ onValue(dbRef(db, 'series'), (snap) => {
       episodes: eps,
     })
   })
+  list.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
   dbSeries.value = list
   checkLoaded('series')
 }, () => { checkLoaded('series') })
@@ -175,6 +177,7 @@ onValue(dbRef(db, 'animation'), (snap) => {
       createdAt: d.createdAt || '',
     })
   })
+  list.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
   dbAnimation.value = list
   checkLoaded('animation')
 }, () => { checkLoaded('animation') })
@@ -284,14 +287,12 @@ onValue(dbRef(db, 'subscriptions'), (snap) => {
 }, () => { subsReady = true; buildTransactions() })
 
 // ─── Users (with subscriptions merged) ────────────────────────────────────
-onValue(dbRef(db, 'users'), (snap) => {
+function buildUserList(snap: any) {
   const list: AdminUser[] = []
-  snap.forEach((child) => {
+  snap.forEach((child: any) => {
     const d = child.val()
     const uid = child.key!
-    // Support both `name` (this app's auth.ts) and `displayName` (Next.js app)
     const name = d.name || d.displayName || d.email?.split('@')[0] || 'Unknown'
-    // Find existing subscription from subsData if available
     const sub = subsData?.[uid] ?? null
     list.push({
       uid,
@@ -308,7 +309,6 @@ onValue(dbRef(db, 'users'), (snap) => {
       } : null,
     })
   })
-  // Sort: active users first, then by lastLogin
   list.sort((a, b) => {
     const aActive = a.subscription?.active && new Date(a.subscription.endDate) > new Date()
     const bActive = b.subscription?.active && new Date(b.subscription.endDate) > new Date()
@@ -319,7 +319,16 @@ onValue(dbRef(db, 'users'), (snap) => {
     return db2 - da
   })
   dbUsers.value = list
-})
+}
+
+let _usersUnsub: (() => void) | null = null
+function registerUsersListener() {
+  if (_usersUnsub) _usersUnsub()
+  _usersUnsub = onValue(dbRef(db, 'users'), buildUserList, () => { dbUsers.value = [] })
+}
+registerUsersListener()
+
+export function refreshUsersListener() { registerUsersListener() }
 
 // ─── CRUD: Movies ───────────────────────────────────────────────────────────
 export async function addMovie(data: Omit<AdminMovie, 'key'>) {
@@ -436,6 +445,7 @@ function toPublicMovie(m: AdminMovie, idx: number): Movie {
     isTrending: m.isTrending,
     category: m.category,
     year: m.year,
+    createdAt: m.createdAt,
   }
 }
 
@@ -454,6 +464,7 @@ function toPublicSeries(s: AdminSeries, idx: number): Movie {
     isTrending: false,
     category: s.category,
     year: s.year,
+    createdAt: s.createdAt,
   }
 }
 
@@ -472,17 +483,23 @@ function toPublicAnimation(a: AdminAnimation, idx: number): Movie {
     isTrending: a.isTrending,
     category: a.category,
     year: a.year,
+    createdAt: a.createdAt,
   }
 }
 
 export const publicMovies = computed<Movie[]>(() => dbMovies.value.map(toPublicMovie))
 export const publicSeries = computed<Movie[]>(() => dbSeries.value.map(toPublicSeries))
 export const publicAnimation = computed<Movie[]>(() => dbAnimation.value.map(toPublicAnimation))
-export const publicAll = computed<Movie[]>(() => [
-  ...publicMovies.value,
-  ...publicSeries.value,
-  ...publicAnimation.value,
-])
+export const publicAll = computed<Movie[]>(() => {
+  const all = [
+    ...publicMovies.value,
+    ...publicSeries.value,
+    ...publicAnimation.value,
+  ]
+  return all.sort((a, b) =>
+    new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+  )
+})
 export const publicTrending = computed<Movie[]>(() =>
   publicAll.value.filter((m) => m.isTrending).slice(0, 24)
 )

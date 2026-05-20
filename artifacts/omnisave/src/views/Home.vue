@@ -9,7 +9,12 @@
         class="hero-slide"
         :class="{ active: currentSlide === i }"
       >
-        <div class="hero-slide-bg" :style="{ background: slide.bg }"></div>
+        <div
+          class="hero-slide-bg"
+          :style="slide.imageUrl
+            ? { backgroundImage: `url(${slide.imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center top' }
+            : { background: slide.bg }"
+        ></div>
         <div class="hero-overlay-h"></div>
         <div class="hero-overlay-v"></div>
       </div>
@@ -22,10 +27,10 @@
         <div class="hero-content">
           <transition name="hero-fade" mode="out-in">
             <div :key="currentSlide" class="hero-text-block">
-              <p class="hero-category" :style="{ color: heroSlides[currentSlide].accent }">
-                {{ heroSlides[currentSlide].type }}
+              <p class="hero-category" :style="{ color: heroSlides[currentSlide]?.accent || '#00ff9d' }">
+                {{ heroSlides[currentSlide]?.type || '' }}
               </p>
-              <h1 class="hero-title">{{ heroSlides[currentSlide].title }}</h1>
+              <h1 class="hero-title">{{ heroSlides[currentSlide]?.title || '' }}</h1>
             </div>
           </transition>
           <div class="hero-dots">
@@ -78,13 +83,14 @@
         <section v-else class="content-section">
           <div class="section-header">
             <div>
-              <p class="section-kicker">TRENDING</p>
+              <p class="section-kicker">ALL CONTENT</p>
               <h2 class="section-title">Movies, Series &amp; Animation</h2>
             </div>
+            <span class="count-badge">{{ publicAll.length }}</span>
           </div>
-          <div v-if="displayContent.length > 0" class="poster-grid">
+          <div v-if="publicAll.length > 0" class="poster-grid">
             <MovieCard
-              v-for="movie in displayContent"
+              v-for="movie in publicAll"
               :key="movie.id"
               :movie="movie"
               @click="openDownload(movie)"
@@ -132,12 +138,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import MovieCard from '../components/MovieCard.vue'
 import DownloadModal from '../components/DownloadModal.vue'
 import type { Movie } from '../data/movies'
-import { publicAll, publicTrending, dbLoading } from '../store/db'
+import { publicAll, dbLoading, dbCarousel } from '../store/db'
 
 const route = useRoute()
 const externalQuery = computed(() => (route.query.q as string) || '')
@@ -146,12 +152,6 @@ const searchResults = computed(() => {
   if (!externalQuery.value) return []
   const q = externalQuery.value.toLowerCase()
   return publicAll.value.filter(m => m.title.toLowerCase().includes(q))
-})
-
-const displayContent = computed(() => {
-  const trending = publicTrending.value
-  if (trending.length > 0) return trending
-  return publicAll.value.slice(0, 24)
 })
 
 const downloadTarget = ref<Movie | null>(null)
@@ -167,20 +167,37 @@ const faqs = [
   { q: 'Is VJ Piles UG free to use?', a: 'Browse content freely. A subscription unlocks unlimited HD downloads.' },
 ]
 
-const heroSlides = [
-  { title: 'The Expendables 2',   type: 'ACTION  •  ADVENTURE',  bg: 'radial-gradient(ellipse 120% 100% at 80% 20%, #0d2a4a 0%, #071220 60%, #050c08 100%)', accent: '#4db8ff' },
-  { title: 'Breaking Bad',         type: 'TV SERIES  •  DRAMA',   bg: 'radial-gradient(ellipse 120% 100% at 80% 20%, #1a1a08 0%, #100f06 60%, #050c08 100%)', accent: '#ffd700' },
-  { title: 'Spider-Man: Across the Spider-Verse', type: 'ANIMATION  •  ACTION', bg: 'radial-gradient(ellipse 120% 100% at 80% 20%, #1a0a3a 0%, #0f0620 60%, #050c08 100%)', accent: '#ff6bde' },
-  { title: 'The Last of Us',       type: 'TV SERIES  •  DRAMA',   bg: 'radial-gradient(ellipse 120% 100% at 80% 20%, #0a1f0a 0%, #071207 60%, #050c08 100%)', accent: '#7aff5c' },
-  { title: 'John Wick 4',          type: 'ACTION  •  THRILLER',   bg: 'radial-gradient(ellipse 120% 100% at 80% 20%, #2a0a0a 0%, #180606 60%, #050c08 100%)', accent: '#ff6b6b' },
+// ─── Hero carousel ─────────────────────────────────────────────────────────
+const FALLBACK_SLIDES = [
+  { title: 'The Expendables 2',   type: 'ACTION  •  ADVENTURE',  bg: 'radial-gradient(ellipse 120% 100% at 80% 20%, #0d2a4a 0%, #071220 60%, #050c08 100%)', accent: '#4db8ff', imageUrl: '' },
+  { title: 'Breaking Bad',         type: 'TV SERIES  •  DRAMA',   bg: 'radial-gradient(ellipse 120% 100% at 80% 20%, #1a1a08 0%, #100f06 60%, #050c08 100%)', accent: '#ffd700', imageUrl: '' },
+  { title: 'Spider-Man: Across the Spider-Verse', type: 'ANIMATION  •  ACTION', bg: 'radial-gradient(ellipse 120% 100% at 80% 20%, #1a0a3a 0%, #0f0620 60%, #050c08 100%)', accent: '#ff6bde', imageUrl: '' },
+  { title: 'The Last of Us',       type: 'TV SERIES  •  DRAMA',   bg: 'radial-gradient(ellipse 120% 100% at 80% 20%, #0a1f0a 0%, #071207 60%, #050c08 100%)', accent: '#7aff5c', imageUrl: '' },
+  { title: 'John Wick 4',          type: 'ACTION  •  THRILLER',   bg: 'radial-gradient(ellipse 120% 100% at 80% 20%, #2a0a0a 0%, #180606 60%, #050c08 100%)', accent: '#ff6b6b', imageUrl: '' },
 ]
+
+const heroSlides = computed(() => {
+  if (dbCarousel.value.length === 0) return FALLBACK_SLIDES
+  return dbCarousel.value.map(s => ({
+    title: s.title,
+    type: s.subtitle || 'STREAMING',
+    imageUrl: s.imageUrl || '',
+    bg: 'radial-gradient(ellipse 120% 100% at 80% 20%, #0d2a4a 0%, #071220 60%, #050c08 100%)',
+    accent: '#00ff9d',
+  }))
+})
 
 const currentSlide = ref(0)
 const SLIDE_MS = 6000
 let autoTimer: ReturnType<typeof setInterval> | null = null
 
 function goToSlide(i: number) { currentSlide.value = i }
-function nextSlide() { currentSlide.value = (currentSlide.value + 1) % heroSlides.length }
+function nextSlide() { currentSlide.value = (currentSlide.value + 1) % heroSlides.value.length }
+
+// Reset slide index if carousel length changes (e.g. Firebase loads)
+watch(() => heroSlides.value.length, (len) => {
+  if (currentSlide.value >= len) currentSlide.value = 0
+})
 
 onMounted(() => { autoTimer = setInterval(nextSlide, SLIDE_MS) })
 onUnmounted(() => { if (autoTimer) clearInterval(autoTimer) })

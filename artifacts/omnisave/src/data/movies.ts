@@ -18,6 +18,7 @@ export interface Movie {
   episodes?: FbEpisode[]
   category?: string
   year?: number
+  createdAt?: string
 }
 
 export const allMovies: Movie[] = []

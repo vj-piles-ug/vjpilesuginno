@@ -52,8 +52,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { dbMovies, dbSeries, dbAnimation, dbCarousel, dbUsers, dbTransactions } from '../../store/db'
+import { ref, computed, onMounted } from 'vue'
+import { dbMovies, dbSeries, dbAnimation, dbCarousel, dbUsers, dbTransactions, refreshUsersListener } from '../../store/db'
 import AdminUsersTab from './AdminUsersTab.vue'
 import AdminCarouselTab from './AdminCarouselTab.vue'
 import AdminMoviesTab from './AdminMoviesTab.vue'
@@ -62,6 +62,8 @@ import AdminAnimationTab from './AdminAnimationTab.vue'
 import AdminTransactionsTab from './AdminTransactionsTab.vue'
 
 const activeTab = ref('overview')
+
+onMounted(() => { refreshUsersListener() })
 
 const navItems = [
   { id: 'overview',   label: 'Dashboard', icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>' },
