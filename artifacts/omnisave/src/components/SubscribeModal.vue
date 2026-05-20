@@ -86,11 +86,12 @@ import { ref, computed, watch } from 'vue'
 import { push as dbPush, ref as dbRef } from 'firebase/database'
 import { db } from '../lib/firebase'
 import { useAuth } from '../store/auth'
+import { loginOpen } from '../store/ui'
 
-defineProps<{ open: boolean }>()
-defineEmits(['close'])
+const props = defineProps<{ open: boolean }>()
+const emit = defineEmits(['close'])
 
-const { currentUser } = useAuth()
+const { currentUser, isLoggedIn } = useAuth()
 
 const step = ref(1)
 const selectedPlan = ref<string | null>(null)
@@ -110,6 +111,11 @@ const plans = [
 const activePlan = computed(() => plans.find(p => p.id === selectedPlan.value))
 
 function pickPlan(id: string) {
+  if (!isLoggedIn.value) {
+    emit('close')
+    loginOpen.value = true
+    return
+  }
   selectedPlan.value = id
   step.value = 2
 }
