@@ -1,0 +1,519 @@
+"use client"
+
+import { useAuth } from "@/lib/auth-context"
+import { useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
+import Sidebar from "@/components/sidebar"
+import AdminNav from "@/components/admin-nav"
+import AdminMobileNav from "@/components/admin-mobile-nav"
+import { Card } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { database } from "@/lib/firebase"
+import { ref as dbRef, get, set, remove } from "firebase/database"
+import { Users, Calendar, Mail, CheckCircle, XCircle, Clock, Power, PowerOff, UserCheck, Search } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { SUBSCRIPTION_PLANS } from "@/lib/subscription-context"
+
+interface Subscription {
+  planId: string
+  startDate: string
+  endDate: string
+  active: boolean
+}
+
+interface User {
+  id: string
+  email: string
+  displayName?: string
+  photoURL?: string
+  createdAt: string
+  lastLogin?: string
+  subscription?: Subscription
+}
+
+const calculateRemainingTime = (endDate: string) => {
+  const now = new Date()
+  const expiry = new Date(endDate)
+  const diff = expiry.getTime() - now.getTime()
+
+  if (diff <= 0) return "Expired"
+
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
+
+  if (days > 0) {
+    return `${days}d ${hours}h`
+  } else if (hours > 0) {
+    return `${hours}h ${minutes}m`
+  } else {
+    return `${minutes}m`
+  }
+}
+
+const getPlanName = (planId: string, planName?: string) => {
+  // For admin-activated subscriptions, always show "1 Day Pass"
+  if (planId === "admin-activated" || planId === "admin-1day-pass") {
+    return "1 Day Pass"
+  }
+  // If planName is provided in subscription data, use it
+  if (planName) return planName
+  // Otherwise look up from SUBSCRIPTION_PLANS
+  const plan = SUBSCRIPTION_PLANS.find((p) => p.id === planId)
+  return plan ? plan.name : planId
+}
+
+export default function UsersManagement() {
+  const { user, loading, isAdmin } = useAuth()
+  const router = useRouter()
+  const [users, setUsers] = useState<User[]>([])
+  const [usersLoading, setUsersLoading] = useState(true)
+  const [actionLoading, setActionLoading] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState("")
+
+  // Calculate active users count
+  const activeUsersCount = users.filter(
+    (u) => u.subscription?.active && new Date(u.subscription.endDate) > new Date()
+  ).length
+
+  // Filter and sort users: active users first, then by search query
+  const filteredUsers = users
+    .filter((u) => {
+      if (!searchQuery) return true
+      const query = searchQuery.toLowerCase()
+      return (
+        u.email?.toLowerCase().includes(query) ||
+        u.displayName?.toLowerCase().includes(query)
+      )
+    })
+    .sort((a, b) => {
+      const aActive = a.subscription?.active && new Date(a.subscription.endDate) > new Date()
+      const bActive = b.subscription?.active && new Date(b.subscription.endDate) > new Date()
+      
+      // Active users first
+      if (aActive && !bActive) return -1
+      if (!aActive && bActive) return 1
+      
+      // Then by last login
+      const dateA = new Date(a.lastLogin || a.createdAt).getTime()
+      const dateB = new Date(b.lastLogin || b.createdAt).getTime()
+      return dateB - dateA
+    })
+
+  useEffect(() => {
+    if (!loading && (!user || !isAdmin)) {
+      router.push("/login")
+    }
+  }, [user, loading, isAdmin, router])
+
+  useEffect(() => {
+    if (isAdmin) {
+      loadUsers()
+    }
+  }, [isAdmin])
+
+  const loadUsers = async () => {
+    try {
+      const [usersSnap, subscriptionsSnap] = await Promise.all([
+        get(dbRef(database, "users")),
+        get(dbRef(database, "subscriptions")),
+      ])
+
+      if (usersSnap.exists()) {
+        const usersData = usersSnap.val()
+        const subscriptionsData = subscriptionsSnap.exists() ? subscriptionsSnap.val() : {}
+
+        const usersList = Object.entries(usersData).map(([id, value]: any) => {
+          const userSubscription = subscriptionsData[id]
+
+          return {
+            id,
+            email: value.email || "N/A",
+            displayName: value.displayName || "User",
+            photoURL: value.photoURL,
+            createdAt: value.createdAt || new Date().toISOString(),
+            lastLogin: value.lastLogin,
+            subscription: userSubscription || undefined,
+          }
+        })
+
+        // Sort by last login (most recent first)
+        usersList.sort((a, b) => {
+          const dateA = new Date(a.lastLogin || a.createdAt).getTime()
+          const dateB = new Date(b.lastLogin || b.createdAt).getTime()
+          return dateB - dateA
+        })
+
+        setUsers(usersList)
+      }
+      setUsersLoading(false)
+    } catch (error) {
+      console.error("Error loading users:", error)
+      setUsersLoading(false)
+    }
+  }
+
+  const activateUser = async (userId: string, days: number = 1) => {
+    if (!user || !isAdmin) {
+      alert("You must be an admin to activate users")
+      return
+    }
+    
+    // Extra check for admin email
+    if (user.email !== "okotstephen57@gmail.com") {
+      alert("Only okotstephen57@gmail.com can activate users")
+      return
+    }
+    
+    setActionLoading(`${userId}-${days}`)
+    try {
+      // Create a pass for the user with specified days
+      const startDate = new Date()
+      const endDate = new Date()
+      endDate.setDate(endDate.getDate() + days)
+
+      const dayNames = {
+        1: "1 Day Pass",
+        2: "2 Days Pass",
+        7: "1 Week Pass",
+        14: "2 Weeks Pass",
+        30: "1 Month Pass",
+      }
+
+      const subscriptionData = {
+        planId: `admin-${days}day-pass`,
+        planName: dayNames[days as keyof typeof dayNames] || `${days} Day Pass`,
+        amount: 0,
+        days: days,
+        orderTrackingId: `admin-${Date.now()}`,
+        merchantReference: `admin-activation-${userId}`,
+        confirmationCode: "ADMIN",
+        paymentMethod: "Admin Activation",
+        startDate: startDate.toISOString(),
+        endDate: endDate.toISOString(),
+        active: true,
+        createdAt: new Date().toISOString(),
+      }
+
+      const subscriptionRef = dbRef(database, `subscriptions/${userId}`)
+      await set(subscriptionRef, subscriptionData)
+      
+      // Update local state immediately for better UX
+      setUsers(prevUsers => 
+        prevUsers.map(u => 
+          u.id === userId 
+            ? { ...u, subscription: subscriptionData }
+            : u
+        )
+      )
+    } catch (error: any) {
+      // Show more helpful error message
+      const errorMsg = error.code === "PERMISSION_DENIED" 
+        ? "PERMISSION_DENIED: Please update your Firebase Realtime Database rules. Go to Firebase Console > Realtime Database > Rules and set subscriptions to: \".write\": \"auth != null\""
+        : error.message || "Unknown error"
+      
+      alert(`Failed to activate user: ${errorMsg}`)
+    } finally {
+      setActionLoading(null)
+    }
+  }
+
+  const deactivateUser = async (userId: string) => {
+    if (!user || !isAdmin) {
+      alert("You must be an admin to deactivate users")
+      return
+    }
+    
+    // Extra check for admin email
+    if (user.email !== "okotstephen57@gmail.com") {
+      alert("Only okotstephen57@gmail.com can deactivate users")
+      return
+    }
+    
+    setActionLoading(userId)
+    try {
+      // Remove the user's subscription entirely
+      const subscriptionRef = dbRef(database, `subscriptions/${userId}`)
+      await remove(subscriptionRef)
+      
+      // Update local state immediately for better UX
+      setUsers(prevUsers => 
+        prevUsers.map(u => 
+          u.id === userId 
+            ? { ...u, subscription: undefined }
+            : u
+        )
+      )
+    } catch (error: any) {
+      // Show more helpful error message
+      const errorMsg = error.code === "PERMISSION_DENIED" 
+        ? "PERMISSION_DENIED: Please update your Firebase Realtime Database rules. Go to Firebase Console > Realtime Database > Rules and set subscriptions to: \".write\": \"auth != null\""
+        : error.message || "Unknown error"
+      
+      alert(`Failed to deactivate user: ${errorMsg}`)
+    } finally {
+      setActionLoading(null)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-foreground text-xl">Loading...</div>
+      </div>
+    )
+  }
+
+  if (!isAdmin) {
+    return null
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Desktop sidebar */}
+      <div className="hidden lg:block">
+        <Sidebar onFilterChange={() => {}} activeFilter="settings" />
+      </div>
+
+      {/* Admin Navigation */}
+      <AdminNav />
+      <AdminMobileNav />
+
+      {/* Main content with proper padding */}
+      <main className="lg:ml-48 pt-14 pb-20 md:pb-6 px-3 md:px-6 min-h-screen">
+        <div className="max-w-7xl mx-auto">
+          {/* Header */}
+          <div className="mb-6">
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground">Manage Users</h1>
+            <div className="flex flex-wrap items-center gap-4 mt-2">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Users className="w-4 h-4" />
+                <span>Total Users: <span className="font-semibold text-foreground">{users.length}</span></span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-green-500">
+                <UserCheck className="w-4 h-4" />
+                <span>Active Users: <span className="font-semibold">{activeUsersCount}</span></span>
+              </div>
+            </div>
+          </div>
+
+          {/* Search Bar */}
+          <div className="mb-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Search users by name or email..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 bg-card border-border text-foreground"
+              />
+            </div>
+            {searchQuery && (
+              <p className="text-xs text-muted-foreground mt-2">
+                Found {filteredUsers.length} user{filteredUsers.length !== 1 ? "s" : ""} matching "{searchQuery}"
+              </p>
+            )}
+          </div>
+
+          {usersLoading ? (
+            <div className="flex justify-center items-center h-64">
+              <div className="text-foreground">Loading users...</div>
+            </div>
+          ) : filteredUsers.length === 0 ? (
+            <Card className="bg-card border-border p-8">
+              <div className="text-center">
+                <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground">{searchQuery ? "No users found matching your search" : "No users registered yet"}</p>
+              </div>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 gap-3">
+              {filteredUsers.map((userItem) => (
+                <Card key={userItem.id} className="bg-card border-border p-4 hover:border-primary/30 transition">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-3 mb-3">
+                        {userItem.photoURL ? (
+                          <img
+                            src={userItem.photoURL || "/placeholder.svg"}
+                            alt={userItem.displayName}
+                            className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                            <span className="text-primary font-bold">
+                              {userItem.displayName?.charAt(0) || userItem.email?.charAt(0) || "U"}
+                            </span>
+                          </div>
+                        )}
+                        <div className="min-w-0">
+                          <h3 className="font-semibold text-foreground truncate">{userItem.displayName}</h3>
+                          <div className="flex items-center gap-1 text-muted-foreground text-xs">
+                            <Mail className="w-3 h-3 flex-shrink-0" />
+                            <span className="truncate">{userItem.email}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3 text-xs">
+                        <div>
+                          <p className="text-muted-foreground">Created</p>
+                          <p className="text-foreground flex items-center gap-1 mt-0.5">
+                            <Calendar className="w-3 h-3" />
+                            {new Date(userItem.createdAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Last Login</p>
+                          <p className="text-foreground flex items-center gap-1 mt-0.5">
+                            <Calendar className="w-3 h-3" />
+                            {userItem.lastLogin ? new Date(userItem.lastLogin).toLocaleDateString() : "Never"}
+                          </p>
+                        </div>
+                      </div>
+
+                      {userItem.subscription && (
+                        <div className="mt-3 p-3 bg-muted/50 rounded-lg">
+                          <p className="text-muted-foreground text-[10px] uppercase tracking-wider mb-2">
+                            Subscription
+                          </p>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                            <div>
+                              <p className="text-muted-foreground">Plan</p>
+                              <p className="text-foreground font-medium">{getPlanName(userItem.subscription.planId, (userItem.subscription as any).planName)}</p>
+                            </div>
+                            <div>
+                              <p className="text-muted-foreground">Start</p>
+                              <p className="text-foreground">
+                                {new Date(userItem.subscription.startDate).toLocaleDateString()}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-muted-foreground">Expires</p>
+                              <p className="text-foreground">
+                                {new Date(userItem.subscription.endDate).toLocaleDateString()}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-muted-foreground flex items-center gap-1">
+                                <Clock className="w-3 h-3" />
+                                Remaining
+                              </p>
+                              <p className="text-foreground font-medium">
+                                {calculateRemainingTime(userItem.subscription.endDate)}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex flex-col items-end gap-2">
+                      {userItem.subscription?.active && new Date(userItem.subscription.endDate) > new Date() ? (
+                        <>
+                          <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-500/10 border border-green-500/30 rounded text-green-500 text-[10px] font-medium">
+                            <CheckCircle className="w-3 h-3" />
+                            Active
+                          </span>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            className="h-7 text-xs"
+                            onClick={() => deactivateUser(userItem.id)}
+                            disabled={actionLoading === userItem.id}
+                          >
+                            {actionLoading === userItem.id ? (
+                              <span className="animate-spin mr-1">...</span>
+                            ) : (
+                              <PowerOff className="w-3 h-3 mr-1" />
+                            )}
+                            Deactivate
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <span className="inline-flex items-center gap-1 px-2 py-1 bg-red-500/10 border border-red-500/30 rounded text-red-500 text-[10px] font-medium">
+                            <XCircle className="w-3 h-3" />
+                            {userItem.subscription ? "Expired" : "None"}
+                          </span>
+                          <div className="flex flex-col gap-1.5 w-full">
+                            <Button
+                              size="sm"
+                              className="h-7 text-xs bg-green-600 hover:bg-green-700 text-white"
+                              onClick={() => activateUser(userItem.id, 1)}
+                              disabled={actionLoading !== null}
+                            >
+                              {actionLoading === `${userItem.id}-1` ? (
+                                <span className="animate-spin mr-1">...</span>
+                              ) : (
+                                <Power className="w-3 h-3 mr-1" />
+                              )}
+                              1-Day
+                            </Button>
+                            <Button
+                              size="sm"
+                              className="h-7 text-xs bg-blue-600 hover:bg-blue-700 text-white"
+                              onClick={() => activateUser(userItem.id, 2)}
+                              disabled={actionLoading !== null}
+                            >
+                              {actionLoading === `${userItem.id}-2` ? (
+                                <span className="animate-spin mr-1">...</span>
+                              ) : (
+                                <Power className="w-3 h-3 mr-1" />
+                              )}
+                              2-Days
+                            </Button>
+                            <Button
+                              size="sm"
+                              className="h-7 text-xs bg-indigo-600 hover:bg-indigo-700 text-white"
+                              onClick={() => activateUser(userItem.id, 7)}
+                              disabled={actionLoading !== null}
+                            >
+                              {actionLoading === `${userItem.id}-7` ? (
+                                <span className="animate-spin mr-1">...</span>
+                              ) : (
+                                <Power className="w-3 h-3 mr-1" />
+                              )}
+                              1-Week
+                            </Button>
+                            <Button
+                              size="sm"
+                              className="h-7 text-xs bg-purple-600 hover:bg-purple-700 text-white"
+                              onClick={() => activateUser(userItem.id, 14)}
+                              disabled={actionLoading !== null}
+                            >
+                              {actionLoading === `${userItem.id}-14` ? (
+                                <span className="animate-spin mr-1">...</span>
+                              ) : (
+                                <Power className="w-3 h-3 mr-1" />
+                              )}
+                              2-Weeks
+                            </Button>
+                            <Button
+                              size="sm"
+                              className="h-7 text-xs bg-pink-600 hover:bg-pink-700 text-white"
+                              onClick={() => activateUser(userItem.id, 30)}
+                              disabled={actionLoading !== null}
+                            >
+                              {actionLoading === `${userItem.id}-30` ? (
+                                <span className="animate-spin mr-1">...</span>
+                              ) : (
+                                <Power className="w-3 h-3 mr-1" />
+                              )}
+                              1-Month
+                            </Button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
+      </main>
+    </div>
+  )
+}

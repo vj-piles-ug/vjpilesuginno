@@ -1,6 +1,11 @@
 <template>
   <div class="admin-wrap">
     <nav class="admin-topnav">
+      <a href="/" class="topnav-back" title="Back to website">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        <span class="topnav-label">Site</span>
+      </a>
+      <div class="topnav-divider"></div>
       <button
         v-for="item in navItems"
         :key="item.id"
@@ -52,8 +57,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { dbMovies, dbSeries, dbAnimation, dbCarousel, dbUsers, dbTransactions, refreshUsersListener } from '../../store/db'
+import { ref, computed, onMounted, watch } from 'vue'
+import { ref as dbRef, get } from 'firebase/database'
+import { db } from '../../lib/firebase'
+import { isAdmin } from '../../store/auth'
+import { dbMovies, dbSeries, dbAnimation, dbCarousel } from '../../store/db'
 import AdminUsersTab from './AdminUsersTab.vue'
 import AdminCarouselTab from './AdminCarouselTab.vue'
 import AdminMoviesTab from './AdminMoviesTab.vue'
@@ -63,7 +71,34 @@ import AdminTransactionsTab from './AdminTransactionsTab.vue'
 
 const activeTab = ref('overview')
 
-onMounted(() => { refreshUsersListener() })
+// Counts fetched directly after auth — not from module-level store
+const userCount = ref(0)
+const paymentCount = ref(0)
+
+async function loadOverviewCounts() {
+  if (!isAdmin.value) return
+  try {
+    const [usersSnap, logsSnap, subsSnap] = await Promise.all([
+      get(dbRef(db, 'users')),
+      get(dbRef(db, 'paymentLogs')),
+      get(dbRef(db, 'subscriptions')),
+    ])
+    userCount.value = usersSnap.exists() ? Object.keys(usersSnap.val()).length : 0
+    // Merge paymentLogs + subscriptions (same logic as wallet tab)
+    const logsKeys = new Set(logsSnap.exists() ? Object.keys(logsSnap.val()) : [])
+    let subsExtra = 0
+    if (subsSnap.exists()) {
+      for (const [uid, v] of Object.entries(subsSnap.val() as Record<string, any>)) {
+        const tid = v.orderTrackingId || `sub-${uid}`
+        if (!logsKeys.has(tid)) subsExtra++
+      }
+    }
+    paymentCount.value = logsKeys.size + subsExtra
+  } catch (_) {}
+}
+
+watch(isAdmin, (val) => { if (val) loadOverviewCounts() }, { immediate: false })
+onMounted(() => { if (isAdmin.value) loadOverviewCounts() })
 
 const navItems = [
   { id: 'overview',   label: 'Dashboard', icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>' },
@@ -75,15 +110,13 @@ const navItems = [
   { id: 'wallet',     label: 'Wallet',    icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg>' },
 ]
 
-const successfulTx = computed(() => dbTransactions.value.filter(t => t.status === 'Successful').length)
-
 const statCards = computed(() => [
-  { label: 'Total Users',    val: dbUsers.value.length,      tab: 'users',     icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#00d4ff" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>' },
+  { label: 'Total Users',    val: userCount.value,           tab: 'users',     icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#00d4ff" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>' },
   { label: 'Total Movies',   val: dbMovies.value.length,     tab: 'movies',    icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="2"/><path d="M7 2v20M17 2v20M2 12h20"/></svg>' },
   { label: 'Total Series',   val: dbSeries.value.length,     tab: 'series',    icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="2"><rect x="2" y="7" width="20" height="15" rx="2"/><path d="M16 2H8l-2 5h12z"/></svg>' },
   { label: 'Animation',      val: dbAnimation.value.length,  tab: 'animation', icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8" fill="rgba(167,139,250,0.3)"/></svg>' },
   { label: 'Carousel Items', val: dbCarousel.value.length,   tab: 'carousel',  icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2"><rect x="1" y="6" width="22" height="13" rx="2"/><path d="M1 10h22"/></svg>' },
-  { label: 'Payments',       val: successfulTx.value,        tab: 'wallet',    icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg>' },
+  { label: 'Payments',       val: paymentCount.value,        tab: 'wallet',    icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg>' },
 ])
 
 const quickActions = [
@@ -100,6 +133,9 @@ const quickActions = [
 .admin-wrap { min-height: 100vh; background: #050c08; display: flex; flex-direction: column; }
 .admin-topnav { display: flex; align-items: stretch; background: rgba(0,0,0,0.6); border-bottom: 1px solid rgba(255,255,255,0.07); overflow-x: auto; scrollbar-width: none; position: sticky; top: 0; z-index: 100; backdrop-filter: blur(14px); }
 .admin-topnav::-webkit-scrollbar { display: none; }
+.topnav-back { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 12px 18px; color: rgba(255,255,255,0.5); font-size: 0.72rem; font-weight: 600; text-decoration: none; transition: color 0.15s, background 0.15s; white-space: nowrap; flex-shrink: 0; }
+.topnav-back:hover { color: #00ff9d; background: rgba(0,255,157,0.05); }
+.topnav-divider { width: 1px; background: rgba(255,255,255,0.1); margin: 8px 0; flex-shrink: 0; }
 .topnav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 12px 20px; border: none; background: transparent; color: rgba(255,255,255,0.45); font-size: 0.72rem; font-weight: 600; cursor: pointer; letter-spacing: 0.03em; transition: color 0.15s, background 0.15s; white-space: nowrap; border-bottom: 2px solid transparent; min-width: 72px; }
 .topnav-item:hover { color: rgba(255,255,255,0.8); background: rgba(255,255,255,0.04); }
 .topnav-item.active { color: #00ff9d; border-bottom-color: #00ff9d; background: rgba(0,255,157,0.06); }

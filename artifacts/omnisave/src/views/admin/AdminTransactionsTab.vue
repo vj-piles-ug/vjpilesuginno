@@ -2,7 +2,7 @@
   <div class="tab-page">
     <div class="tab-header">
       <h1 class="tab-title">Transactions</h1>
-      <p class="tab-sub">All payment transactions · Firebase RTDB /paymentLogs</p>
+      <p class="tab-sub">All payment transactions with real-time updates</p>
     </div>
 
     <div class="summary-grid">
@@ -26,15 +26,15 @@
     <div class="filters-row">
       <div class="search-wrap">
         <svg class="search-ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input v-model="search" placeholder="Search by phone, email, or name..." class="search-input" />
+        <input v-model="search" placeholder="Search by phone, email, or name…" class="search-input" />
       </div>
       <div class="filter-controls">
         <div class="select-wrap">
           <select v-model="statusFilter" class="filter-sel">
             <option value="">All Status</option>
-            <option value="Successful">Successful</option>
-            <option value="Failed">Failed</option>
-            <option value="Pending">Pending</option>
+            <option value="successful">Successful</option>
+            <option value="failed">Failed</option>
+            <option value="pending">Pending</option>
           </select>
           <svg class="sel-arrow" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
         </div>
@@ -45,7 +45,13 @@
       </div>
     </div>
 
-    <div class="table-wrap">
+    <!-- Loading -->
+    <div v-if="loading" class="loading-state">
+      <div class="spin-ring"></div>
+      <p class="loading-text">Loading transactions…</p>
+    </div>
+
+    <div v-else class="table-wrap">
       <table class="data-table">
         <thead>
           <tr>
@@ -60,21 +66,21 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="t in filtered" :key="t.key">
+          <tr v-for="t in filteredPayments" :key="t.id">
             <td>
               <div class="user-cell">
-                <div class="u-avatar">{{ t.userName ? t.userName[0].toUpperCase() : '?' }}</div>
+                <div class="u-avatar">{{ (t.firstName || t.email || '?')[0].toUpperCase() }}</div>
                 <div class="u-info">
-                  <span class="u-name">{{ t.userName || '—' }}</span>
+                  <span class="u-name">{{ fullName(t) || '—' }}</span>
                   <span class="u-id">{{ t.userId }}</span>
                 </div>
               </div>
             </td>
             <td>
               <div class="contact-cell">
-                <span v-if="t.phone" class="contact-phone">
+                <span v-if="t.phoneNumber" class="contact-phone">
                   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81 19.79 19.79 0 01.007 1.16A2 2 0 012 0h3a2 2 0 012 1.72c.127.96.36 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92z"/></svg>
-                  {{ t.phone }}
+                  {{ t.phoneNumber }}
                 </span>
                 <span v-if="t.email" class="contact-email">
                   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
@@ -82,23 +88,23 @@
                 </span>
               </div>
             </td>
-            <td class="plan-cell">{{ t.plan }}</td>
-            <td class="amount-cell">{{ t.amount > 0 ? 'UGX ' + t.amount.toLocaleString() : '—' }}</td>
-            <td class="method-cell">{{ t.method || 'N/A' }}</td>
+            <td class="plan-cell">{{ t.planName || t.planId || '—' }}</td>
+            <td class="amount-cell">{{ t.amount > 0 ? 'UGX ' + Number(t.amount).toLocaleString() : '—' }}</td>
+            <td class="method-cell">{{ t.paymentMethod || 'N/A' }}</td>
             <td>
               <span class="status-badge" :class="statusCls(t.status)">
                 <span class="status-dot"></span>
-                {{ t.status }}
+                {{ capitalize(t.status) }}
               </span>
             </td>
-            <td class="date-cell">{{ t.createdAt }}</td>
+            <td class="date-cell">{{ fmtDate(t.createdAt) }}</td>
             <td>
-              <button class="del-btn" @click="deleteT(t.key)" title="Delete">
+              <button class="del-btn" @click="deletePayment(t.id)" title="Delete">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
               </button>
             </td>
           </tr>
-          <tr v-if="filtered.length === 0">
+          <tr v-if="filteredPayments.length === 0 && !loading">
             <td colspan="8" class="empty-row">No transactions found.</td>
           </tr>
         </tbody>
@@ -108,44 +114,195 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { dbTransactions, removeTransaction } from '../../store/db'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref as fbRef, onValue, remove } from 'firebase/database'
+import { db } from '../../lib/firebase'
+import { isAdmin } from '../../store/auth'
 
+interface Payment {
+  id: string
+  userId: string
+  email: string
+  phoneNumber: string
+  firstName: string
+  lastName: string
+  amount: number
+  planId: string
+  planName: string
+  orderTrackingId: string
+  status: string
+  paymentMethod: string
+  createdAt: string
+}
+
+const payments = ref<Payment[]>([])
+const loading = ref(true)
 const search = ref('')
 const statusFilter = ref('')
 const sortNewest = ref(true)
 
-const successCount = computed(() => dbTransactions.value.filter(t => t.status === 'Successful').length)
-const failedCount = computed(() => dbTransactions.value.filter(t => t.status === 'Failed').length)
-const pendingCount = computed(() => dbTransactions.value.filter(t => t.status === 'Pending').length)
+let unsubLogs: (() => void) | null = null
+let unsubSubs: (() => void) | null = null
+let logsData: any = null
+let subsData: any = null
+let gotLogs = false
+let gotSubs = false
 
-const filtered = computed(() => {
-  let list = [...dbTransactions.value]
+function normalizeStatus(s?: string): string {
+  if (!s) return 'pending'
+  const l = s.toLowerCase()
+  if (l === 'completed' || l === 'successful' || l === 'success') return 'successful'
+  if (l === 'failed' || l === 'fail' || l === 'reversed') return 'failed'
+  return 'pending'
+}
+
+function buildPayments() {
+  if (!gotLogs || !gotSubs) return
+  const map: Record<string, Payment> = {}
+
+  if (logsData && typeof logsData === 'object') {
+    for (const [key, v] of Object.entries(logsData as Record<string, any>)) {
+      map[key] = {
+        id: key,
+        userId: v.userId || '',
+        email: v.email || '',
+        phoneNumber: v.phoneNumber || v.phone_number || v.phone || v.payment_account || '',
+        firstName: v.firstName || v.first_name || v.userName || v.displayName || '',
+        lastName: v.lastName || v.last_name || '',
+        amount: Number(v.amount) || 0,
+        planId: v.planId || '',
+        planName: v.planName || v.plan || '',
+        orderTrackingId: v.orderTrackingId || key,
+        status: normalizeStatus(v.status),
+        paymentMethod: v.paymentMethod || v.payment_method || v.method || '',
+        createdAt: v.createdAt || v.created_at || '',
+      }
+    }
+  }
+
+  if (subsData && typeof subsData === 'object') {
+    for (const [userId, v] of Object.entries(subsData as Record<string, any>)) {
+      const trackingId = v.orderTrackingId || `sub-${userId}`
+      if (!map[trackingId]) {
+        map[trackingId] = {
+          id: trackingId,
+          userId,
+          email: v.email || '',
+          phoneNumber: v.paymentPhone || v.phoneNumber || v.phone || '',
+          firstName: v.firstName || v.displayName || v.planName || '',
+          lastName: v.lastName || '',
+          amount: Number(v.amount) || 0,
+          planId: v.planId || '',
+          planName: v.planName || v.planId || '',
+          orderTrackingId: trackingId,
+          status: 'successful',
+          paymentMethod: v.paymentMethod || 'Admin Activation',
+          createdAt: v.createdAt || v.startDate || '',
+        }
+      }
+    }
+  }
+
+  payments.value = Object.values(map)
+  loading.value = false
+}
+
+function startListeners() {
+  if (unsubLogs) unsubLogs()
+  if (unsubSubs) unsubSubs()
+  loading.value = true
+  gotLogs = false
+  gotSubs = false
+  logsData = null
+  subsData = null
+
+  unsubLogs = onValue(fbRef(db, 'paymentLogs'), (snap) => {
+    logsData = snap.exists() ? snap.val() : null
+    gotLogs = true
+    buildPayments()
+  }, () => { gotLogs = true; buildPayments() })
+
+  unsubSubs = onValue(fbRef(db, 'subscriptions'), (snap) => {
+    subsData = snap.exists() ? snap.val() : null
+    gotSubs = true
+    buildPayments()
+  }, () => { gotSubs = true; buildPayments() })
+}
+
+function stopListeners() {
+  if (unsubLogs) { unsubLogs(); unsubLogs = null }
+  if (unsubSubs) { unsubSubs(); unsubSubs = null }
+}
+
+const successCount = computed(() => payments.value.filter(p => p.status === 'successful').length)
+const failedCount = computed(() => payments.value.filter(p => p.status === 'failed').length)
+const pendingCount = computed(() => payments.value.filter(p => p.status === 'pending').length)
+
+const filteredPayments = computed(() => {
+  let list = [...payments.value]
+  if (statusFilter.value) list = list.filter(p => p.status === statusFilter.value)
   if (search.value) {
     const q = search.value.toLowerCase()
-    list = list.filter(t => t.userName?.toLowerCase().includes(q) || t.email?.toLowerCase().includes(q) || t.phone?.includes(q))
+    list = list.filter(p =>
+      p.phoneNumber?.toLowerCase().includes(q) ||
+      p.email?.toLowerCase().includes(q) ||
+      p.firstName?.toLowerCase().includes(q) ||
+      p.lastName?.toLowerCase().includes(q) ||
+      p.orderTrackingId?.toLowerCase().includes(q)
+    )
   }
-  if (statusFilter.value) list = list.filter(t => t.status === statusFilter.value)
   list.sort((a, b) => {
-    const ta = a.createdAt || ''
-    const tb = b.createdAt || ''
-    return sortNewest.value ? tb.localeCompare(ta) : ta.localeCompare(tb)
+    const da = a.createdAt ? new Date(a.createdAt).getTime() : 0
+    const db2 = b.createdAt ? new Date(b.createdAt).getTime() : 0
+    if (da === 0 && db2 === 0) return 0
+    if (da === 0) return 1
+    if (db2 === 0) return -1
+    return sortNewest.value ? db2 - da : da - db2
   })
   return list
 })
 
+function fullName(t: Payment): string {
+  const fn = t.firstName || ''
+  const ln = t.lastName || ''
+  return fn || ln ? `${fn} ${ln}`.trim() : ''
+}
+
+function fmtDate(d?: string): string {
+  if (!d) return 'N/A'
+  const dt = new Date(d)
+  if (isNaN(dt.getTime())) return d
+  return dt.toLocaleDateString('en-UG', { year: 'numeric', month: 'short', day: 'numeric' }) + ' ' +
+    dt.toLocaleTimeString('en-UG', { hour: '2-digit', minute: '2-digit', hour12: true })
+}
+
+function capitalize(s: string) {
+  return s.charAt(0).toUpperCase() + s.slice(1)
+}
+
 function statusCls(s: string) {
-  if (s === 'Successful') return 'status-success'
-  if (s === 'Failed') return 'status-failed'
+  if (s === 'successful') return 'status-success'
+  if (s === 'failed') return 'status-failed'
   return 'status-pending'
 }
 
-async function deleteT(key: string) {
-  await removeTransaction(key)
+async function deletePayment(id: string) {
+  if (!confirm('Delete this transaction?')) return
+  try {
+    const safeKey = id.replace(/[.#$[\]/]/g, '_')
+    await remove(fbRef(db, `paymentLogs/${safeKey}`))
+  } catch {
+    alert('Failed to delete transaction')
+  }
 }
+
+watch(isAdmin, (val) => { if (val) startListeners() }, { immediate: false })
+onMounted(() => { if (isAdmin.value) startListeners() })
+onUnmounted(() => stopListeners())
 </script>
 
 <style scoped>
+@keyframes spin { to { transform: rotate(360deg); } }
 .tab-page { padding: 28px 24px; }
 .tab-header { margin-bottom: 22px; }
 .tab-title { font-size: 1.5rem; font-weight: 900; color: #fff; margin-bottom: 4px; }
@@ -164,7 +321,7 @@ async function deleteT(key: string) {
 .filters-row { display: flex; gap: 12px; margin-bottom: 18px; flex-wrap: wrap; align-items: center; }
 .search-wrap { position: relative; flex: 1; min-width: 200px; }
 .search-ic { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: rgba(255,255,255,0.3); pointer-events: none; }
-.search-input { width: 100%; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 9px 14px 9px 34px; color: #fff; font-size: 0.83rem; outline: none; }
+.search-input { width: 100%; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 9px 14px 9px 34px; color: #fff; font-size: 0.83rem; outline: none; box-sizing: border-box; }
 .search-input::placeholder { color: rgba(255,255,255,0.25); }
 .filter-controls { display: flex; gap: 10px; align-items: center; }
 .select-wrap { position: relative; }
@@ -173,6 +330,9 @@ async function deleteT(key: string) {
 .sel-arrow { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); pointer-events: none; color: rgba(255,255,255,0.4); }
 .sort-btn { display: flex; align-items: center; gap: 6px; padding: 9px 14px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: rgba(255,255,255,0.7); font-size: 0.8rem; font-weight: 600; cursor: pointer; white-space: nowrap; }
 .sort-btn:hover { background: rgba(255,255,255,0.08); }
+.loading-state { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 60px 16px; }
+.spin-ring { width: 32px; height: 32px; border: 3px solid rgba(0,255,157,0.15); border-top-color: #00ff9d; border-radius: 50%; animation: spin 0.8s linear infinite; }
+.loading-text { font-size: 0.82rem; color: rgba(255,255,255,0.35); }
 .table-wrap { overflow-x: auto; border-radius: 14px; border: 1px solid rgba(255,255,255,0.07); }
 .data-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
 .data-table thead th { background: rgba(255,255,255,0.04); padding: 11px 14px; text-align: left; font-size: 0.65rem; font-weight: 700; color: rgba(255,255,255,0.35); letter-spacing: 0.1em; white-space: nowrap; }
