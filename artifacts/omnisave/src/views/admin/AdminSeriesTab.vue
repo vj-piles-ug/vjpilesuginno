@@ -126,9 +126,11 @@ async function submitForm() {
       .filter(e => e.title || e.streamlink)
       .map((e, i) => ({ episodeNumber: e.episodeNumber || i + 1, title: e.title || `Episode ${i + 1}`, streamlink: e.streamlink }))
 
+    // Firebase rule requires episodes to exist; store placeholder when empty
+    const episodesPayload = eps.length > 0 ? eps : { _empty: true }
     const data = {
       title: sf.value.title, category: sf.value.category, image: sf.value.image,
-      rating: sf.value.rating, year: sf.value.year, episodes: eps,
+      rating: sf.value.rating, year: sf.value.year, episodes: episodesPayload,
       createdAt: new Date().toISOString().slice(0, 10),
     }
     if (editingKey.value !== null) {

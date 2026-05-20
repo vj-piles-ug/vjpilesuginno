@@ -365,10 +365,15 @@ export async function removeAnimation(key: string) {
 
 // ─── CRUD: Carousel ─────────────────────────────────────────────────────────
 export async function addCarousel(data: Omit<AdminCarousel, 'key'>) {
-  return push(dbRef(db, 'carousel'), data)
+  // Firebase rule requires 'image' field — map imageUrl → image
+  const { imageUrl, ...rest } = data as any
+  return push(dbRef(db, 'carousel'), { ...rest, image: imageUrl || '' })
 }
 export async function updateCarousel(key: string, data: Partial<Omit<AdminCarousel, 'key'>>) {
-  return update(dbRef(db, `carousel/${key}`), data)
+  const { imageUrl, ...rest } = data as any
+  const payload: any = { ...rest }
+  if (imageUrl !== undefined) payload.image = imageUrl
+  return update(dbRef(db, `carousel/${key}`), payload)
 }
 export async function removeCarousel(key: string) {
   return remove(dbRef(db, `carousel/${key}`))

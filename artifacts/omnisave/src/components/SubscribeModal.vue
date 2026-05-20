@@ -54,16 +54,7 @@
             <p class="footer-note">You'll be taken to a secure PesaPal payment page</p>
           </template>
 
-          <!-- STEP: loading (calling PesaPal API) -->
-          <template v-else-if="step === 'loading'">
-            <div class="center-state">
-              <div class="spinner"></div>
-              <p class="center-title">Setting up payment…</p>
-              <p class="center-sub">Connecting to PesaPal</p>
-            </div>
-          </template>
-
-          <!-- STEP: PesaPal payment iframe -->
+          <!-- STEP: PesaPal payment iframe (shows immediately, loads URL in background) -->
           <template v-else-if="step === 'paying'">
             <div class="pp-header">
               <button class="pp-back-btn" @click="maybeClose">
@@ -75,8 +66,13 @@
                 Secure Payment
               </div>
             </div>
+            <!-- Inline spinner while PesaPal URL is being prepared -->
+            <div v-if="iframeLoading" class="iframe-preparing">
+              <div class="spinner"></div>
+              <p class="iframe-prep-text">Connecting to PesaPal…</p>
+            </div>
             <iframe
-              v-if="iframeUrl"
+              v-else-if="iframeUrl"
               :src="iframeUrl"
               class="pay-iframe"
               frameborder="0"
@@ -86,7 +82,7 @@
             <div class="pp-status-bar">
               <div class="pp-waiting">
                 <div class="pulse-dot"></div>
-                Waiting for payment…
+                {{ iframeLoading ? 'Preparing payment…' : 'Waiting for payment…' }}
               </div>
               <div class="pp-plan-label">{{ activePlan?.name }}</div>
               <div class="pp-amount">UGX {{ activePlan?.price.toLocaleString() }}</div>
@@ -141,11 +137,12 @@ const emit = defineEmits(['close'])
 
 const { currentUser } = useAuth()
 
-type Step = 'plans' | 'phone' | 'loading' | 'paying' | 'success' | 'failed'
+type Step = 'plans' | 'phone' | 'paying' | 'success' | 'failed'
 const step = ref<Step>('plans')
 const selectedPlanId = ref<string | null>(null)
 const phoneInput = ref('')
 const iframeUrl = ref('')
+const iframeLoading = ref(false)
 const errMsg = ref('')
 let pollTimer: ReturnType<typeof setInterval> | null = null
 let authToken = ''
@@ -170,6 +167,7 @@ function resetToPlans() {
   step.value = 'plans'
   phoneInput.value = ''
   iframeUrl.value = ''
+  iframeLoading.value = false
   errMsg.value = ''
   authToken = ''
   trackingId = ''
@@ -207,7 +205,10 @@ async function startPayment() {
   const user = currentUser.value
   if (!user) return
 
-  step.value = 'loading'
+  // Show the payment frame immediately with a loading spinner inside
+  step.value = 'paying'
+  iframeLoading.value = true
+  iframeUrl.value = ''
   errMsg.value = ''
 
   const normalizedPhone = normalizePhone(phoneInput.value.trim())
@@ -273,10 +274,11 @@ async function startPayment() {
     }))
 
     iframeUrl.value = order.redirectUrl
-    step.value = 'paying'
+    iframeLoading.value = false
     startPolling(token, order.orderTrackingId, user.uid, plan)
 
   } catch (e: any) {
+    iframeLoading.value = false
     errMsg.value = e.message || 'Something went wrong. Please try again.'
     step.value = 'failed'
   }
@@ -426,6 +428,28 @@ function stopPolling() {
 .center-sub { font-size: 0.68rem; color: rgba(255,255,255,0.38); margin-top: 4px; text-align: center; }
 .mt-1 { margin-top: 4px; }
 .mt-3 { margin-top: 10px; }
+
+/* Inline preparing state (shown instead of iframe while URL loads) */
+.iframe-preparing {
+  flex: 1;
+  height: 0;
+  min-height: 0;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+.iframe-prep-text {
+  font-size: 0.75rem;
+  color: rgba(0,0,0,0.45);
+  font-weight: 600;
+}
+.iframe-preparing .spinner {
+  border-color: rgba(0,200,100,0.2);
+  border-top-color: #00c864;
+}
 
 /* Payment iframe step */
 .pp-header {
