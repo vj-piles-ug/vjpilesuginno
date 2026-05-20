@@ -31,7 +31,7 @@
               <h1 class="hero-title">{{ heroSlides[currentSlide].title }}</h1>
               <p class="hero-desc">{{ heroSlides[currentSlide].desc }}</p>
               <div class="hero-actions">
-                <button class="btn-hero-primary" @click="openDownload(heroSlides[currentSlide])">
+                <button class="btn-hero-download" @click="openDownload(heroSlides[currentSlide])">
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                     <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
                     <polyline points="7 10 12 15 17 10"/>
@@ -90,58 +90,18 @@
         </div>
       </template>
 
-      <!-- Default sections -->
+      <!-- Default sections: ALL content in one mixed section -->
       <template v-else>
-        <!-- Trending Movies -->
         <section class="content-section">
           <div class="section-header">
             <div>
               <p class="section-kicker">TRENDING</p>
-              <h2 class="section-title">Movies</h2>
+              <h2 class="section-title">Movies, Series &amp; Animation</h2>
             </div>
-            <RouterLink to="/movies" class="see-all">SEE ALL →</RouterLink>
           </div>
           <div class="poster-grid">
             <MovieCard
-              v-for="movie in trendingMovies"
-              :key="movie.id"
-              :movie="movie"
-              @click="openDownload(movie)"
-            />
-          </div>
-        </section>
-
-        <!-- Trending Series -->
-        <section class="content-section">
-          <div class="section-header">
-            <div>
-              <p class="section-kicker">TRENDING</p>
-              <h2 class="section-title">TV Series</h2>
-            </div>
-            <RouterLink to="/series" class="see-all">SEE ALL →</RouterLink>
-          </div>
-          <div class="poster-grid">
-            <MovieCard
-              v-for="movie in trendingSeries"
-              :key="movie.id"
-              :movie="movie"
-              @click="openDownload(movie)"
-            />
-          </div>
-        </section>
-
-        <!-- Trending Animation -->
-        <section class="content-section">
-          <div class="section-header">
-            <div>
-              <p class="section-kicker">TRENDING</p>
-              <h2 class="section-title">Animation &amp; Anime</h2>
-            </div>
-            <RouterLink to="/animation" class="see-all">SEE ALL →</RouterLink>
-          </div>
-          <div class="poster-grid">
-            <MovieCard
-              v-for="movie in trendingAnimation"
+              v-for="movie in allTrending"
               :key="movie.id"
               :movie="movie"
               @click="openDownload(movie)"
@@ -202,10 +162,20 @@ const filteredMovies = computed(() => {
   return allMovies.filter(m => m.title.toLowerCase().includes(q))
 })
 
-// Trending slices
-const trendingMovies    = computed(() => movies.slice(0, 8))
-const trendingSeries    = computed(() => series.slice(0, 8))
-const trendingAnimation = computed(() => animation.slice(0, 8))
+// Single mixed trending section
+const allTrending = computed(() => {
+  const m = movies.slice(0, 8)
+  const s = series.slice(0, 8)
+  const a = animation.slice(0, 8)
+  const mixed: typeof m = []
+  const max = Math.max(m.length, s.length, a.length)
+  for (let i = 0; i < max; i++) {
+    if (m[i]) mixed.push(m[i])
+    if (s[i]) mixed.push(s[i])
+    if (a[i]) mixed.push(a[i])
+  }
+  return mixed
+})
 
 // Download modal
 const downloadTarget = ref<Movie | null>(null)
@@ -291,12 +261,12 @@ function particleStyle(n: number) {
   flex: 1; display: flex; align-items: center;
 }
 .hero-content {
-  width: 100%; max-width: 1600px;
-  margin: 0 auto;
+  width: 100%;
   padding: 32px 24px 28px;
 }
 @media (min-width: 768px) { .hero-content { padding: 36px 48px 32px; } }
-@media (min-width: 1280px) { .hero-content { padding: 40px 64px 32px; } }
+@media (min-width: 1280px) { .hero-content { padding: 40px 72px 32px; } }
+@media (min-width: 1920px) { .hero-content { padding: 40px 120px 32px; } }
 
 .hero-text-block { max-width: 540px; }
 .hero-category {
@@ -314,16 +284,16 @@ function particleStyle(n: number) {
 }
 .hero-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 
-.btn-hero-primary {
-  display: inline-flex; align-items: center; gap: 7px;
-  padding: 11px 24px; border-radius: 9999px;
+.btn-hero-download {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 13px 26px; border-radius: 12px;
   background: linear-gradient(135deg, #00ff9d, #00c8b8, #00d4ff);
-  color: #021a10; font-size: 0.75rem; font-weight: 800; letter-spacing: 0.1em;
+  color: #021a10; font-size: 0.76rem; font-weight: 800; letter-spacing: 0.1em;
   border: none; cursor: pointer;
-  box-shadow: 0 12px 32px rgba(0,255,157,0.28);
-  transition: filter 0.2s, transform 0.15s;
+  box-shadow: 0 10px 30px rgba(0,255,157,0.25);
+  transition: filter 0.2s, opacity 0.2s;
 }
-.btn-hero-primary:hover { filter: brightness(1.07); transform: translateY(-1px); }
+.btn-hero-download:hover { filter: brightness(1.06); }
 
 .btn-hero-outline {
   display: inline-flex; align-items: center;
@@ -344,12 +314,13 @@ function particleStyle(n: number) {
 
 /* CONTENT */
 .content-wrap {
-  max-width: 1600px; margin: 0 auto;
+  width: 100%;
   padding: 24px 16px 60px;
 }
 @media (min-width: 640px) { .content-wrap { padding: 28px 24px 60px; } }
 @media (min-width: 1024px) { .content-wrap { padding: 32px 48px 60px; } }
-@media (min-width: 1280px) { .content-wrap { padding: 32px 64px 60px; } }
+@media (min-width: 1280px) { .content-wrap { padding: 32px 72px 60px; } }
+@media (min-width: 1920px) { .content-wrap { padding: 32px 120px 60px; } }
 
 .content-section { margin-bottom: 40px; }
 
