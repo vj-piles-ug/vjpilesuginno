@@ -5,6 +5,9 @@
         <div class="flex items-center gap-5 shrink-0">
           <RouterLink to="/" class="brand-link">
             <img src="/logo.png" alt="VJ Piles UG" class="brand-logo" />
+            <div class="brand-text">
+              <span class="brand-name">VJ PILES UG</span><span class="brand-dot">.COM</span>
+            </div>
           </RouterLink>
           <nav class="hidden items-center gap-0.5 lg:flex">
             <RouterLink v-for="item in navItems" :key="item.path" :to="item.path" class="nav-item" :class="{ 'nav-item--active': $route.path === item.path, 'nav-item--admin': item.label === 'ADMIN' }">{{ item.label }}</RouterLink>
@@ -127,8 +130,11 @@ function doSearch() {
   display: flex; align-items: center; justify-content: space-between; gap: 14px;
   width: 100%; padding: 0 12px; height: 52px;
 }
-.brand-link { display: flex; align-items: center; text-decoration: none; }
-.brand-logo { height: 40px; width: auto; object-fit: contain; display: block; }
+.brand-link { display: flex; align-items: center; gap: 7px; text-decoration: none; }
+.brand-logo { height: 36px; width: 36px; object-fit: cover; border-radius: 50%; display: block; flex-shrink: 0; }
+.brand-text { display: flex; align-items: baseline; gap: 1px; }
+.brand-name { font-size: 0.88rem; font-weight: 800; letter-spacing: 0.05em; color: #fff; }
+.brand-dot { font-size: 0.68rem; font-weight: 700; color: #00ff9d; }
 
 .nav-item { padding: 4px 11px; border-radius: 7px; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; color: rgba(255,255,255,0.48); text-decoration: none; transition: color 0.15s, background 0.15s; }
 .nav-item:hover { color: rgba(255,255,255,0.9); background: rgba(255,255,255,0.06); }

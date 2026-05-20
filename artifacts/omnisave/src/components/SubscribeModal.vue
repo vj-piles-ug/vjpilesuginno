@@ -4,101 +4,70 @@
       <div v-if="open" class="modal-backdrop" @click.self="$emit('close')">
         <div class="modal-box">
           <button class="modal-close" @click="$emit('close')">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
           </button>
 
-          <!-- STEP 1: Plan Selection -->
+          <!-- STEP 1: Plan grid -->
           <template v-if="step === 1">
-            <div class="modal-brand">
-              <img src="/logo.png" alt="VJ Piles UG" class="brand-logo" />
+            <div class="modal-header-row">
+              <img src="/logo.png" alt="" class="hdr-logo" />
+              <div>
+                <h2 class="hdr-title">Subscribe</h2>
+                <p class="hdr-sub">HD downloads via PesaPal · Mobile Money</p>
+              </div>
             </div>
-            <h2 class="modal-heading">Choose a Plan</h2>
-            <p class="modal-sub">Unlock unlimited HD downloads via PesaPal</p>
 
-            <div class="plans">
+            <div class="plan-grid">
               <div
                 v-for="plan in plans"
                 :key="plan.id"
                 class="plan-card"
-                :class="{ selected: selectedPlan === plan.id, popular: plan.popular }"
-                @click="selectedPlan = plan.id"
+                :class="{ popular: plan.popular }"
               >
-                <div v-if="plan.popular" class="popular-badge">BEST VALUE</div>
-                <div class="plan-top">
-                  <div class="plan-radio" :class="{ active: selectedPlan === plan.id }">
-                    <div v-if="selectedPlan === plan.id" class="plan-radio-dot"></div>
-                  </div>
-                  <div class="plan-name-wrap">
-                    <p class="plan-name">{{ plan.name }}</p>
-                    <p class="plan-period">{{ plan.period }}</p>
-                  </div>
-                  <div class="plan-price-wrap">
-                    <p class="plan-price">{{ plan.price.toLocaleString() }}</p>
-                    <p class="plan-currency">UGX</p>
-                  </div>
+                <div v-if="plan.popular" class="popular-badge">BEST</div>
+                <p class="plan-name">{{ plan.name }}</p>
+                <div class="plan-price-row">
+                  <span class="plan-price">{{ plan.price.toLocaleString() }}</span>
+                  <span class="plan-ugx">UGX</span>
                 </div>
-                <ul class="plan-features">
-                  <li v-for="f in plan.features" :key="f" class="plan-feature">
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#00ff9d" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
-                    {{ f }}
-                  </li>
-                </ul>
+                <p class="plan-period">{{ plan.period }}</p>
+                <button class="plan-sub-btn" @click="pickPlan(plan.id)">Subscribe</button>
               </div>
             </div>
-
-            <button class="pay-btn" :disabled="!selectedPlan" @click="step = 2">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-              CONTINUE TO PAYMENT
-            </button>
-            <p class="cancel-note">Cancel anytime · Secure PesaPal payment</p>
+            <p class="cancel-note">Secure PesaPal payment · MTN / Airtel Money</p>
           </template>
 
-          <!-- STEP 2: PesaPal Payment -->
+          <!-- STEP 2: Phone number + payment instructions -->
           <template v-else-if="step === 2">
             <button class="back-btn" @click="step = 1">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
               Back
             </button>
 
-            <div class="pesapal-header">
-              <div class="pesapal-logo-wrap">
-                <div class="pesapal-badge">PesaPal</div>
-              </div>
-              <h2 class="modal-heading mt-2">Pay via Mobile Money</h2>
-              <p class="modal-sub">{{ activePlan?.name }} — {{ activePlan?.price.toLocaleString() }} UGX</p>
+            <div class="pay-header">
+              <div class="pesapal-badge">PesaPal</div>
+              <h2 class="hdr-title mt-1">{{ activePlan?.name }}</h2>
+              <p class="hdr-sub">{{ activePlan?.price.toLocaleString() }} UGX · {{ activePlan?.period }}</p>
             </div>
 
-            <div class="payment-steps">
-              <div class="pay-step">
-                <div class="pay-step-num">1</div>
-                <div class="pay-step-text">
-                  <p class="pay-step-title">Open MTN / Airtel Money</p>
-                  <p class="pay-step-desc">Select "Send Money" or "Pay Bill"</p>
-                </div>
+            <div class="pay-instructions">
+              <div class="pay-row">
+                <span class="pay-num">1</span>
+                <span class="pay-text">Open <strong>MTN / Airtel Money</strong> → Send Money</span>
               </div>
-              <div class="pay-step">
-                <div class="pay-step-num">2</div>
-                <div class="pay-step-text">
-                  <p class="pay-step-title">Send to this number</p>
+              <div class="pay-row">
+                <span class="pay-num">2</span>
+                <div class="pay-text">
+                  Send <strong>{{ activePlan?.price.toLocaleString() }} UGX</strong> to:
                   <div class="phone-chip">
-                    <span class="phone-number">0774 356 888</span>
-                    <button class="copy-btn" @click="copyPhone">{{ copied ? '✓ Copied' : 'Copy' }}</button>
+                    <span class="phone-num">0774 356 888</span>
+                    <button class="copy-btn" @click="copyPhone">{{ copied ? '✓' : 'Copy' }}</button>
                   </div>
                 </div>
               </div>
-              <div class="pay-step">
-                <div class="pay-step-num">3</div>
-                <div class="pay-step-text">
-                  <p class="pay-step-title">Amount to send</p>
-                  <div class="amount-chip">{{ activePlan?.price.toLocaleString() }} UGX</div>
-                </div>
-              </div>
-              <div class="pay-step">
-                <div class="pay-step-num">4</div>
-                <div class="pay-step-text">
-                  <p class="pay-step-title">Use your email as reference</p>
-                  <p class="pay-step-desc">So we can identify your payment</p>
-                </div>
+              <div class="pay-row">
+                <span class="pay-num">3</span>
+                <span class="pay-text">Use your <strong>email</strong> as payment reference</span>
               </div>
             </div>
 
@@ -107,25 +76,25 @@
               <input v-model="phoneInput" class="field-input" placeholder="e.g. 0771234567" type="tel" />
             </div>
 
-            <button class="pay-btn" :disabled="submitting || !phoneInput" @click="submitPayment">
-              <svg v-if="submitting" class="spin-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg>
-              <svg v-else width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            <button class="pay-btn" :disabled="submitting || !phoneInput.trim()" @click="submitPayment">
+              <svg v-if="submitting" class="spin-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg>
+              <svg v-else width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
               {{ submitting ? 'Sending...' : "I'VE PAID — CONFIRM" }}
             </button>
             <p v-if="errMsg" class="err-msg">{{ errMsg }}</p>
-            <p class="cancel-note">Your subscription activates within 1 hour after payment confirmation</p>
+            <p class="cancel-note">Subscription activates within 1 hour after confirmation</p>
           </template>
 
           <!-- STEP 3: Success -->
           <template v-else>
             <div class="success-wrap">
               <div class="success-icon">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#00ff9d" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#00ff9d" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
               </div>
-              <h2 class="modal-heading mt-4">Payment Received!</h2>
-              <p class="modal-sub" style="text-align:center">Your payment request has been sent. Your subscription will be activated within 1 hour.</p>
-              <p class="cancel-note mt-3">Questions? WhatsApp: <strong style="color:#fff">0774 356 888</strong></p>
-              <button class="pay-btn mt-4" @click="$emit('close')">CLOSE</button>
+              <h2 class="hdr-title mt-3">Payment Submitted!</h2>
+              <p class="hdr-sub" style="text-align:center;margin-top:4px">Your subscription will be activated within 1 hour.</p>
+              <p class="cancel-note mt-2">Questions? WhatsApp: <strong style="color:#fff">0774 356 888</strong></p>
+              <button class="pay-btn mt-3" @click="$emit('close')">DONE</button>
             </div>
           </template>
 
@@ -142,47 +111,31 @@ import { db } from '../lib/firebase'
 import { useAuth } from '../store/auth'
 
 defineProps<{ open: boolean }>()
-const emit = defineEmits(['close'])
+defineEmits(['close'])
 
 const { currentUser } = useAuth()
 
 const step = ref(1)
-const selectedPlan = ref<string | null>('weekly')
+const selectedPlan = ref<string | null>(null)
 const phoneInput = ref('')
 const submitting = ref(false)
 const errMsg = ref('')
 const copied = ref(false)
 
-watch(() => step.value, (s) => { if (s === 1) { phoneInput.value = ''; errMsg.value = '' } })
+watch(step, (s) => { if (s === 1) { phoneInput.value = ''; errMsg.value = '' } })
 
 const plans = [
-  {
-    id: 'daily',
-    name: '1-Day Pass',
-    period: 'one day',
-    price: 500,
-    popular: false,
-    features: ['HD downloads', 'All content', '24-hour access'],
-  },
-  {
-    id: 'weekly',
-    name: '1-Week Pass',
-    period: 'per week',
-    price: 3000,
-    popular: true,
-    features: ['HD downloads', 'All content', '7-day access', 'TV Series episodes'],
-  },
-  {
-    id: 'monthly',
-    name: '1-Month Pass',
-    period: 'per month',
-    price: 10000,
-    popular: false,
-    features: ['1080P Full HD', 'Unlimited downloads', 'All content', '30-day access', 'Priority support'],
-  },
+  { id: 'daily',   name: '1-Day',   period: 'one day',  price: 500,   popular: false },
+  { id: 'weekly',  name: '1-Week',  period: 'per week', price: 3000,  popular: true  },
+  { id: 'monthly', name: '1-Month', period: 'monthly',  price: 10000, popular: false },
 ]
 
 const activePlan = computed(() => plans.find(p => p.id === selectedPlan.value))
+
+function pickPlan(id: string) {
+  selectedPlan.value = id
+  step.value = 2
+}
 
 function copyPhone() {
   navigator.clipboard.writeText('0774356888').catch(() => {})
@@ -208,7 +161,7 @@ async function submitPayment() {
     })
     step.value = 3
   } catch (e: any) {
-    errMsg.value = 'Failed to submit. Please try again or contact 0774356888.'
+    errMsg.value = 'Failed to submit. Contact 0774356888.'
   } finally {
     submitting.value = false
   }
@@ -219,135 +172,114 @@ async function submitPayment() {
 .modal-backdrop {
   position: fixed; inset: 0; z-index: 300;
   display: flex; align-items: center; justify-content: center; padding: 16px;
-  background: rgba(0,0,0,0.85); backdrop-filter: blur(16px);
+  background: rgba(0,0,0,0.82); backdrop-filter: blur(16px);
 }
 .modal-box {
-  position: relative; width: 100%; max-width: 390px;
-  border-radius: 22px; border: 1px solid rgba(255,255,255,0.1);
-  background: rgba(8,14,12,0.99); padding: 22px;
-  box-shadow: 0 32px 72px rgba(0,0,0,0.65);
-  max-height: 92vh; overflow-y: auto;
+  position: relative; width: 100%; max-width: 340px;
+  border-radius: 18px; border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(8,14,12,0.99); padding: 18px 16px 16px;
+  box-shadow: 0 28px 64px rgba(0,0,0,0.7);
+  max-height: 90vh; overflow-y: auto;
 }
 .modal-close {
-  position: absolute; top: 14px; right: 14px;
-  width: 26px; height: 26px; border-radius: 50%;
+  position: absolute; top: 12px; right: 12px;
+  width: 24px; height: 24px; border-radius: 50%;
   border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05);
   display: flex; align-items: center; justify-content: center;
-  color: rgba(255,255,255,0.5); cursor: pointer; transition: background 0.15s;
+  color: rgba(255,255,255,0.45); cursor: pointer; transition: background 0.15s;
 }
 .modal-close:hover { background: rgba(255,255,255,0.1); color: #fff; }
 
-.modal-brand { margin-bottom: 14px; }
-.brand-logo { height: 36px; width: auto; object-fit: contain; }
-.modal-heading { font-size: 1.12rem; font-weight: 800; color: #fff; margin-bottom: 3px; }
-.modal-sub { font-size: 0.72rem; color: rgba(255,255,255,0.38); margin-bottom: 16px; }
+/* Header row */
+.modal-header-row { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+.hdr-logo { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+.hdr-title { font-size: 0.92rem; font-weight: 800; color: #fff; line-height: 1.1; }
+.hdr-sub { font-size: 0.65rem; color: rgba(255,255,255,0.38); margin-top: 1px; }
+.mt-1 { margin-top: 4px; }
+.mt-2 { margin-top: 6px; }
+.mt-3 { margin-top: 10px; }
 
-/* Plans */
-.plans { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+/* 3-column plan grid */
+.plan-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 12px; }
 .plan-card {
-  position: relative; border-radius: 14px;
+  position: relative; border-radius: 10px;
   border: 1px solid rgba(255,255,255,0.08);
-  background: rgba(255,255,255,0.03); padding: 12px 13px;
-  cursor: pointer; transition: border-color 0.2s, background 0.2s;
+  background: rgba(255,255,255,0.03);
+  padding: 10px 7px 9px; display: flex; flex-direction: column; align-items: center; gap: 4px;
+  transition: border-color 0.2s, background 0.2s;
 }
-.plan-card:hover { border-color: rgba(255,255,255,0.14); background: rgba(255,255,255,0.05); }
-.plan-card.selected { border-color: rgba(0,255,157,0.4); background: rgba(0,255,157,0.05); }
-.plan-card.popular { border-color: rgba(0,255,157,0.22); }
+.plan-card.popular { border-color: rgba(0,255,157,0.28); background: rgba(0,255,157,0.04); }
 .popular-badge {
-  position: absolute; top: -9px; right: 12px;
+  position: absolute; top: -8px; left: 50%; transform: translateX(-50%);
   background: linear-gradient(135deg, #00ff9d, #00d4ff);
-  color: #021a10; font-size: 0.55rem; font-weight: 800;
-  letter-spacing: 0.08em; padding: 2px 9px; border-radius: 99px;
+  color: #021a10; font-size: 0.5rem; font-weight: 800;
+  letter-spacing: 0.08em; padding: 1px 7px; border-radius: 99px; white-space: nowrap;
 }
-.plan-top { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
-.plan-radio { width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,0.25); flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: border-color 0.15s; }
-.plan-radio.active { border-color: #00ff9d; }
-.plan-radio-dot { width: 7px; height: 7px; border-radius: 50%; background: #00ff9d; }
-.plan-name-wrap { flex: 1; }
-.plan-name { font-size: 0.82rem; font-weight: 700; color: #fff; line-height: 1; }
-.plan-period { font-size: 0.6rem; color: rgba(255,255,255,0.35); margin-top: 1px; }
-.plan-price-wrap { text-align: right; }
+.plan-name { font-size: 0.72rem; font-weight: 800; color: #fff; text-align: center; margin-top: 2px; }
+.plan-price-row { display: flex; align-items: baseline; gap: 2px; }
 .plan-price { font-size: 1rem; font-weight: 800; color: #fff; line-height: 1; }
-.plan-currency { font-size: 0.58rem; color: rgba(0,255,157,0.7); font-weight: 700; letter-spacing: 0.06em; margin-top: 1px; }
-.plan-features { display: flex; flex-direction: column; gap: 4px; padding-left: 26px; }
-.plan-feature { display: flex; align-items: center; gap: 6px; font-size: 0.68rem; color: rgba(255,255,255,0.52); }
-
-/* PesaPal step */
-.back-btn { display: flex; align-items: center; gap: 5px; background: none; border: none; color: rgba(255,255,255,0.45); font-size: 0.72rem; cursor: pointer; padding: 0; margin-bottom: 14px; transition: color 0.15s; }
-.back-btn:hover { color: rgba(255,255,255,0.8); }
-.pesapal-header { margin-bottom: 16px; }
-.pesapal-badge {
-  display: inline-block; padding: 4px 12px; border-radius: 6px;
-  background: linear-gradient(135deg, #e63900, #ff6b35);
-  color: #fff; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.06em;
+.plan-ugx { font-size: 0.52rem; font-weight: 700; color: rgba(0,255,157,0.7); }
+.plan-period { font-size: 0.56rem; color: rgba(255,255,255,0.32); text-align: center; }
+.plan-sub-btn {
+  width: 100%; margin-top: 5px; padding: 5px 4px;
+  background: linear-gradient(135deg, #00ff9d, #00c8b8);
+  color: #021a10; font-size: 0.6rem; font-weight: 800; letter-spacing: 0.06em;
+  border: none; border-radius: 6px; cursor: pointer; transition: filter 0.2s;
 }
+.plan-sub-btn:hover { filter: brightness(1.07); }
 
-.payment-steps { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
-.pay-step { display: flex; align-items: flex-start; gap: 12px; }
-.pay-step-num {
-  width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0;
-  background: rgba(0,255,157,0.12); border: 1px solid rgba(0,255,157,0.3);
-  color: #00ff9d; font-size: 0.68rem; font-weight: 800;
+/* Step 2 */
+.back-btn { display: flex; align-items: center; gap: 4px; background: none; border: none; color: rgba(255,255,255,0.4); font-size: 0.68rem; cursor: pointer; padding: 0; margin-bottom: 10px; transition: color 0.15s; }
+.back-btn:hover { color: rgba(255,255,255,0.75); }
+.pay-header { margin-bottom: 12px; }
+.pesapal-badge { display: inline-block; padding: 3px 9px; border-radius: 5px; background: linear-gradient(135deg, #e63900, #ff6b35); color: #fff; font-size: 0.62rem; font-weight: 800; letter-spacing: 0.05em; }
+
+.pay-instructions { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+.pay-row { display: flex; align-items: flex-start; gap: 9px; }
+.pay-num {
+  width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0;
+  background: rgba(0,255,157,0.1); border: 1px solid rgba(0,255,157,0.28);
+  color: #00ff9d; font-size: 0.6rem; font-weight: 800;
   display: flex; align-items: center; justify-content: center;
 }
-.pay-step-title { font-size: 0.78rem; font-weight: 600; color: rgba(255,255,255,0.82); margin-bottom: 3px; }
-.pay-step-desc { font-size: 0.68rem; color: rgba(255,255,255,0.38); }
-.phone-chip {
-  display: inline-flex; align-items: center; gap: 8px;
-  background: rgba(0,255,157,0.07); border: 1px solid rgba(0,255,157,0.2);
-  border-radius: 8px; padding: 5px 10px; margin-top: 2px;
-}
-.phone-number { font-size: 0.88rem; font-weight: 800; color: #00ff9d; letter-spacing: 0.04em; }
-.copy-btn { background: rgba(0,255,157,0.12); border: none; color: #00ff9d; font-size: 0.62rem; font-weight: 700; padding: 2px 8px; border-radius: 5px; cursor: pointer; transition: background 0.15s; }
-.copy-btn:hover { background: rgba(0,255,157,0.22); }
-.amount-chip {
-  display: inline-block; margin-top: 3px;
-  background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 6px; padding: 4px 10px;
-  font-size: 0.82rem; font-weight: 800; color: #fff;
-}
+.pay-text { font-size: 0.72rem; color: rgba(255,255,255,0.7); line-height: 1.5; }
+.pay-text strong { color: #fff; font-weight: 700; }
+.phone-chip { display: inline-flex; align-items: center; gap: 6px; background: rgba(0,255,157,0.07); border: 1px solid rgba(0,255,157,0.2); border-radius: 7px; padding: 4px 8px; margin-top: 3px; }
+.phone-num { font-size: 0.84rem; font-weight: 800; color: #00ff9d; letter-spacing: 0.04em; }
+.copy-btn { background: rgba(0,255,157,0.14); border: none; color: #00ff9d; font-size: 0.58rem; font-weight: 700; padding: 2px 7px; border-radius: 4px; cursor: pointer; }
+.copy-btn:hover { background: rgba(0,255,157,0.24); }
 
-.field { margin-bottom: 12px; }
-.field-label { display: block; font-size: 0.68rem; font-weight: 600; color: rgba(255,255,255,0.45); margin-bottom: 5px; }
-.field-input {
-  width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 10px; color: #fff; font-size: 0.82rem; padding: 9px 12px; outline: none;
-  transition: border-color 0.2s; box-sizing: border-box;
-}
-.field-input:focus { border-color: rgba(0,255,157,0.4); }
+.field { margin-bottom: 10px; }
+.field-label { display: block; font-size: 0.64rem; font-weight: 600; color: rgba(255,255,255,0.42); margin-bottom: 4px; }
+.field-input { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); border-radius: 9px; color: #fff; font-size: 0.82rem; padding: 8px 11px; outline: none; transition: border-color 0.2s; box-sizing: border-box; }
+.field-input:focus { border-color: rgba(0,255,157,0.38); }
 
-/* Pay button */
 .pay-btn {
-  width: 100%; padding: 13px;
+  width: 100%; padding: 11px;
   background: linear-gradient(135deg, #00ff9d, #00c8b8, #00d4ff);
-  color: #021a10; font-size: 0.73rem; font-weight: 800; letter-spacing: 0.08em;
-  border: none; border-radius: 12px; cursor: pointer;
-  display: flex; align-items: center; justify-content: center; gap: 8px;
-  box-shadow: 0 10px 28px rgba(0,255,157,0.24); margin-bottom: 10px;
+  color: #021a10; font-size: 0.7rem; font-weight: 800; letter-spacing: 0.08em;
+  border: none; border-radius: 10px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+  box-shadow: 0 8px 22px rgba(0,255,157,0.22); margin-bottom: 8px;
   transition: filter 0.2s, opacity 0.2s;
 }
 .pay-btn:hover { filter: brightness(1.06); }
-.pay-btn:disabled { opacity: 0.4; cursor: not-allowed; filter: none; background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.4); box-shadow: none; }
-.pay-btn.mt-4 { margin-top: 10px; }
+.pay-btn:disabled { opacity: 0.4; cursor: not-allowed; filter: none; background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.38); box-shadow: none; }
+.pay-btn.mt-3 { margin-top: 10px; }
 
-.err-msg { font-size: 0.68rem; color: #f87171; margin-bottom: 8px; text-align: center; }
-.cancel-note { text-align: center; font-size: 0.62rem; color: rgba(255,255,255,0.25); }
-.cancel-note.mt-3 { margin-top: 8px; }
+.err-msg { font-size: 0.65rem; color: #f87171; margin-bottom: 6px; text-align: center; }
+.cancel-note { text-align: center; font-size: 0.6rem; color: rgba(255,255,255,0.22); }
 
 /* Success */
-.success-wrap { display: flex; flex-direction: column; align-items: center; padding: 12px 0; }
-.success-icon {
-  width: 60px; height: 60px; border-radius: 50%;
-  background: rgba(0,255,157,0.1); border: 2px solid rgba(0,255,157,0.3);
-  display: flex; align-items: center; justify-content: center;
-}
+.success-wrap { display: flex; flex-direction: column; align-items: center; padding: 8px 0; }
+.success-icon { width: 54px; height: 54px; border-radius: 50%; background: rgba(0,255,157,0.1); border: 2px solid rgba(0,255,157,0.3); display: flex; align-items: center; justify-content: center; }
 
 @keyframes spin { to { transform: rotate(360deg); } }
 .spin-icon { animation: spin 0.8s linear infinite; }
 
-.modal-enter-active, .modal-leave-active { transition: opacity 0.22s ease; }
+.modal-enter-active, .modal-leave-active { transition: opacity 0.2s ease; }
 .modal-enter-from, .modal-leave-to { opacity: 0; }
-.modal-enter-active .modal-box, .modal-leave-active .modal-box { transition: transform 0.22s ease; }
-.modal-enter-from .modal-box { transform: scale(0.95) translateY(10px); }
-.modal-leave-to .modal-box { transform: scale(0.97) translateY(6px); }
+.modal-enter-active .modal-box, .modal-leave-active .modal-box { transition: transform 0.2s ease; }
+.modal-enter-from .modal-box { transform: scale(0.96) translateY(8px); }
+.modal-leave-to .modal-box { transform: scale(0.98) translateY(5px); }
 </style>
