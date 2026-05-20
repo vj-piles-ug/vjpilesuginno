@@ -64,7 +64,7 @@
   </header>
 
   <!-- Bottom mobile navigation bar -->
-  <nav class="mobile-bottom-nav lg:hidden">
+  <nav class="mobile-bottom-nav">
     <RouterLink
       v-for="item in navItems"
       :key="item.path"
@@ -234,6 +234,10 @@ function doSearch() {
 .dropdown-item:hover { background: rgba(220,38,38,0.1); }
 
 /* ── Mobile bottom navigation bar ──────────────────────────── */
+@media (min-width: 1024px) {
+  .mobile-bottom-nav { display: none !important; }
+}
+
 .mobile-bottom-nav {
   position: fixed;
   bottom: 0; left: 0; right: 0;
