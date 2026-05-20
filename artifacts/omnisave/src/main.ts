@@ -5,6 +5,7 @@ import Home from './views/Home.vue'
 import Movies from './views/Movies.vue'
 import Series from './views/Series.vue'
 import Animation from './views/Animation.vue'
+import AdminDashboard from './views/admin/AdminDashboard.vue'
 import './index.css'
 
 const router = createRouter({
@@ -14,6 +15,7 @@ const router = createRouter({
     { path: '/movies', component: Movies, meta: { nav: 'MOVIES' } },
     { path: '/series', component: Series, meta: { nav: 'SERIES' } },
     { path: '/animation', component: Animation, meta: { nav: 'ANIMATION' } },
+    { path: '/admin', component: AdminDashboard, meta: { admin: true } },
   ],
   scrollBehavior: () => ({ top: 0 }),
 })

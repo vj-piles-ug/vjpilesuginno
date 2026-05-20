@@ -300,20 +300,17 @@ function particleStyle(n: number) {
 }
 .see-all:hover { color: #00ff9d; }
 
-/* Dense poster grid — matches reference image */
+/* Dense poster grid */
 .poster-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
 }
-@media (min-width: 480px) {
-  .poster-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 11px; }
-}
-@media (min-width: 768px) {
-  .poster-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; }
+@media (min-width: 640px) {
+  .poster-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
 }
 @media (min-width: 1024px) {
-  .poster-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 14px; }
+  .poster-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
 }
 @media (min-width: 1280px) {
   .poster-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; }
