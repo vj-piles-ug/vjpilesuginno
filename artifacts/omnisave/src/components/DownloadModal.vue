@@ -1,7 +1,7 @@
 <template>
   <Teleport to="body">
     <Transition name="modal">
-      <div v-if="movie" class="modal-backdrop" @click.self="$emit('close')">
+      <div v-if="movie" class="modal-backdrop" @click.self="$emit('close')" @contextmenu.prevent>
         <div class="modal-box">
           <div class="modal-header">
             <div class="modal-poster" :style="posterThumbStyle">
@@ -55,13 +55,10 @@
             <!-- MOVIE or ANIMATION: direct download -->
             <template v-if="movie.type === 'MOVIES' || movie.type === 'ANIMATION'">
               <p class="section-label">DOWNLOAD</p>
-              <a
+              <button
                 v-if="movie.streamlink"
-                :href="directLink(movie.streamlink)"
-                target="_blank"
-                rel="noopener noreferrer"
                 class="big-dl-btn"
-                @click="$emit('close')"
+                @click="openViewer(movie.streamlink, movie.title)"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                   <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
@@ -69,7 +66,7 @@
                   <line x1="12" y1="15" x2="12" y2="3"/>
                 </svg>
                 DOWNLOAD MP4
-              </a>
+              </button>
               <button v-else class="big-dl-btn big-dl-btn--disabled" disabled>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                   <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
@@ -100,13 +97,10 @@
                 <span class="ep-selected-title">{{ selectedEpisode.title }}</span>
               </div>
 
-              <a
+              <button
                 v-if="selectedEpisode && selectedEpisode.streamlink"
-                :href="directLink(selectedEpisode.streamlink)"
-                target="_blank"
-                rel="noopener noreferrer"
                 class="big-dl-btn"
-                @click="$emit('close')"
+                @click="openViewer(selectedEpisode.streamlink, movie.title + ' EP ' + selectedEpisode.episodeNumber)"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                   <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
@@ -114,7 +108,7 @@
                   <line x1="12" y1="15" x2="12" y2="3"/>
                 </svg>
                 DOWNLOAD EP {{ selectedEpisode.episodeNumber }}
-              </a>
+              </button>
               <button v-else-if="selectedEpisode && !selectedEpisode.streamlink" class="big-dl-btn big-dl-btn--disabled" disabled>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                   <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
@@ -138,33 +132,55 @@
         </div>
       </div>
     </Transition>
+
+    <!-- ── Embedded viewer overlay ───────────────────────────── -->
+    <Transition name="viewer">
+      <div v-if="showViewer" class="viewer-backdrop" @contextmenu.prevent>
+        <div class="viewer-bar">
+          <div class="viewer-bar-left">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(0,255,157,0.8)" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            <span class="viewer-title">{{ viewerTitle }}</span>
+          </div>
+          <button class="viewer-close-btn" @click="closeViewer">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            Close
+          </button>
+        </div>
+        <div class="viewer-frame-wrap" @contextmenu.prevent>
+          <div v-if="iframeLoading" class="viewer-loading">
+            <div class="viewer-spinner"></div>
+            <span>Loading…</span>
+          </div>
+          <iframe
+            :src="viewerUrl"
+            class="viewer-iframe"
+            frameborder="0"
+            allowfullscreen
+            allow="autoplay; fullscreen"
+            sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-popups"
+            @load="iframeLoading = false"
+          ></iframe>
+        </div>
+      </div>
+    </Transition>
   </Teleport>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import type { Movie } from '../data/movies'
 import { useAuth } from '../store/auth'
 import { isSubscribed } from '../store/subscription'
 import { loginOpen, subscribeOpen } from '../store/ui'
-import { toDirectDownload } from '../lib/utils'
+import { toEmbedUrl } from '../lib/utils'
 
 const props = defineProps<{ movie: Movie | null }>()
 defineEmits(['close'])
 
 const { isLoggedIn } = useAuth()
 
-function openLogin() {
-  loginOpen.value = true
-}
-
-function openSubscribe() {
-  subscribeOpen.value = true
-}
-
-function directLink(url: string): string {
-  return toDirectDownload(url)
-}
+function openLogin() { loginOpen.value = true }
+function openSubscribe() { subscribeOpen.value = true }
 
 const selectedEpNum = ref<number | null>(null)
 watch(() => props.movie, () => { selectedEpNum.value = null })
@@ -178,6 +194,57 @@ const posterThumbStyle = computed(() => {
   if (!props.movie) return {}
   return { background: `linear-gradient(160deg, ${props.movie.color || '#0d2035'} 0%, #050c08 100%)` }
 })
+
+// ── Embedded viewer ────────────────────────────────────────────
+const showViewer = ref(false)
+const viewerUrl = ref('')
+const viewerTitle = ref('')
+const iframeLoading = ref(false)
+
+function openViewer(rawUrl: string, title: string) {
+  viewerUrl.value = toEmbedUrl(rawUrl)
+  viewerTitle.value = title
+  iframeLoading.value = true
+  showViewer.value = true
+}
+
+function closeViewer() {
+  showViewer.value = false
+  viewerUrl.value = ''
+  iframeLoading.value = false
+}
+
+// ── Right-click + DevTools blocking (active while viewer is open) ──
+function blockMenu(e: MouseEvent) { e.preventDefault() }
+function blockDevTools(e: KeyboardEvent) {
+  const ctrl = e.ctrlKey || e.metaKey
+  if (
+    e.key === 'F12' ||
+    (ctrl && e.shiftKey && ['I', 'J', 'C'].includes(e.key.toUpperCase())) ||
+    (ctrl && e.key.toUpperCase() === 'U')
+  ) {
+    e.preventDefault()
+    e.stopPropagation()
+  }
+}
+
+watch(showViewer, (v) => {
+  if (v) {
+    document.addEventListener('contextmenu', blockMenu)
+    document.addEventListener('keydown', blockDevTools, true)
+  } else {
+    document.removeEventListener('contextmenu', blockMenu)
+    document.removeEventListener('keydown', blockDevTools, true)
+  }
+})
+
+onUnmounted(() => {
+  document.removeEventListener('contextmenu', blockMenu)
+  document.removeEventListener('keydown', blockDevTools, true)
+})
+
+// Also block globally while page has the viewer open
+onMounted(() => {})
 </script>
 
 <style scoped>
@@ -283,4 +350,49 @@ const posterThumbStyle = computed(() => {
 .modal-enter-active .modal-box, .modal-leave-active .modal-box { transition: transform 0.22s ease; }
 .modal-enter-from .modal-box { transform: scale(0.95) translateY(10px); }
 .modal-leave-to .modal-box { transform: scale(0.97) translateY(6px); }
+
+/* ── Viewer overlay ─────────────────────────────────────────── */
+.viewer-backdrop {
+  position: fixed; inset: 0; z-index: 300;
+  background: #000;
+  display: flex; flex-direction: column;
+  user-select: none;
+}
+.viewer-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 18px; background: rgba(5,12,8,0.97);
+  border-bottom: 1px solid rgba(255,255,255,0.07); flex-shrink: 0;
+}
+.viewer-bar-left { display: flex; align-items: center; gap: 8px; }
+.viewer-title { font-size: 0.78rem; font-weight: 700; color: rgba(255,255,255,0.75); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 60vw; }
+.viewer-close-btn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 14px; border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.7); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em;
+  cursor: pointer; transition: background 0.15s, color 0.15s; white-space: nowrap;
+}
+.viewer-close-btn:hover { background: rgba(255,255,255,0.12); color: #fff; }
+.viewer-frame-wrap {
+  flex: 1; position: relative; overflow: hidden;
+}
+.viewer-loading {
+  position: absolute; inset: 0; z-index: 2;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+  background: #000; color: rgba(255,255,255,0.4); font-size: 0.8rem;
+}
+.viewer-spinner {
+  width: 36px; height: 36px; border-radius: 50%;
+  border: 3px solid rgba(0,255,157,0.15);
+  border-top-color: #00ff9d;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.viewer-iframe {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  border: none; display: block;
+}
+
+.viewer-enter-active, .viewer-leave-active { transition: opacity 0.18s ease; }
+.viewer-enter-from, .viewer-leave-to { opacity: 0; }
 </style>

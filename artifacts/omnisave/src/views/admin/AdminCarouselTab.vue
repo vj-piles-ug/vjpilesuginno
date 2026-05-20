@@ -94,7 +94,7 @@ async function addItem() {
   saving.value = true
   errMsg.value = ''
   try {
-    await addCarousel({ ...form.value })
+    await addCarousel({ ...form.value, createdAt: new Date().toISOString() })
     form.value = { title: '', subtitle: '', imageUrl: '', linkContent: 'No Link' }
   } catch (e: any) {
     errMsg.value = e.message || 'Failed to add.'

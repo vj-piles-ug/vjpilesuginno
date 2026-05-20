@@ -18,3 +18,9 @@ export function toDirectDownload(url: string): string {
   if (id) return `https://drive.google.com/uc?export=download&id=${id}`
   return url
 }
+
+export function toEmbedUrl(url: string): string {
+  const id = extractGDriveId(url)
+  if (id) return `https://drive.google.com/file/d/${id}/preview`
+  return url
+}

@@ -48,6 +48,7 @@ export interface AdminCarousel {
   subtitle: string
   imageUrl: string
   linkContent: string
+  createdAt?: string
 }
 
 export interface AdminSubscription {
@@ -193,8 +194,10 @@ onValue(dbRef(db, 'carousel'), (snap) => {
       subtitle: d.subtitle || '',
       imageUrl: d.image || d.imageUrl || '',
       linkContent: d.linkContent || d.contentType || 'No Link',
+      createdAt: d.createdAt || '',
     })
   })
+  list.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
   dbCarousel.value = list
   checkLoaded('carousel')
 }, () => { checkLoaded('carousel') })
