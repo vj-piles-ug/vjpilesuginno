@@ -52,15 +52,18 @@ const filteredList = computed(() =>
 .page-banner { position: relative; height: 220px; display: flex; align-items: flex-end; overflow: hidden; }
 @media (min-width: 768px) { .page-banner { height: 250px; } }
 .page-banner-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(5,12,8,1) 0%, transparent 60%); }
-.page-banner-content { position: relative; z-index: 10; max-width: 1600px; width: 100%; margin: 0 auto; padding: 0 24px 28px; }
+.page-banner-content { position: relative; z-index: 10; width: 100%; padding: 0 24px 28px; }
 @media (min-width: 768px) { .page-banner-content { padding: 0 48px 36px; } }
+@media (min-width: 1280px) { .page-banner-content { padding: 0 72px 36px; } }
+@media (min-width: 1920px) { .page-banner-content { padding: 0 120px 36px; } }
 .page-title { font-size: clamp(1.8rem, 5vw, 3rem); font-weight: 800; color: #fff; letter-spacing: -0.01em; margin-bottom: 6px; }
 .page-subtitle { font-size: 0.9rem; color: rgba(255,255,255,0.48); }
 
-.page-container { max-width: 1600px; margin: 0 auto; padding: 20px 16px 60px; }
+.page-container { width: 100%; padding: 20px 16px 60px; }
 @media (min-width: 640px) { .page-container { padding: 24px 24px 60px; } }
 @media (min-width: 1024px) { .page-container { padding: 28px 48px 60px; } }
-@media (min-width: 1280px) { .page-container { padding: 28px 64px 60px; } }
+@media (min-width: 1280px) { .page-container { padding: 28px 72px 60px; } }
+@media (min-width: 1920px) { .page-container { padding: 28px 120px 60px; } }
 
 .filter-row { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 20px; }
 .filter-chip { padding: 5px 14px; border-radius: 9999px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.55); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; cursor: pointer; transition: all 0.15s; }

@@ -1,6 +1,6 @@
 <template>
   <footer class="relative border-t border-white/[0.06] pb-8 pt-12">
-    <div class="mx-auto w-full max-w-[1380px] px-6 md:px-8 xl:px-10">
+    <div class="w-full px-6 md:px-12 xl:px-[72px] 2xl:px-[120px]">
       <div class="flex flex-col gap-10 md:flex-row md:justify-between">
         <!-- Brand -->
         <div class="max-w-xs">

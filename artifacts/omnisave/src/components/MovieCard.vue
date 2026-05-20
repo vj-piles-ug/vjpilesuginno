@@ -136,11 +136,11 @@ const shortType = computed(() => {
 
 .poster-dl-btn {
   width: 100%;
-  padding: 5px 0;
-  border-radius: 6px;
-  border: 1px solid rgba(0,255,157,0.22);
-  background: rgba(0,255,157,0.08);
-  color: #00ff9d;
+  padding: 6px 0;
+  border-radius: 7px;
+  border: none;
+  background: linear-gradient(135deg, #00ff9d, #00c8b8, #00d4ff);
+  color: #021a10;
   font-size: 0.58rem;
   font-weight: 800;
   letter-spacing: 0.1em;
@@ -149,10 +149,10 @@ const shortType = computed(() => {
   align-items: center;
   justify-content: center;
   gap: 4px;
-  transition: background 0.15s, border-color 0.15s;
+  box-shadow: 0 4px 14px rgba(0,255,157,0.22);
+  transition: filter 0.15s, opacity 0.15s;
 }
 .poster-dl-btn:hover {
-  background: rgba(0,255,157,0.16);
-  border-color: rgba(0,255,157,0.4);
+  filter: brightness(1.07);
 }
 </style>

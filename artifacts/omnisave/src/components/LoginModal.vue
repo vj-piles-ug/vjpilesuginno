@@ -2,7 +2,7 @@
   <Teleport to="body">
     <Transition name="modal">
       <div v-if="open" class="modal-backdrop" @click.self="$emit('close')">
-        <div class="modal-box">
+        <div class="modal-box" :class="{ 'modal-box--wide': step === 2 }">
           <button class="modal-close" @click="$emit('close')">
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
           </button>
@@ -38,7 +38,7 @@
             </p>
           </template>
 
-          <!-- STEP 2: SUBSCRIPTION PLANS -->
+          <!-- STEP 2: SUBSCRIPTION PLANS — 3 columns -->
           <template v-else>
             <div class="step2-top">
               <button class="back-btn" @click="step = 1">
@@ -50,9 +50,10 @@
               </div>
             </div>
             <h2 class="modal-heading" style="margin-top:10px">Choose a Plan</h2>
-            <p class="modal-sub">HD downloads · Subtitles · Billed in UGX</p>
+            <p class="modal-sub">Billed monthly in UGX · Cancel anytime</p>
 
-            <div class="plans">
+            <!-- 3-column plan grid -->
+            <div class="plans-grid">
               <div
                 v-for="plan in plans"
                 :key="plan.id"
@@ -60,35 +61,33 @@
                 :class="{ selected: selectedPlan === plan.id, popular: plan.popular }"
                 @click="selectedPlan = plan.id"
               >
-                <div v-if="plan.popular" class="popular-badge">BEST VALUE</div>
-                <div class="plan-top">
+                <div v-if="plan.popular" class="popular-badge">BEST</div>
+
+                <div class="plan-radio-row">
                   <div class="plan-radio" :class="{ active: selectedPlan === plan.id }">
                     <div v-if="selectedPlan === plan.id" class="plan-radio-dot"></div>
                   </div>
-                  <div class="plan-name-wrap">
-                    <p class="plan-name">{{ plan.name }}</p>
-                    <p class="plan-period">/ month</p>
-                  </div>
-                  <div class="plan-price-wrap">
-                    <p class="plan-price">{{ plan.price.toLocaleString() }}</p>
-                    <p class="plan-currency">UGX</p>
-                  </div>
                 </div>
+
+                <p class="plan-name">{{ plan.name }}</p>
+                <div class="plan-price-block">
+                  <span class="plan-price">{{ plan.price.toLocaleString() }}</span>
+                  <span class="plan-currency">UGX</span>
+                </div>
+                <p class="plan-period">/ month</p>
+
                 <ul class="plan-features">
                   <li v-for="f in plan.features" :key="f" class="plan-feature">
-                    <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#00ff9d" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                    <svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="#00ff9d" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
                     {{ f }}
                   </li>
                 </ul>
+
+                <button class="subscribe-btn" @click.stop="$emit('close')">SUBSCRIBE</button>
               </div>
             </div>
 
-            <button class="pay-btn" :disabled="!selectedPlan" @click="$emit('close')">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-              PAY NOW — {{ selectedPlan ? plans.find(p => p.id === selectedPlan)?.price.toLocaleString() + ' UGX' : 'SELECT A PLAN' }}
-            </button>
-
-            <p class="footer-note">Cancel anytime · Secure payment · Auto-renews monthly</p>
+            <p class="footer-note" style="margin-top:10px">Secure payment · Auto-renews monthly</p>
           </template>
         </div>
       </div>
@@ -110,9 +109,9 @@ const selectedPlan = ref<string>('standard')
 watch(() => props.open, (v) => { if (!v) { step.value = 1; email.value = ''; password.value = '' } })
 
 const plans = [
-  { id: 'basic',    name: 'Basic',    price: 15000, popular: false, features: ['480P downloads', '5 downloads/day', 'Subtitles'] },
-  { id: 'standard', name: 'Standard', price: 35000, popular: true,  features: ['720P HD downloads', '30 downloads/day', 'Subtitles', 'TV Series'] },
-  { id: 'premium',  name: 'Premium',  price: 65000, popular: false, features: ['1080P Full HD', 'Unlimited downloads', 'Priority speed'] },
+  { id: 'basic',    name: 'Basic',    price: 15000, popular: false, features: ['480P', '5/day', 'Subtitles'] },
+  { id: 'standard', name: 'Standard', price: 35000, popular: true,  features: ['720P HD', '30/day', 'Subtitles', 'TV Series'] },
+  { id: 'premium',  name: 'Premium',  price: 65000, popular: false, features: ['1080P', 'Unlimited', 'Priority'] },
 ]
 </script>
 
@@ -128,7 +127,10 @@ const plans = [
   background: rgba(7,13,10,0.99); padding: 18px;
   box-shadow: 0 24px 56px rgba(0,0,0,0.72);
   max-height: 90vh; overflow-y: auto;
+  transition: max-width 0.25s ease;
 }
+.modal-box--wide { max-width: 480px; }
+
 .modal-close {
   position: absolute; top: 11px; right: 11px;
   width: 22px; height: 22px; border-radius: 50%;
@@ -191,51 +193,71 @@ const plans = [
 .link { color: rgba(0,255,157,0.7); text-decoration: none; font-weight: 600; }
 .link:hover { color: #00ff9d; }
 
-/* Plans */
-.plans { display: flex; flex-direction: column; gap: 6px; margin-bottom: 11px; }
+/* 3-column plans grid */
+.plans-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
 .plan-card {
-  position: relative; border-radius: 11px; border: 1px solid rgba(255,255,255,0.08);
-  background: rgba(255,255,255,0.03); padding: 9px 11px;
-  cursor: pointer; transition: border-color 0.2s, background 0.2s;
+  position: relative;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.03);
+  padding: 10px 8px 10px;
+  cursor: pointer;
+  display: flex; flex-direction: column; align-items: center;
+  text-align: center;
+  transition: border-color 0.2s, background 0.2s;
+  gap: 4px;
 }
 .plan-card:hover { border-color: rgba(255,255,255,0.14); }
-.plan-card.selected { border-color: rgba(0,255,157,0.42); background: rgba(0,255,157,0.05); }
-.plan-card.popular { border-color: rgba(0,255,157,0.2); }
+.plan-card.selected { border-color: rgba(0,255,157,0.45); background: rgba(0,255,157,0.06); }
+.plan-card.popular { border-color: rgba(0,255,157,0.22); }
 
 .popular-badge {
-  position: absolute; top: -7px; right: 9px;
+  position: absolute; top: -7px; left: 50%; transform: translateX(-50%);
   background: linear-gradient(135deg, #00ff9d, #00d4ff);
-  color: #021a10; font-size: 0.48rem; font-weight: 800; letter-spacing: 0.08em;
-  padding: 2px 7px; border-radius: 99px;
+  color: #021a10; font-size: 0.46rem; font-weight: 800; letter-spacing: 0.08em;
+  padding: 2px 7px; border-radius: 99px; white-space: nowrap;
 }
 
-.plan-top { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
-.plan-radio { width: 13px; height: 13px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,0.22); flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: border-color 0.15s; }
+.plan-radio-row { display: flex; justify-content: center; }
+.plan-radio {
+  width: 12px; height: 12px; border-radius: 50%;
+  border: 1.5px solid rgba(255,255,255,0.22);
+  display: flex; align-items: center; justify-content: center;
+  transition: border-color 0.15s; flex-shrink: 0;
+}
 .plan-radio.active { border-color: #00ff9d; }
 .plan-radio-dot { width: 5px; height: 5px; border-radius: 50%; background: #00ff9d; }
 
-.plan-name-wrap { flex: 1; }
-.plan-name { font-size: 0.74rem; font-weight: 700; color: #fff; line-height: 1; }
-.plan-period { font-size: 0.53rem; color: rgba(255,255,255,0.35); margin-top: 1px; }
+.plan-name { font-size: 0.72rem; font-weight: 800; color: #fff; line-height: 1; }
 
-.plan-price-wrap { text-align: right; }
-.plan-price { font-size: 0.86rem; font-weight: 800; color: #fff; line-height: 1; }
-.plan-currency { font-size: 0.5rem; color: rgba(0,255,157,0.7); font-weight: 700; letter-spacing: 0.06em; margin-top: 1px; }
+.plan-price-block { display: flex; align-items: baseline; gap: 2px; justify-content: center; }
+.plan-price { font-size: 0.9rem; font-weight: 800; color: #fff; line-height: 1; }
+.plan-currency { font-size: 0.48rem; color: rgba(0,255,157,0.8); font-weight: 700; }
+.plan-period { font-size: 0.5rem; color: rgba(255,255,255,0.3); margin-top: -2px; }
 
-.plan-features { display: flex; flex-direction: column; gap: 3px; padding-left: 21px; }
-.plan-feature { display: flex; align-items: center; gap: 5px; font-size: 0.6rem; color: rgba(255,255,255,0.48); }
-
-.pay-btn {
-  width: 100%; padding: 11px;
-  background: linear-gradient(135deg, #00ff9d, #00c8b8, #00d4ff);
-  color: #021a10; font-size: 0.66rem; font-weight: 800; letter-spacing: 0.07em;
-  border: none; border-radius: 10px; cursor: pointer;
-  display: flex; align-items: center; justify-content: center; gap: 6px;
-  box-shadow: 0 7px 20px rgba(0,255,157,0.24); margin-bottom: 8px;
-  transition: filter 0.2s, opacity 0.2s;
+.plan-features {
+  list-style: none; padding: 0; margin: 2px 0 0;
+  display: flex; flex-direction: column; gap: 3px; width: 100%;
 }
-.pay-btn:hover { filter: brightness(1.06); }
-.pay-btn:disabled { opacity: 0.4; cursor: not-allowed; filter: none; background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.4); box-shadow: none; }
+.plan-feature {
+  display: flex; align-items: center; gap: 4px;
+  font-size: 0.56rem; color: rgba(255,255,255,0.48); text-align: left;
+}
+
+.subscribe-btn {
+  width: 100%; margin-top: 6px; padding: 7px 4px;
+  background: linear-gradient(135deg, #00ff9d, #00c8b8, #00d4ff);
+  color: #021a10; font-size: 0.58rem; font-weight: 800; letter-spacing: 0.06em;
+  border: none; border-radius: 7px; cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0,255,157,0.22); transition: filter 0.2s;
+}
+.subscribe-btn:hover { filter: brightness(1.07); }
 
 .modal-enter-active, .modal-leave-active { transition: opacity 0.2s ease; }
 .modal-enter-from, .modal-leave-to { opacity: 0; }
