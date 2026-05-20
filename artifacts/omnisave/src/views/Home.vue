@@ -29,18 +29,6 @@
                 {{ heroSlides[currentSlide].type }}
               </p>
               <h1 class="hero-title">{{ heroSlides[currentSlide].title }}</h1>
-              <p class="hero-desc">{{ heroSlides[currentSlide].desc }}</p>
-              <div class="hero-actions">
-                <button class="btn-hero-download" @click="openDownload(heroSlides[currentSlide])">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
-                    <polyline points="7 10 12 15 17 10"/>
-                    <line x1="12" y1="15" x2="12" y2="3"/>
-                  </svg>
-                  DOWNLOAD
-                </button>
-                <button class="btn-hero-outline">DETAILS</button>
-              </div>
             </div>
           </transition>
 
@@ -230,7 +218,10 @@ function particleStyle(n: number) {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  height: 320px;
 }
+@media (min-width: 768px) { .hero-section { height: 400px; } }
+@media (min-width: 1280px) { .hero-section { height: 460px; } }
 
 .hero-slide {
   position: absolute;
@@ -276,31 +267,6 @@ function particleStyle(n: number) {
   font-weight: 800; line-height: 1.06;
   color: #fff; margin-bottom: 14px; letter-spacing: -0.01em;
 }
-.hero-desc {
-  font-size: 0.9rem; line-height: 1.65;
-  color: rgba(255,255,255,0.52); max-width: 480px; margin-bottom: 24px;
-}
-.hero-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-
-.btn-hero-download {
-  display: inline-flex; align-items: center; gap: 8px;
-  padding: 13px 26px; border-radius: 12px;
-  background: linear-gradient(135deg, #00ff9d, #00c8b8, #00d4ff);
-  color: #021a10; font-size: 0.76rem; font-weight: 800; letter-spacing: 0.1em;
-  border: none; cursor: pointer;
-  box-shadow: 0 10px 30px rgba(0,255,157,0.25);
-  transition: filter 0.2s, opacity 0.2s;
-}
-.btn-hero-download:hover { filter: brightness(1.06); }
-
-.btn-hero-outline {
-  display: inline-flex; align-items: center;
-  padding: 10px 24px; border-radius: 9999px;
-  border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.06);
-  color: rgba(255,255,255,0.8); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em;
-  cursor: pointer; transition: background 0.2s, border-color 0.2s;
-}
-.btn-hero-outline:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3); }
 
 .hero-dots { display: flex; align-items: center; gap: 7px; margin-top: 28px; }
 .hero-dot {
