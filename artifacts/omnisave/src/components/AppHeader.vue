@@ -101,11 +101,8 @@ function doSearch() {
 .header-inner {
   display: flex; align-items: center; justify-content: space-between; gap: 14px;
   width: 100%;
-  padding: 0 20px; height: 52px;
+  padding: 0 12px; height: 52px;
 }
-@media (min-width: 1024px) { .header-inner { padding: 0 48px; } }
-@media (min-width: 1280px) { .header-inner { padding: 0 72px; } }
-@media (min-width: 1920px) { .header-inner { padding: 0 120px; } }
 
 .brand-link { display: flex; align-items: center; gap: 8px; text-decoration: none; }
 .brand-icon { width: 28px; height: 28px; border-radius: 7px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #00ff9d, #00c8b8, #00d4ff); }
