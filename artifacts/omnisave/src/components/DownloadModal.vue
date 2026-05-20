@@ -145,23 +145,14 @@
 import { ref, computed, watch } from 'vue'
 import type { Movie } from '../data/movies'
 import { useAuth } from '../store/auth'
-import { dbUsers } from '../store/db'
+import { isSubscribed } from '../store/subscription'
 import { loginOpen, subscribeOpen } from '../store/ui'
 import { toDirectDownload } from '../lib/utils'
 
 const props = defineProps<{ movie: Movie | null }>()
 defineEmits(['close'])
 
-const { isLoggedIn, isAdmin, currentUser } = useAuth()
-
-const isSubscribed = computed(() => {
-  if (isAdmin.value) return true
-  if (!currentUser.value) return false
-  const user = dbUsers.value.find((u: any) => u.uid === currentUser.value!.uid)
-  const sub = (user as any)?.subscription
-  if (!sub || !sub.active) return false
-  return new Date(sub.endDate) > new Date()
-})
+const { isLoggedIn } = useAuth()
 
 function openLogin() {
   loginOpen.value = true

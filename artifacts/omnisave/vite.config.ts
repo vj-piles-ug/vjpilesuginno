@@ -65,6 +65,14 @@ export default defineConfig({
     fs: {
       strict: true,
     },
+    proxy: {
+      '/api/pesapal': {
+        target: 'https://pay.pesapal.com/v3',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/pesapal/, ''),
+        secure: true,
+      },
+    },
   },
   preview: {
     port,

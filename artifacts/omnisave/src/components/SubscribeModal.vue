@@ -1,77 +1,108 @@
 <template>
   <Teleport to="body">
     <Transition name="modal">
-      <div v-if="open" class="modal-backdrop" @click.self="$emit('close')">
-        <div class="modal-box">
-          <button class="modal-close" @click="$emit('close')">
+      <div v-if="open" class="modal-backdrop" @click.self="maybeClose">
+        <div class="modal-box" :class="{ 'modal-box--wide': step === 'paying' }">
+          <button class="modal-close" @click="maybeClose">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
           </button>
 
-          <!-- STEP 1: Plan grid -->
-          <template v-if="step === 1">
+          <!-- STEP: plan selection -->
+          <template v-if="step === 'plans'">
             <div class="modal-header-row">
               <img src="/logo.png" alt="" class="hdr-logo" />
               <div>
                 <h2 class="hdr-title">Subscribe</h2>
-                <p class="hdr-sub">HD downloads via PesaPal · Mobile Money</p>
+                <p class="hdr-sub">Unlimited HD downloads · Powered by PesaPal</p>
               </div>
             </div>
-
             <div class="plan-grid">
-              <div
-                v-for="plan in plans"
-                :key="plan.id"
-                class="plan-card"
-                :class="{ popular: plan.popular }"
-              >
-                <div v-if="plan.popular" class="popular-badge">BEST</div>
+              <div v-for="plan in PLANS" :key="plan.id" class="plan-card" :class="{ popular: plan.popular }">
+                <div v-if="plan.popular" class="popular-badge">POPULAR</div>
                 <p class="plan-name">{{ plan.name }}</p>
                 <div class="plan-price-row">
                   <span class="plan-price">{{ plan.price.toLocaleString() }}</span>
                   <span class="plan-ugx">UGX</span>
                 </div>
-                <p class="plan-period">{{ plan.period }}</p>
+                <p class="plan-period">{{ plan.duration }}</p>
+                <p class="plan-feature">Unlimited Downloads</p>
                 <button class="plan-sub-btn" @click="pickPlan(plan.id)">Subscribe</button>
               </div>
             </div>
-            <p class="cancel-note">Secure PesaPal payment · MTN / Airtel Money</p>
+            <p class="footer-note">Secure payment via PesaPal · MTN / Airtel / Visa</p>
           </template>
 
-          <!-- STEP 2: Phone number -->
-          <template v-else-if="step === 2">
-            <button class="back-btn" @click="step = 1">
+          <!-- STEP: phone input -->
+          <template v-else-if="step === 'phone'">
+            <button class="back-btn" @click="step = 'plans'">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
               Back
             </button>
-
             <div class="pay-header">
-              <h2 class="hdr-title">{{ activePlan?.name }} — {{ activePlan?.price.toLocaleString() }} UGX</h2>
-              <p class="hdr-sub">{{ activePlan?.period }}</p>
+              <h2 class="hdr-title">{{ activePlan?.name }}</h2>
+              <p class="hdr-sub">{{ activePlan?.price.toLocaleString() }} UGX · {{ activePlan?.duration }}</p>
             </div>
-
             <div class="field">
               <label class="field-label">Phone number</label>
-              <input v-model="phoneInput" class="field-input" placeholder="e.g. 0771234567" type="tel" />
+              <input v-model="phoneInput" class="field-input" placeholder="e.g. 0771234567" type="tel" @keyup.enter="startPayment" />
             </div>
-
-            <button class="pay-btn" :disabled="submitting || !phoneInput.trim()" @click="submitPayment">
-              <svg v-if="submitting" class="spin-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg>
-              <svg v-else width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
-              {{ submitting ? 'Processing...' : 'PROCEED' }}
-            </button>
             <p v-if="errMsg" class="err-msg">{{ errMsg }}</p>
+            <button class="pay-btn" :disabled="!phoneInput.trim()" @click="startPayment">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+              PROCEED TO PAYMENT
+            </button>
+            <p class="footer-note">You'll be taken to a secure PesaPal payment page</p>
           </template>
 
-          <!-- STEP 3: Success -->
-          <template v-else>
-            <div class="success-wrap">
-              <div class="success-icon">
-                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#00ff9d" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          <!-- STEP: loading (calling PesaPal API) -->
+          <template v-else-if="step === 'loading'">
+            <div class="center-state">
+              <div class="spinner"></div>
+              <p class="center-title">Setting up payment…</p>
+              <p class="center-sub">Connecting to PesaPal</p>
+            </div>
+          </template>
+
+          <!-- STEP: PesaPal payment iframe -->
+          <template v-else-if="step === 'paying'">
+            <div class="iframe-header">
+              <p class="iframe-plan-info">{{ activePlan?.name }} — {{ activePlan?.price.toLocaleString() }} UGX</p>
+              <div class="polling-badge">
+                <div class="pulse-dot"></div>
+                Waiting for payment…
               </div>
-              <h2 class="hdr-title mt-3">Payment Submitted!</h2>
-              <p class="hdr-sub" style="text-align:center;margin-top:4px">Your subscription will be activated within 1 hour.</p>
-              <p class="cancel-note mt-2">Questions? WhatsApp: <strong style="color:#fff">0774 356 888</strong></p>
-              <button class="pay-btn mt-3" @click="$emit('close')">DONE</button>
+            </div>
+            <iframe
+              v-if="iframeUrl"
+              :src="iframeUrl"
+              class="pay-iframe"
+              frameborder="0"
+              allow="payment"
+              scrolling="yes"
+            ></iframe>
+          </template>
+
+          <!-- STEP: success -->
+          <template v-else-if="step === 'success'">
+            <div class="center-state">
+              <div class="success-icon">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#00ff9d" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+              <h2 class="hdr-title mt-3">Payment Successful!</h2>
+              <p class="center-sub mt-1">Your subscription is now active. Enjoy unlimited downloads!</p>
+              <button class="pay-btn mt-4" @click="$emit('close')">START DOWNLOADING</button>
+            </div>
+          </template>
+
+          <!-- STEP: failed -->
+          <template v-else-if="step === 'failed'">
+            <div class="center-state">
+              <div class="fail-icon">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+              </div>
+              <h2 class="hdr-title mt-3">Payment Failed</h2>
+              <p class="center-sub mt-1">{{ errMsg || 'The payment was not completed. Please try again.' }}</p>
+              <button class="pay-btn pay-btn--retry mt-4" @click="retry">TRY AGAIN</button>
             </div>
           </template>
 
@@ -82,72 +113,183 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
-import { push as dbPush, ref as dbRef } from 'firebase/database'
+import { ref, computed, watch, onUnmounted } from 'vue'
+import { set as dbSet, ref as dbRef, push as dbPush } from 'firebase/database'
 import { db } from '../lib/firebase'
 import { useAuth } from '../store/auth'
-import { loginOpen } from '../store/ui'
+import { activateSubscription } from '../store/subscription'
+import {
+  pesapalGetToken,
+  pesapalRegisterIPN,
+  pesapalSubmitOrder,
+  pesapalGetStatus,
+} from '../lib/pesapal'
 
 const props = defineProps<{ open: boolean }>()
 const emit = defineEmits(['close'])
 
-const { currentUser, isLoggedIn } = useAuth()
+const { currentUser } = useAuth()
 
-const step = ref(1)
-const selectedPlan = ref<string | null>(null)
+type Step = 'plans' | 'phone' | 'loading' | 'paying' | 'success' | 'failed'
+const step = ref<Step>('plans')
+const selectedPlanId = ref<string | null>(null)
 const phoneInput = ref('')
-const submitting = ref(false)
+const iframeUrl = ref('')
 const errMsg = ref('')
-const copied = ref(false)
+let pollTimer: ReturnType<typeof setInterval> | null = null
+let authToken = ''
+let trackingId = ''
 
-watch(step, (s) => { if (s === 1) { phoneInput.value = ''; errMsg.value = '' } })
-
-const plans = [
-  { id: 'daily',   name: '1-Day',   period: 'one day',  price: 500,   popular: false },
-  { id: 'weekly',  name: '1-Week',  period: 'per week', price: 3000,  popular: true  },
-  { id: 'monthly', name: '1-Month', period: 'monthly',  price: 10000, popular: false },
+const PLANS = [
+  { id: '2days',  name: '2 Days Pass',  duration: '2 Days',  price: 5000,  days: 2,  popular: false },
+  { id: '1week',  name: '1 Week Pass',  duration: '1 Week',  price: 15000, days: 7,  popular: true  },
+  { id: '2weeks', name: '2 Weeks Pass', duration: '2 Weeks', price: 25000, days: 14, popular: false },
+  { id: '1month', name: '1 Month Pass', duration: '1 Month', price: 40000, days: 30, popular: false },
 ]
 
-const activePlan = computed(() => plans.find(p => p.id === selectedPlan.value))
+const activePlan = computed(() => PLANS.find(p => p.id === selectedPlanId.value))
+
+watch(() => props.open, (v) => {
+  if (!v) { stopPolling(); resetToPlans() }
+})
+
+onUnmounted(() => stopPolling())
+
+function resetToPlans() {
+  step.value = 'plans'
+  phoneInput.value = ''
+  iframeUrl.value = ''
+  errMsg.value = ''
+  authToken = ''
+  trackingId = ''
+}
 
 function pickPlan(id: string) {
-  if (!isLoggedIn.value) {
-    emit('close')
-    loginOpen.value = true
-    return
-  }
-  selectedPlan.value = id
-  step.value = 2
-}
-
-function copyPhone() {
-  navigator.clipboard.writeText('0774356888').catch(() => {})
-  copied.value = true
-  setTimeout(() => { copied.value = false }, 2000)
-}
-
-async function submitPayment() {
-  if (!phoneInput.value.trim()) return
-  submitting.value = true
+  selectedPlanId.value = id
+  step.value = 'phone'
   errMsg.value = ''
+}
+
+function maybeClose() {
+  if (step.value === 'paying') return
+  emit('close')
+}
+
+function retry() {
+  stopPolling()
+  step.value = 'phone'
+  errMsg.value = ''
+  iframeUrl.value = ''
+}
+
+async function startPayment() {
+  if (!phoneInput.value.trim() || !activePlan.value) return
+  const plan = activePlan.value
+  const user = currentUser.value
+  if (!user) return
+
+  step.value = 'loading'
+  errMsg.value = ''
+
   try {
-    await dbPush(dbRef(db, 'paymentLogs'), {
-      userId: currentUser.value?.uid || 'anonymous',
-      email: currentUser.value?.email || '',
+    const token = await pesapalGetToken()
+    if (!token) throw new Error('Could not connect to PesaPal. Check your internet and try again.')
+    authToken = token
+
+    const origin = window.location.origin
+    const ipnUrl = `${origin}/api/pesapal-ipn`
+    const ipnId = await pesapalRegisterIPN(token, ipnUrl)
+    if (!ipnId) throw new Error('Failed to register payment notification. Please try again.')
+
+    const order = await pesapalSubmitOrder(token, ipnId, {
+      amount: plan.price,
+      description: `VJ PILES UG - ${plan.name}`,
+      email: user.email || '',
       phone: phoneInput.value.trim(),
-      planName: activePlan.value?.name || '',
-      planId: selectedPlan.value,
-      amount: activePlan.value?.price || 0,
-      paymentMethod: 'Mobile Money (PesaPal)',
+      firstName: user.displayName?.split(' ')[0] || 'Customer',
+      callbackUrl: `${origin}/?pp_done=1`,
+      cancellationUrl: `${origin}/`,
+    })
+    if (!order) throw new Error('Failed to create payment order. Please try again.')
+
+    trackingId = order.orderTrackingId
+
+    await dbPush(dbRef(db, 'paymentLogs'), {
+      userId: user.uid,
+      email: user.email || '',
+      phone: phoneInput.value.trim(),
+      planName: plan.name,
+      planId: plan.id,
+      amount: plan.price,
+      orderTrackingId: order.orderTrackingId,
+      merchantReference: order.merchantReference,
+      paymentMethod: 'PesaPal',
       status: 'pending',
       createdAt: new Date().toISOString(),
     })
-    step.value = 3
+
+    await dbSet(dbRef(db, `pendingOrders/${order.orderTrackingId}`), {
+      userId: user.uid,
+      planId: plan.id,
+      planName: plan.name,
+      amount: plan.price,
+      days: plan.days,
+      merchantReference: order.merchantReference,
+      createdAt: new Date().toISOString(),
+    })
+
+    localStorage.setItem('pendingSubscription', JSON.stringify({
+      orderTrackingId: order.orderTrackingId,
+      planId: plan.id,
+      planName: plan.name,
+      amount: plan.price,
+      days: plan.days,
+      userId: user.uid,
+    }))
+
+    iframeUrl.value = order.redirectUrl
+    step.value = 'paying'
+    startPolling(token, order.orderTrackingId, user.uid, plan)
+
   } catch (e: any) {
-    errMsg.value = 'Failed to submit. Contact 0774356888.'
-  } finally {
-    submitting.value = false
+    errMsg.value = e.message || 'Something went wrong. Please try again.'
+    step.value = 'failed'
   }
+}
+
+function startPolling(
+  token: string,
+  tId: string,
+  userId: string,
+  plan: typeof PLANS[0]
+) {
+  stopPolling()
+  let attempts = 0
+  pollTimer = setInterval(async () => {
+    attempts++
+    if (attempts > 100) { stopPolling(); return }
+
+    try {
+      const status = await pesapalGetStatus(token, tId)
+      if (!status) return
+
+      if (status.statusCode === 1) {
+        stopPolling()
+        await activateSubscription(userId, plan, tId, status)
+        localStorage.removeItem('pendingSubscription')
+        step.value = 'success'
+      } else if (status.statusCode === 2 || status.statusCode === 3) {
+        stopPolling()
+        localStorage.removeItem('pendingSubscription')
+        errMsg.value = status.statusCode === 3 ? 'Payment was reversed.' : 'Payment failed. Please try again.'
+        step.value = 'failed'
+      }
+    } catch { /* network hiccup, keep polling */ }
+  }, 3000)
+}
+
+function stopPolling() {
+  if (pollTimer) { clearInterval(pollTimer); pollTimer = null }
 }
 </script>
 
@@ -155,86 +297,74 @@ async function submitPayment() {
 .modal-backdrop {
   position: fixed; inset: 0; z-index: 300;
   display: flex; align-items: center; justify-content: center; padding: 16px;
-  background: rgba(0,0,0,0.82); backdrop-filter: blur(16px);
+  background: rgba(0,0,0,0.85); backdrop-filter: blur(16px);
 }
 .modal-box {
-  position: relative; width: 100%; max-width: 340px;
+  position: relative; width: 100%; max-width: 360px;
   border-radius: 18px; border: 1px solid rgba(255,255,255,0.1);
   background: rgba(8,14,12,0.99); padding: 18px 16px 16px;
   box-shadow: 0 28px 64px rgba(0,0,0,0.7);
   max-height: 90vh; overflow-y: auto;
+  transition: max-width 0.3s ease;
 }
+.modal-box--wide { max-width: 520px; }
+
 .modal-close {
   position: absolute; top: 12px; right: 12px;
   width: 24px; height: 24px; border-radius: 50%;
   border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05);
   display: flex; align-items: center; justify-content: center;
   color: rgba(255,255,255,0.45); cursor: pointer; transition: background 0.15s;
+  z-index: 2;
 }
 .modal-close:hover { background: rgba(255,255,255,0.1); color: #fff; }
 
-/* Header row */
 .modal-header-row { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
-.hdr-logo { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
-.hdr-title { font-size: 0.92rem; font-weight: 800; color: #fff; line-height: 1.1; }
-.hdr-sub { font-size: 0.65rem; color: rgba(255,255,255,0.38); margin-top: 1px; }
-.mt-1 { margin-top: 4px; }
-.mt-2 { margin-top: 6px; }
-.mt-3 { margin-top: 10px; }
+.hdr-logo { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+.hdr-title { font-size: 0.9rem; font-weight: 800; color: #fff; line-height: 1.1; }
+.hdr-sub { font-size: 0.63rem; color: rgba(255,255,255,0.36); margin-top: 1px; }
 
-/* 3-column plan grid */
-.plan-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 12px; }
+/* 2x2 plan grid */
+.plan-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 7px; margin-bottom: 12px;
+}
 .plan-card {
-  position: relative; border-radius: 10px;
+  position: relative; border-radius: 11px;
   border: 1px solid rgba(255,255,255,0.08);
   background: rgba(255,255,255,0.03);
-  padding: 10px 7px 9px; display: flex; flex-direction: column; align-items: center; gap: 4px;
-  transition: border-color 0.2s, background 0.2s;
+  padding: 10px 8px 9px; display: flex; flex-direction: column; align-items: center; gap: 3px;
 }
 .plan-card.popular { border-color: rgba(0,255,157,0.28); background: rgba(0,255,157,0.04); }
 .popular-badge {
   position: absolute; top: -8px; left: 50%; transform: translateX(-50%);
   background: linear-gradient(135deg, #00ff9d, #00d4ff);
-  color: #021a10; font-size: 0.5rem; font-weight: 800;
+  color: #021a10; font-size: 0.48rem; font-weight: 800;
   letter-spacing: 0.08em; padding: 1px 7px; border-radius: 99px; white-space: nowrap;
 }
-.plan-name { font-size: 0.72rem; font-weight: 800; color: #fff; text-align: center; margin-top: 2px; }
+.plan-name { font-size: 0.7rem; font-weight: 800; color: #fff; text-align: center; margin-top: 4px; }
 .plan-price-row { display: flex; align-items: baseline; gap: 2px; }
-.plan-price { font-size: 1rem; font-weight: 800; color: #fff; line-height: 1; }
-.plan-ugx { font-size: 0.52rem; font-weight: 700; color: rgba(0,255,157,0.7); }
-.plan-period { font-size: 0.56rem; color: rgba(255,255,255,0.32); text-align: center; }
+.plan-price { font-size: 1.05rem; font-weight: 800; color: #fff; line-height: 1; }
+.plan-ugx { font-size: 0.5rem; font-weight: 700; color: rgba(0,255,157,0.7); }
+.plan-period { font-size: 0.54rem; color: rgba(255,255,255,0.3); }
+.plan-feature { font-size: 0.55rem; color: rgba(0,255,157,0.6); font-weight: 600; }
 .plan-sub-btn {
-  width: 100%; margin-top: 5px; padding: 5px 4px;
+  width: 100%; margin-top: 5px; padding: 5px;
   background: linear-gradient(135deg, #00ff9d, #00c8b8);
-  color: #021a10; font-size: 0.6rem; font-weight: 800; letter-spacing: 0.06em;
-  border: none; border-radius: 6px; cursor: pointer; transition: filter 0.2s;
+  color: #021a10; font-size: 0.58rem; font-weight: 800; letter-spacing: 0.05em;
+  border: none; border-radius: 7px; cursor: pointer; transition: filter 0.2s;
 }
-.plan-sub-btn:hover { filter: brightness(1.07); }
+.plan-sub-btn:hover { filter: brightness(1.08); }
 
-/* Step 2 */
-.back-btn { display: flex; align-items: center; gap: 4px; background: none; border: none; color: rgba(255,255,255,0.4); font-size: 0.68rem; cursor: pointer; padding: 0; margin-bottom: 10px; transition: color 0.15s; }
+/* Phone step */
+.back-btn { display: flex; align-items: center; gap: 4px; background: none; border: none; color: rgba(255,255,255,0.38); font-size: 0.68rem; cursor: pointer; padding: 0; margin-bottom: 10px; transition: color 0.15s; }
 .back-btn:hover { color: rgba(255,255,255,0.75); }
 .pay-header { margin-bottom: 12px; }
-.pesapal-badge { display: inline-block; padding: 3px 9px; border-radius: 5px; background: linear-gradient(135deg, #e63900, #ff6b35); color: #fff; font-size: 0.62rem; font-weight: 800; letter-spacing: 0.05em; }
-
-.pay-instructions { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
-.pay-row { display: flex; align-items: flex-start; gap: 9px; }
-.pay-num {
-  width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0;
-  background: rgba(0,255,157,0.1); border: 1px solid rgba(0,255,157,0.28);
-  color: #00ff9d; font-size: 0.6rem; font-weight: 800;
-  display: flex; align-items: center; justify-content: center;
-}
-.pay-text { font-size: 0.72rem; color: rgba(255,255,255,0.7); line-height: 1.5; }
-.pay-text strong { color: #fff; font-weight: 700; }
-.phone-chip { display: inline-flex; align-items: center; gap: 6px; background: rgba(0,255,157,0.07); border: 1px solid rgba(0,255,157,0.2); border-radius: 7px; padding: 4px 8px; margin-top: 3px; }
-.phone-num { font-size: 0.84rem; font-weight: 800; color: #00ff9d; letter-spacing: 0.04em; }
-.copy-btn { background: rgba(0,255,157,0.14); border: none; color: #00ff9d; font-size: 0.58rem; font-weight: 700; padding: 2px 7px; border-radius: 4px; cursor: pointer; }
-.copy-btn:hover { background: rgba(0,255,157,0.24); }
 
 .field { margin-bottom: 10px; }
-.field-label { display: block; font-size: 0.64rem; font-weight: 600; color: rgba(255,255,255,0.42); margin-bottom: 4px; }
-.field-input { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); border-radius: 9px; color: #fff; font-size: 0.82rem; padding: 8px 11px; outline: none; transition: border-color 0.2s; box-sizing: border-box; }
+.field-label { display: block; font-size: 0.63rem; font-weight: 600; color: rgba(255,255,255,0.4); margin-bottom: 4px; }
+.field-input { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); border-radius: 9px; color: #fff; font-size: 0.88rem; padding: 9px 12px; outline: none; transition: border-color 0.2s; box-sizing: border-box; }
 .field-input:focus { border-color: rgba(0,255,157,0.38); }
 
 .pay-btn {
@@ -247,18 +377,33 @@ async function submitPayment() {
   transition: filter 0.2s, opacity 0.2s;
 }
 .pay-btn:hover { filter: brightness(1.06); }
-.pay-btn:disabled { opacity: 0.4; cursor: not-allowed; filter: none; background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.38); box-shadow: none; }
-.pay-btn.mt-3 { margin-top: 10px; }
+.pay-btn:disabled { opacity: 0.38; cursor: not-allowed; filter: none; background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.38); box-shadow: none; }
+.pay-btn--retry { background: linear-gradient(135deg, #f87171, #ef4444); box-shadow: 0 8px 22px rgba(248,113,113,0.2); }
+.pay-btn.mt-4 { margin-top: 12px; }
 
-.err-msg { font-size: 0.65rem; color: #f87171; margin-bottom: 6px; text-align: center; }
-.cancel-note { text-align: center; font-size: 0.6rem; color: rgba(255,255,255,0.22); }
+.err-msg { font-size: 0.65rem; color: #f87171; margin-bottom: 8px; text-align: center; }
+.footer-note { text-align: center; font-size: 0.59rem; color: rgba(255,255,255,0.2); }
 
-/* Success */
-.success-wrap { display: flex; flex-direction: column; align-items: center; padding: 8px 0; }
-.success-icon { width: 54px; height: 54px; border-radius: 50%; background: rgba(0,255,157,0.1); border: 2px solid rgba(0,255,157,0.3); display: flex; align-items: center; justify-content: center; }
-
+/* Loading / center states */
+.center-state { display: flex; flex-direction: column; align-items: center; padding: 24px 0 8px; }
+.spinner { width: 36px; height: 36px; border: 3px solid rgba(0,255,157,0.15); border-top-color: #00ff9d; border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 14px; }
 @keyframes spin { to { transform: rotate(360deg); } }
-.spin-icon { animation: spin 0.8s linear infinite; }
+.center-title { font-size: 0.88rem; font-weight: 700; color: #fff; }
+.center-sub { font-size: 0.68rem; color: rgba(255,255,255,0.38); margin-top: 4px; text-align: center; }
+.mt-1 { margin-top: 4px; }
+.mt-3 { margin-top: 10px; }
+
+/* iframe payment step */
+.iframe-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; flex-wrap: wrap; gap: 6px; }
+.iframe-plan-info { font-size: 0.75rem; font-weight: 700; color: #fff; }
+.polling-badge { display: flex; align-items: center; gap: 5px; font-size: 0.6rem; color: rgba(0,255,157,0.7); font-weight: 600; }
+.pulse-dot { width: 7px; height: 7px; border-radius: 50%; background: #00ff9d; animation: pulse 1.4s ease-in-out infinite; }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+.pay-iframe { width: 100%; height: 500px; border: none; border-radius: 10px; background: #fff; display: block; }
+
+/* Success / failure icons */
+.success-icon { width: 56px; height: 56px; border-radius: 50%; background: rgba(0,255,157,0.1); border: 2px solid rgba(0,255,157,0.3); display: flex; align-items: center; justify-content: center; }
+.fail-icon { width: 56px; height: 56px; border-radius: 50%; background: rgba(248,113,113,0.1); border: 2px solid rgba(248,113,113,0.3); display: flex; align-items: center; justify-content: center; }
 
 .modal-enter-active, .modal-leave-active { transition: opacity 0.2s ease; }
 .modal-enter-from, .modal-leave-to { opacity: 0; }
