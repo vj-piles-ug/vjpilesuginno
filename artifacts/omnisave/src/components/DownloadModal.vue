@@ -49,42 +49,63 @@
             <p class="dl-note">Available in HD · MP4 format</p>
           </template>
 
-          <!-- TV SERIES: episode selector -->
+          <!-- TV SERIES: episode grid -->
           <template v-else>
             <p class="section-label">SELECT EPISODE</p>
-            <div v-if="movie.episodes && movie.episodes.length > 0" class="episode-list">
-              <a
+            <div v-if="movie.episodes && movie.episodes.length > 0" class="episode-grid">
+              <button
                 v-for="ep in movie.episodes"
                 :key="ep.episodeNumber"
-                :href="ep.streamlink || undefined"
-                :target="ep.streamlink ? '_blank' : undefined"
-                rel="noopener noreferrer"
-                class="ep-row"
-                :class="{ 'ep-row--no-link': !ep.streamlink }"
-                @click="ep.streamlink ? $emit('close') : undefined"
-              >
-                <span class="ep-num">Ep {{ ep.episodeNumber }}</span>
-                <span class="ep-title">{{ ep.title }}</span>
-                <svg v-if="ep.streamlink" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#00ff9d" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                <span v-else class="ep-no-link">—</span>
-              </a>
-            </div>
-            <div v-else class="episode-grid">
-              <button
-                v-for="ep in 24"
-                :key="ep"
                 class="ep-box"
-                :class="{ selected: selectedEp === ep }"
-                @click="selectedEp = ep"
-              >{{ ep }}</button>
+                :class="{ selected: selectedEpNum === ep.episodeNumber, 'ep-box--no-link': !ep.streamlink }"
+                @click="selectedEpNum = ep.episodeNumber"
+              >{{ ep.episodeNumber }}</button>
             </div>
-            <button v-if="!movie.episodes?.length" class="big-dl-btn" :disabled="!selectedEp" @click="$emit('close')">
+            <div v-else class="ep-empty">No episodes available yet.</div>
+
+            <div v-if="selectedEpisode" class="ep-selected-info">
+              <span class="ep-selected-label">EP {{ selectedEpisode.episodeNumber }}</span>
+              <span class="ep-selected-title">{{ selectedEpisode.title }}</span>
+            </div>
+
+            <a
+              v-if="selectedEpisode && selectedEpisode.streamlink"
+              :href="selectedEpisode.streamlink"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="big-dl-btn"
+              @click="$emit('close')"
+            >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                 <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
                 <polyline points="7 10 12 15 17 10"/>
                 <line x1="12" y1="15" x2="12" y2="3"/>
               </svg>
-              {{ selectedEp ? `DOWNLOAD EP ${selectedEp}` : 'SELECT AN EPISODE' }}
+              DOWNLOAD EP {{ selectedEpisode.episodeNumber }}
+            </a>
+            <button
+              v-else-if="selectedEpisode && !selectedEpisode.streamlink"
+              class="big-dl-btn big-dl-btn--disabled"
+              disabled
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              NO LINK FOR THIS EPISODE
+            </button>
+            <button
+              v-else
+              class="big-dl-btn big-dl-btn--disabled"
+              disabled
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              SELECT AN EPISODE
             </button>
           </template>
 
@@ -102,8 +123,13 @@ import type { Movie } from '../data/movies'
 const props = defineProps<{ movie: Movie | null }>()
 defineEmits(['close'])
 
-const selectedEp = ref<number | null>(null)
-watch(() => props.movie, () => { selectedEp.value = null })
+const selectedEpNum = ref<number | null>(null)
+watch(() => props.movie, () => { selectedEpNum.value = null })
+
+const selectedEpisode = computed(() => {
+  if (!props.movie?.episodes || selectedEpNum.value === null) return null
+  return props.movie.episodes.find(ep => ep.episodeNumber === selectedEpNum.value) ?? null
+})
 
 const posterThumbStyle = computed(() => {
   if (!props.movie) return {}
@@ -139,23 +165,7 @@ const posterThumbStyle = computed(() => {
 
 .section-label { font-size: 0.62rem; font-weight: 800; letter-spacing: 0.14em; color: rgba(255,255,255,0.28); margin-bottom: 10px; }
 
-.episode-list { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; max-height: 260px; overflow-y: auto; }
-.ep-row {
-  display: flex; align-items: center; gap: 10px;
-  padding: 8px 12px; border-radius: 8px;
-  border: 1px solid rgba(255,255,255,0.08);
-  background: rgba(255,255,255,0.03);
-  text-decoration: none; transition: background 0.15s, border-color 0.15s;
-  cursor: pointer;
-}
-.ep-row:hover { background: rgba(0,255,157,0.06); border-color: rgba(0,255,157,0.25); }
-.ep-row--no-link { cursor: default; opacity: 0.5; }
-.ep-row--no-link:hover { background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.08); }
-.ep-num { font-size: 0.65rem; font-weight: 800; color: rgba(0,255,157,0.8); white-space: nowrap; min-width: 36px; }
-.ep-title { flex: 1; font-size: 0.75rem; color: rgba(255,255,255,0.8); font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ep-no-link { font-size: 0.7rem; color: rgba(255,255,255,0.25); }
-
-.episode-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 5px; margin-bottom: 14px; }
+.episode-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 5px; margin-bottom: 10px; max-height: 200px; overflow-y: auto; padding-right: 2px; }
 .ep-box {
   aspect-ratio: 1; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1);
   background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.55);
@@ -164,6 +174,16 @@ const posterThumbStyle = computed(() => {
 }
 .ep-box:hover { border-color: rgba(0,255,157,0.3); color: #fff; background: rgba(0,255,157,0.06); }
 .ep-box.selected { border-color: rgba(0,255,157,0.6); background: rgba(0,255,157,0.15); color: #00ff9d; }
+.ep-box--no-link { opacity: 0.4; }
+.ep-box--no-link:hover { border-color: rgba(255,255,255,0.1); color: rgba(255,255,255,0.55); background: rgba(255,255,255,0.04); }
+.ep-empty { font-size: 0.75rem; color: rgba(255,255,255,0.25); text-align: center; padding: 20px 0 12px; }
+.ep-selected-info {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 12px; margin-bottom: 10px;
+  background: rgba(0,255,157,0.06); border: 1px solid rgba(0,255,157,0.18); border-radius: 8px;
+}
+.ep-selected-label { font-size: 0.65rem; font-weight: 800; color: #00ff9d; white-space: nowrap; }
+.ep-selected-title { font-size: 0.75rem; color: rgba(255,255,255,0.75); font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
 
 .big-dl-btn {
   width: 100%; padding: 13px; text-decoration: none;

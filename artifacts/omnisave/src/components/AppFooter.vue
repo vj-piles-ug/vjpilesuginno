@@ -73,7 +73,6 @@
               <a href="#" class="footer-link">PRIVACY POLICY</a>
               <a href="#" class="footer-link">TERMS OF SERVICE</a>
               <a href="#" class="footer-link">CONTACT</a>
-              <RouterLink to="/admin" class="footer-link admin-link">ADMIN PANEL</RouterLink>
             </div>
           </div>
         </div>

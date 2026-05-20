@@ -191,8 +191,8 @@ onValue(dbRef(db, 'carousel'), (snap) => {
       key: child.key!,
       title: d.title || '',
       subtitle: d.subtitle || '',
-      imageUrl: d.imageUrl || '',
-      linkContent: d.linkContent || 'No Link',
+      imageUrl: d.image || d.imageUrl || '',
+      linkContent: d.linkContent || d.contentType || 'No Link',
     })
   })
   dbCarousel.value = list
