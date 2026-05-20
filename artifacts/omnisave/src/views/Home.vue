@@ -277,8 +277,9 @@ function particleStyle(n: number) {
 .section-kicker { font-size: 0.65rem; font-weight: 800; letter-spacing: 0.16em; color: rgba(0,255,157,0.7); text-transform: uppercase; }
 .section-title { font-size: clamp(1.1rem, 2.5vw, 1.4rem); font-weight: 800; color: #fff; }
 .count-badge { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em; color: rgba(255,255,255,0.3); margin-bottom: 4px; }
-.poster-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-@media (min-width: 640px) { .poster-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; } }
+.poster-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+@media (min-width: 480px) { .poster-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; } }
+@media (min-width: 768px) { .poster-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; } }
 @media (min-width: 1024px) { .poster-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; } }
 .empty-state { text-align: center; padding: 60px 16px; }
 
