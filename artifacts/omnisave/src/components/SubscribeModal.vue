@@ -57,7 +57,7 @@
           <!-- STEP: PesaPal payment iframe (shows immediately, loads URL in background) -->
           <template v-else-if="step === 'paying'">
             <div class="pp-header">
-              <button class="pp-back-btn" @click="maybeClose">
+              <button class="pp-back-btn" @click="goBackFromPaying">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
                 Back
               </button>
@@ -182,6 +182,13 @@ function pickPlan(id: string) {
 function maybeClose() {
   if (step.value === 'paying') return
   emit('close')
+}
+
+function goBackFromPaying() {
+  stopPolling()
+  iframeUrl.value = ''
+  iframeLoading.value = false
+  step.value = 'phone'
 }
 
 function retry() {
