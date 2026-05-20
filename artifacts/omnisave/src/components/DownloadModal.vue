@@ -135,38 +135,39 @@
 
     <!-- ── Embedded viewer overlay ───────────────────────────── -->
     <Transition name="viewer">
-      <div v-if="showViewer" class="viewer-backdrop" @contextmenu.prevent>
-        <div class="viewer-bar">
-          <div class="viewer-bar-left">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(0,255,157,0.8)" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            <span class="viewer-title">{{ viewerTitle }}</span>
+      <div v-if="showViewer" class="viewer-backdrop" @click.self="closeViewer" @contextmenu.prevent>
+        <div class="viewer-modal">
+          <div class="viewer-bar">
+            <div class="viewer-bar-left">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(0,255,157,0.8)" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              <span class="viewer-title">{{ viewerTitle }}</span>
+            </div>
+            <div class="viewer-bar-right">
+              <a :href="viewerDirectUrl" target="_blank" rel="noopener noreferrer" class="viewer-open-btn">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                Open directly
+              </a>
+              <button class="viewer-close-btn" @click="closeViewer">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+              </button>
+            </div>
           </div>
-          <div class="viewer-bar-right">
-            <a :href="viewerDirectUrl" target="_blank" rel="noopener noreferrer" class="viewer-open-btn">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-              Open directly
-            </a>
-            <button class="viewer-close-btn" @click="closeViewer">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
-              Close
-            </button>
+          <div class="viewer-frame-wrap" @contextmenu.prevent>
+            <div v-if="iframeLoading" class="viewer-loading">
+              <div class="viewer-spinner"></div>
+              <span>Loading…</span>
+              <span class="viewer-loading-hint">If it doesn't load, use "Open directly" above</span>
+            </div>
+            <iframe
+              :key="viewerUrl"
+              :src="viewerUrl"
+              class="viewer-iframe"
+              frameborder="0"
+              allowfullscreen
+              allow="autoplay; fullscreen; encrypted-media"
+              @load="onIframeLoad"
+            ></iframe>
           </div>
-        </div>
-        <div class="viewer-frame-wrap" @contextmenu.prevent>
-          <div v-if="iframeLoading" class="viewer-loading">
-            <div class="viewer-spinner"></div>
-            <span>Loading content…</span>
-            <span class="viewer-loading-hint">If this takes too long, use "Open directly" above</span>
-          </div>
-          <iframe
-            :key="viewerUrl"
-            :src="viewerUrl"
-            class="viewer-iframe"
-            frameborder="0"
-            allowfullscreen
-            allow="autoplay; fullscreen; encrypted-media"
-            @load="onIframeLoad"
-          ></iframe>
         </div>
       </div>
     </Transition>
@@ -179,7 +180,7 @@ import type { Movie } from '../data/movies'
 import { useAuth } from '../store/auth'
 import { isSubscribed } from '../store/subscription'
 import { loginOpen, subscribeOpen } from '../store/ui'
-import { toEmbedUrl } from '../lib/utils'
+import { toDirectDownload } from '../lib/utils'
 
 const props = defineProps<{ movie: Movie | null }>()
 defineEmits(['close'])
@@ -212,8 +213,8 @@ const iframeLoading = ref(false)
 let loadTimer: ReturnType<typeof setTimeout> | null = null
 
 function openViewer(rawUrl: string, title: string) {
-  viewerUrl.value = toEmbedUrl(rawUrl)
-  viewerDirectUrl.value = rawUrl
+  viewerUrl.value = toDirectDownload(rawUrl)
+  viewerDirectUrl.value = toDirectDownload(rawUrl)
   viewerTitle.value = title
   iframeLoading.value = true
   showViewer.value = true
@@ -371,48 +372,55 @@ onMounted(() => {})
 .modal-enter-from .modal-box { transform: scale(0.95) translateY(10px); }
 .modal-leave-to .modal-box { transform: scale(0.97) translateY(6px); }
 
-/* ── Viewer overlay ─────────────────────────────────────────── */
+/* ── Viewer modal (floating, like subscription modal) ─────── */
 .viewer-backdrop {
   position: fixed; inset: 0; z-index: 300;
-  background: #000;
-  display: flex; flex-direction: column;
+  display: flex; align-items: center; justify-content: center; padding: 16px;
+  background: rgba(0,0,0,0.82); backdrop-filter: blur(14px);
   user-select: none;
+}
+.viewer-modal {
+  width: 100%; max-width: 520px;
+  height: min(88vh, 620px);
+  border-radius: 22px;
+  border: 1px solid rgba(255,255,255,0.1); background: rgba(8,16,12,0.98);
+  box-shadow: 0 32px 70px rgba(0,0,0,0.65);
+  display: flex; flex-direction: column; overflow: hidden;
 }
 .viewer-bar {
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
-  padding: 10px 18px; background: rgba(5,12,8,0.97);
+  padding: 12px 16px; background: rgba(255,255,255,0.03);
   border-bottom: 1px solid rgba(255,255,255,0.07); flex-shrink: 0;
 }
 .viewer-bar-left { display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1; }
 .viewer-bar-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-.viewer-title { font-size: 0.78rem; font-weight: 700; color: rgba(255,255,255,0.75); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.viewer-title { font-size: 0.75rem; font-weight: 700; color: rgba(255,255,255,0.75); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .viewer-open-btn {
   display: flex; align-items: center; gap: 5px; text-decoration: none;
-  padding: 6px 12px; border-radius: 8px;
+  padding: 5px 10px; border-radius: 7px;
   border: 1px solid rgba(0,255,157,0.25); background: rgba(0,255,157,0.08);
-  color: #00ff9d; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.05em;
-  cursor: pointer; transition: background 0.15s; white-space: nowrap;
+  color: #00ff9d; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.04em;
+  transition: background 0.15s; white-space: nowrap;
 }
-.viewer-open-btn:hover { background: rgba(0,255,157,0.15); }
+.viewer-open-btn:hover { background: rgba(0,255,157,0.16); }
 .viewer-close-btn {
-  display: flex; align-items: center; gap: 6px;
-  padding: 6px 14px; border-radius: 8px;
-  border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.06);
-  color: rgba(255,255,255,0.7); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em;
-  cursor: pointer; transition: background 0.15s, color 0.15s; white-space: nowrap;
+  display: flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px; border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05);
+  color: rgba(255,255,255,0.5); cursor: pointer; transition: background 0.15s, color 0.15s;
 }
-.viewer-close-btn:hover { background: rgba(255,255,255,0.12); color: #fff; }
+.viewer-close-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
 .viewer-frame-wrap {
-  flex: 1; position: relative; overflow: hidden;
+  flex: 1; position: relative; overflow: hidden; border-radius: 0 0 22px 22px;
 }
 .viewer-loading {
   position: absolute; inset: 0; z-index: 2;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
-  background: #000; color: rgba(255,255,255,0.4); font-size: 0.8rem;
+  background: rgba(8,16,12,0.98); color: rgba(255,255,255,0.4); font-size: 0.8rem;
 }
-.viewer-loading-hint { font-size: 0.68rem; color: rgba(255,255,255,0.25); text-align: center; max-width: 280px; line-height: 1.5; }
+.viewer-loading-hint { font-size: 0.65rem; color: rgba(255,255,255,0.22); text-align: center; max-width: 260px; line-height: 1.5; }
 .viewer-spinner {
-  width: 36px; height: 36px; border-radius: 50%;
+  width: 32px; height: 32px; border-radius: 50%;
   border: 3px solid rgba(0,255,157,0.15);
   border-top-color: #00ff9d;
   animation: spin 0.8s linear infinite;
@@ -423,6 +431,9 @@ onMounted(() => {})
   border: none; display: block;
 }
 
-.viewer-enter-active, .viewer-leave-active { transition: opacity 0.18s ease; }
+.viewer-enter-active, .viewer-leave-active { transition: opacity 0.22s ease; }
 .viewer-enter-from, .viewer-leave-to { opacity: 0; }
+.viewer-enter-active .viewer-modal, .viewer-leave-active .viewer-modal { transition: transform 0.22s ease; }
+.viewer-enter-from .viewer-modal { transform: scale(0.95) translateY(10px); }
+.viewer-leave-to .viewer-modal { transform: scale(0.97) translateY(6px); }
 </style>
