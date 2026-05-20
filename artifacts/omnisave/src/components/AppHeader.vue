@@ -144,6 +144,14 @@ function doSearch() {
 .brand-name { font-size: 0.88rem; font-weight: 800; letter-spacing: 0.05em; color: #fff; }
 .brand-dot { font-size: 0.68rem; font-weight: 700; color: #00ff9d; }
 
+@media (max-width: 640px) {
+  .header-inner { height: 44px; gap: 8px; padding: 0 10px; }
+  .brand-logo { height: 28px; width: 28px; }
+  .brand-name { font-size: 0.75rem; }
+  .brand-dot { font-size: 0.58rem; }
+  .header-search { display: none; }
+}
+
 .nav-item { padding: 4px 11px; border-radius: 7px; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; color: rgba(255,255,255,0.48); text-decoration: none; transition: color 0.15s, background 0.15s; }
 .nav-item:hover { color: rgba(255,255,255,0.9); background: rgba(255,255,255,0.06); }
 .nav-item--active { color: #fff; background: rgba(0,255,157,0.1); border: 1px solid rgba(0,255,157,0.18); }

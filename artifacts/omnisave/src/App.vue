@@ -31,6 +31,17 @@ const isAdminRoute = computed(() => route.path.startsWith('/admin'))
 // When redirect_mode=PARENT_WINDOW, PesaPal navigates the main window to
 // callbackUrl after payment. We detect that here and immediately activate.
 onMounted(async () => {
+  // ── Global right-click + DevTools protection ──────────────
+  document.addEventListener('contextmenu', (e) => e.preventDefault())
+  document.addEventListener('keydown', (e) => {
+    const ctrl = e.ctrlKey || e.metaKey
+    if (
+      e.key === 'F12' ||
+      (ctrl && e.shiftKey && ['I','J','C'].includes(e.key.toUpperCase())) ||
+      (ctrl && e.key.toUpperCase() === 'U')
+    ) { e.preventDefault(); e.stopPropagation() }
+  }, true)
+
   const params = new URLSearchParams(window.location.search)
   if (!params.has('pp_done')) return
 
