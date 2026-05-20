@@ -292,10 +292,13 @@ function startPolling(
 ) {
   stopPolling()
   let attempts = 0
+  let fetching = false
   pollTimer = setInterval(async () => {
+    if (fetching) return
     attempts++
-    if (attempts > 100) { stopPolling(); return }
+    if (attempts > 200) { stopPolling(); return }
 
+    fetching = true
     try {
       const status = await pesapalGetStatus(token, tId)
       if (!status) return
@@ -305,14 +308,18 @@ function startPolling(
         await activateSubscription(userId, plan, tId, status)
         localStorage.removeItem('pendingSubscription')
         step.value = 'success'
+        // Auto-close after 2 seconds
+        setTimeout(() => emit('close'), 2000)
       } else if (status.statusCode === 2 || status.statusCode === 3) {
         stopPolling()
         localStorage.removeItem('pendingSubscription')
         errMsg.value = status.statusCode === 3 ? 'Payment was reversed.' : 'Payment failed. Please try again.'
         step.value = 'failed'
       }
-    } catch { /* network hiccup, keep polling */ }
-  }, 3000)
+    } catch { /* network hiccup, keep polling */ } finally {
+      fetching = false
+    }
+  }, 1500)
 }
 
 function stopPolling() {

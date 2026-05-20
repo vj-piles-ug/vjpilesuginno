@@ -131,7 +131,7 @@ async function submitForm() {
     const data = {
       title: sf.value.title, category: sf.value.category, image: sf.value.image,
       rating: sf.value.rating, year: sf.value.year, episodes: episodesPayload,
-      createdAt: new Date().toISOString().slice(0, 10),
+      createdAt: new Date().toISOString(),
     }
     if (editingKey.value !== null) {
       await updateSeries(editingKey.value, data)

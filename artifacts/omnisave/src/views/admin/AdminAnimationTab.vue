@@ -107,7 +107,7 @@ async function submitForm() {
   saving.value = true
   errMsg.value = ''
   try {
-    const data = { ...form.value, createdAt: new Date().toISOString().slice(0, 10) }
+    const data = { ...form.value, createdAt: new Date().toISOString() }
     if (editingKey.value !== null) {
       await updateAnimation(editingKey.value, data)
       editingKey.value = null

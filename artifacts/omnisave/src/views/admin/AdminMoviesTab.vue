@@ -134,7 +134,7 @@ async function submitForm() {
       rating: form.value.rating,
       year: form.value.year,
       isTrending: form.value.isTrending,
-      createdAt: new Date().toISOString().slice(0, 10),
+      createdAt: new Date().toISOString(),
     }
     if (editingKey.value !== null) {
       await updateMovie(editingKey.value, data)
