@@ -1,5 +1,5 @@
 import { ref, computed } from 'vue'
-import { ref as dbRef, onValue, push, update, remove, set, get } from 'firebase/database'
+import { ref as dbRef, onValue, push, update, remove, set } from 'firebase/database'
 import { db } from '../lib/firebase'
 import type { Movie, FbEpisode } from '../data/movies'
 
@@ -88,17 +88,29 @@ export const dbUsers = ref<AdminUser[]>([])
 export const dbTransactions = ref<AdminTransaction[]>([])
 export const dbLoading = ref(true)
 
-let loadCount = 0
-const TOTAL = 5
-function checkLoaded() {
-  loadCount++
-  if (loadCount >= TOTAL) dbLoading.value = false
+// Track how many of the 5 content listeners have fired at least once
+let firedFlags = { movies: false, series: false, animation: false, carousel: false, paymentLogs: false }
+function checkLoaded(key: keyof typeof firedFlags) {
+  firedFlags[key] = true
+  if (Object.values(firedFlags).every(Boolean)) {
+    dbLoading.value = false
+  }
 }
 
+function normalizeStatus(status: string | undefined): 'Successful' | 'Failed' | 'Pending' {
+  if (!status) return 'Pending'
+  const s = status.toLowerCase()
+  if (s === 'completed' || s === 'successful' || s === 'success') return 'Successful'
+  if (s === 'failed' || s === 'fail' || s === 'reversed') return 'Failed'
+  return 'Pending'
+}
+
+// ─── Movies ────────────────────────────────────────────────────────────────
 onValue(dbRef(db, 'movies'), (snap) => {
   const list: AdminMovie[] = []
   snap.forEach((child) => {
     const d = child.val()
+    // Only include non-animation/series entries, or all — keep everything, views filter by type
     list.push({
       key: child.key!,
       title: d.title || '',
@@ -112,9 +124,10 @@ onValue(dbRef(db, 'movies'), (snap) => {
     })
   })
   dbMovies.value = list
-  checkLoaded()
+  checkLoaded('movies')
 })
 
+// ─── Series ────────────────────────────────────────────────────────────────
 onValue(dbRef(db, 'series'), (snap) => {
   const list: AdminSeries[] = []
   snap.forEach((child) => {
@@ -141,9 +154,10 @@ onValue(dbRef(db, 'series'), (snap) => {
     })
   })
   dbSeries.value = list
-  checkLoaded()
+  checkLoaded('series')
 })
 
+// ─── Animation ─────────────────────────────────────────────────────────────
 onValue(dbRef(db, 'animation'), (snap) => {
   const list: AdminAnimation[] = []
   snap.forEach((child) => {
@@ -161,9 +175,10 @@ onValue(dbRef(db, 'animation'), (snap) => {
     })
   })
   dbAnimation.value = list
-  checkLoaded()
+  checkLoaded('animation')
 })
 
+// ─── Carousel ──────────────────────────────────────────────────────────────
 onValue(dbRef(db, 'carousel'), (snap) => {
   const list: AdminCarousel[] = []
   snap.forEach((child) => {
@@ -177,62 +192,135 @@ onValue(dbRef(db, 'carousel'), (snap) => {
     })
   })
   dbCarousel.value = list
-  checkLoaded()
+  checkLoaded('carousel')
 })
+
+// ─── Transactions (paymentLogs + subscriptions merged) ─────────────────────
+let logsData: Record<string, any> | null = null
+let subsData: Record<string, any> | null = null
+let logsReady = false
+let subsReady = false
+
+function buildTransactions() {
+  if (!logsReady || !subsReady) return
+  const map: Record<string, AdminTransaction> = {}
+
+  // 1. Payment logs are primary source
+  if (logsData) {
+    for (const [key, v] of Object.entries(logsData)) {
+      const firstName = v.firstName || v.first_name || ''
+      const lastName = v.lastName || v.last_name || ''
+      const fullName = v.userName || v.displayName || (firstName || lastName ? `${firstName} ${lastName}`.trim() : '')
+      map[key] = {
+        key,
+        userId: v.userId || '',
+        userName: fullName,
+        phone: v.phoneNumber || v.phone_number || v.phone || v.payment_account || '',
+        email: v.email || '',
+        plan: v.planName || v.plan || '',
+        amount: Number(v.amount) || 0,
+        method: v.paymentMethod || v.payment_method || v.method || '',
+        status: normalizeStatus(v.status),
+        createdAt: v.createdAt || v.created_at || '',
+      }
+    }
+  }
+
+  // 2. Subscriptions — add entries not already in paymentLogs
+  if (subsData) {
+    for (const [userId, v] of Object.entries(subsData)) {
+      const trackingId = v.orderTrackingId || `sub-${userId}`
+      if (!map[trackingId]) {
+        const firstName = v.firstName || v.displayName || ''
+        const lastName = v.lastName || ''
+        const fullName = v.userName || (firstName || lastName ? `${firstName} ${lastName}`.trim() : '')
+        map[trackingId] = {
+          key: trackingId,
+          userId,
+          userName: fullName,
+          phone: v.paymentPhone || v.phoneNumber || v.phone || '',
+          email: v.email || '',
+          plan: v.planName || v.planId || '',
+          amount: Number(v.amount) || 0,
+          method: v.paymentMethod || v.method || 'Admin Activation',
+          status: 'Successful',
+          createdAt: v.createdAt || v.startDate || '',
+        }
+      }
+    }
+  }
+
+  dbTransactions.value = Object.values(map)
+  checkLoaded('paymentLogs')
+}
 
 onValue(dbRef(db, 'paymentLogs'), (snap) => {
-  const list: AdminTransaction[] = []
-  snap.forEach((child) => {
-    const d = child.val()
-    list.push({
-      key: child.key!,
-      userId: d.userId || '',
-      userName: d.userName || '',
-      phone: d.phone || '',
-      email: d.email || '',
-      plan: d.plan || '',
-      amount: Number(d.amount) || 0,
-      method: d.method || '',
-      status: d.status || 'Pending',
-      createdAt: d.createdAt || '',
-    })
-  })
-  dbTransactions.value = list
-  checkLoaded()
-})
-
-onValue(dbRef(db, 'users'), async (snap) => {
-  const list: AdminUser[] = []
-  const promises: Promise<void>[] = []
-  snap.forEach((child) => {
-    const d = child.val()
-    const uid = child.key!
-    const user: AdminUser = {
-      uid,
-      name: d.name || d.displayName || 'Unknown',
-      email: d.email || '',
-      joinedAt: d.joinedAt || '',
-      lastLogin: d.lastLogin,
-      subscription: null,
-    }
-    list.push(user)
-    promises.push(
-      get(dbRef(db, `subscriptions/${uid}`)).then((subSnap) => {
-        if (subSnap.exists()) user.subscription = subSnap.val() as AdminSubscription
-      })
-    )
-  })
-  await Promise.all(promises)
-  dbUsers.value = list
+  logsData = snap.exists() ? snap.val() : null
+  logsReady = true
+  buildTransactions()
 })
 
 onValue(dbRef(db, 'subscriptions'), (snap) => {
+  subsData = snap.exists() ? snap.val() : null
+  subsReady = true
+  buildTransactions()
+
+  // Also update user subscriptions reactively
   const subs: Record<string, AdminSubscription> = {}
-  snap.forEach((child) => { subs[child.key!] = child.val() as AdminSubscription })
+  if (snap.exists()) {
+    snap.forEach((child) => {
+      const v = child.val()
+      subs[child.key!] = {
+        planId: v.planId || '',
+        planName: v.planName || v.planId || '',
+        startDate: v.startDate || '',
+        endDate: v.endDate || '',
+        active: !!v.active,
+      }
+    })
+  }
   dbUsers.value = dbUsers.value.map((u) => ({ ...u, subscription: subs[u.uid] || null }))
 })
 
-// === CRUD: Movies ===
+// ─── Users (with subscriptions merged) ────────────────────────────────────
+onValue(dbRef(db, 'users'), (snap) => {
+  const list: AdminUser[] = []
+  snap.forEach((child) => {
+    const d = child.val()
+    const uid = child.key!
+    // Support both `name` (this app's auth.ts) and `displayName` (Next.js app)
+    const name = d.name || d.displayName || d.email?.split('@')[0] || 'Unknown'
+    // Find existing subscription from subsData if available
+    const sub = subsData?.[uid] ?? null
+    list.push({
+      uid,
+      name,
+      email: d.email || '',
+      joinedAt: d.joinedAt || d.createdAt?.slice(0, 10) || '',
+      lastLogin: d.lastLogin,
+      subscription: sub ? {
+        planId: sub.planId || '',
+        planName: sub.planName || sub.planId || '',
+        startDate: sub.startDate || '',
+        endDate: sub.endDate || '',
+        active: !!sub.active,
+      } : null,
+    })
+  })
+  // Sort: active users first, then by lastLogin
+  list.sort((a, b) => {
+    const aActive = a.subscription?.active && new Date(a.subscription.endDate) > new Date()
+    const bActive = b.subscription?.active && new Date(b.subscription.endDate) > new Date()
+    if (aActive && !bActive) return -1
+    if (!aActive && bActive) return 1
+    const da = new Date(a.lastLogin || a.joinedAt || 0).getTime()
+    const db2 = new Date(b.lastLogin || b.joinedAt || 0).getTime()
+    return db2 - da
+  })
+  dbUsers.value = list
+})
+
+// ─── CRUD: Movies ───────────────────────────────────────────────────────────
 export async function addMovie(data: Omit<AdminMovie, 'key'>) {
   return push(dbRef(db, 'movies'), data)
 }
@@ -243,7 +331,7 @@ export async function removeMovie(key: string) {
   return remove(dbRef(db, `movies/${key}`))
 }
 
-// === CRUD: Series ===
+// ─── CRUD: Series ───────────────────────────────────────────────────────────
 export async function addSeries(data: Omit<AdminSeries, 'key'>) {
   return push(dbRef(db, 'series'), data)
 }
@@ -254,7 +342,7 @@ export async function removeSeries(key: string) {
   return remove(dbRef(db, `series/${key}`))
 }
 
-// === CRUD: Animation ===
+// ─── CRUD: Animation ────────────────────────────────────────────────────────
 export async function addAnimation(data: Omit<AdminAnimation, 'key'>) {
   return push(dbRef(db, 'animation'), data)
 }
@@ -265,7 +353,7 @@ export async function removeAnimation(key: string) {
   return remove(dbRef(db, `animation/${key}`))
 }
 
-// === CRUD: Carousel ===
+// ─── CRUD: Carousel ─────────────────────────────────────────────────────────
 export async function addCarousel(data: Omit<AdminCarousel, 'key'>) {
   return push(dbRef(db, 'carousel'), data)
 }
@@ -276,17 +364,19 @@ export async function removeCarousel(key: string) {
   return remove(dbRef(db, `carousel/${key}`))
 }
 
-// === CRUD: Transactions ===
+// ─── CRUD: Transactions ──────────────────────────────────────────────────────
 export async function removeTransaction(key: string) {
-  return remove(dbRef(db, `paymentLogs/${key}`))
+  const safeKey = key.replace(/[.#$[\]]/g, '_')
+  return remove(dbRef(db, `paymentLogs/${safeKey}`))
 }
 
-// === User Subscription Management ===
+// ─── User Subscription Management ────────────────────────────────────────────
 const PLAN_DURATIONS: Record<SubDuration, number> = {
   '1-Day': 1, '2-Days': 2, '1-Week': 7, '2-Weeks': 14, '1-Month': 30,
 }
 const PLAN_NAMES: Record<SubDuration, string> = {
-  '1-Day': '1 Day Pass', '2-Days': '2 Days Pass', '1-Week': '1 Week Pass', '2-Weeks': '2 Weeks Pass', '1-Month': '1 Month Pass',
+  '1-Day': '1 Day Pass', '2-Days': '2 Days Pass', '1-Week': '1 Week Pass',
+  '2-Weeks': '2 Weeks Pass', '1-Month': '1 Month Pass',
 }
 
 export async function activateUser(uid: string, plan: SubDuration) {
@@ -301,13 +391,15 @@ export async function activateUser(uid: string, plan: SubDuration) {
   }
   await set(dbRef(db, `subscriptions/${uid}`), sub)
   await push(dbRef(db, 'paymentLogs'), {
-    userId: `admin-${Date.now()}`,
-    userName: '',
+    userId: uid,
+    userName: dbUsers.value.find(u => u.uid === uid)?.name || '',
+    email: dbUsers.value.find(u => u.uid === uid)?.email || '',
     phone: '',
-    email: '',
     plan: PLAN_NAMES[plan],
+    planName: PLAN_NAMES[plan],
     amount: 0,
     method: 'Admin Activation',
+    paymentMethod: 'Admin Activation',
     status: 'Successful',
     createdAt: now.toISOString().slice(0, 16).replace('T', ' '),
   })
@@ -317,7 +409,7 @@ export async function deactivateUser(uid: string) {
   return remove(dbRef(db, `subscriptions/${uid}`))
 }
 
-// === Public reactive content (for frontend views) ===
+// ─── Public reactive content (for frontend views) ────────────────────────────
 const BG_COLORS = [
   '#0d2035', '#1a0d2e', '#2a0d0d', '#0d1535', '#1a150d',
   '#0d0d20', '#200d0d', '#100d1a', '#0d1f15', '#200a0a',
@@ -349,7 +441,7 @@ function toPublicMovie(m: AdminMovie, idx: number): Movie {
 function toPublicSeries(s: AdminSeries, idx: number): Movie {
   const h = keyHash(s.key)
   return {
-    id: idx,
+    id: idx + 10000,
     title: s.title,
     type: 'TV SERIES',
     rating: s.rating,
@@ -367,7 +459,7 @@ function toPublicSeries(s: AdminSeries, idx: number): Movie {
 function toPublicAnimation(a: AdminAnimation, idx: number): Movie {
   const h = keyHash(a.key)
   return {
-    id: idx + 1000,
+    id: idx + 20000,
     title: a.title,
     type: 'ANIMATION',
     rating: a.rating,

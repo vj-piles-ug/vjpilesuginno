@@ -3,11 +3,11 @@ import { getAuth } from 'firebase/auth'
 import { getDatabase } from 'firebase/database'
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  apiKey: 'AIzaSyBsz3RyI6H9M70i-qG6HOAuvnyup_oOaaI',
+  authDomain: 'vj-pilesug.firebaseapp.com',
+  databaseURL: 'https://vj-pilesug-default-rtdb.firebaseio.com',
+  projectId: 'vj-pilesug',
+  storageBucket: 'vj-pilesug.appspot.com',
 }
 
 export const firebaseApp = initializeApp(firebaseConfig)

@@ -1,0 +1,82 @@
+/**
+ * Downloads a file directly from Google Drive.
+ * Opens the Google Drive download link in the browser (not the Google Drive app on Android).
+ */
+export async function downloadFile(
+  fileUrl: string,
+  fileName: string,
+  _onProgress?: (percent: number) => void
+): Promise<void> {
+  // Extract Google Drive file ID from the URL
+  function extractFileId(url: string): string | null {
+    const patterns = [
+      /\/file\/d\/([a-zA-Z0-9_-]+)/,
+      /\/d\/([a-zA-Z0-9_-]+)/,
+      /[?&]id=([a-zA-Z0-9_-]+)/,
+      /open\?id=([a-zA-Z0-9_-]+)/,
+    ]
+    for (const p of patterns) {
+      const m = url.match(p)
+      if (m?.[1]) return m[1]
+    }
+    return null
+  }
+
+  const fileId = extractFileId(fileUrl)
+  
+  // Use Google Drive direct download URL with confirm parameter to skip virus scan warning
+  const downloadUrl = fileId
+    ? `https://drive.google.com/uc?export=download&confirm=t&id=${fileId}`
+    : fileUrl
+
+  // Detect if running on Android
+  const isAndroid = /Android/i.test(navigator.userAgent)
+  
+  if (isAndroid) {
+    // On Android, use window.location.assign() to navigate directly in the browser
+    // This prevents Android from showing the "Open with" dialog or launching Google Drive app
+    // because it's treated as a same-page navigation rather than an external link
+    
+    // Use a data URI redirect page that then navigates to the download URL
+    // This technique forces the browser to handle the request internally
+    const redirectHtml = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta http-equiv="refresh" content="0;url=${downloadUrl}">
+        <title>Downloading...</title>
+      </head>
+      <body>
+        <p>Starting download...</p>
+        <script>window.location.replace("${downloadUrl}");</script>
+      </body>
+      </html>
+    `
+    
+    // Create a blob URL from the HTML - this bypasses intent filters completely
+    const blob = new Blob([redirectHtml], { type: 'text/html' })
+    const blobUrl = URL.createObjectURL(blob)
+    
+    // Navigate to the blob URL which will then redirect to the download
+    window.location.href = blobUrl
+    
+    // Cleanup blob URL after navigation starts
+    setTimeout(() => {
+      URL.revokeObjectURL(blobUrl)
+    }, 1000)
+    
+  } else {
+    // On other platforms (iOS, desktop), use standard anchor approach
+    const link = document.createElement("a")
+    link.href = downloadUrl
+    link.target = "_blank"
+    link.rel = "noopener noreferrer"
+    link.download = fileName || "download"
+    
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+}
