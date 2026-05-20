@@ -9,12 +9,14 @@
         class="hero-slide"
         :class="{ active: currentSlide === i }"
       >
-        <div
-          class="hero-slide-bg"
-          :style="slide.imageUrl
-            ? { backgroundImage: `url(${slide.imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center top' }
-            : { background: slide.bg }"
-        ></div>
+        <div class="hero-slide-bg" :style="{ background: slide.bg }">
+          <img
+            v-if="slide.imageUrl"
+            :src="slide.imageUrl"
+            class="hero-slide-img"
+            @error="(e) => (e.target as HTMLImageElement).style.display = 'none'"
+          />
+        </div>
         <div class="hero-overlay-h"></div>
         <div class="hero-overlay-v"></div>
       </div>
@@ -220,7 +222,8 @@ function particleStyle(n: number) {
 @media (min-width: 1280px) { .hero-section { height: 460px; } }
 .hero-slide { position: absolute; inset: 0; transition: opacity 1.2s ease-in-out; opacity: 0; }
 .hero-slide.active { opacity: 1; }
-.hero-slide-bg { position: absolute; inset: 0; }
+.hero-slide-bg { position: absolute; inset: 0; overflow: hidden; }
+.hero-slide-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center top; }
 .hero-overlay-h { position: absolute; inset: 0; background: linear-gradient(to right, rgba(5,12,8,0.96) 0%, rgba(5,12,8,0.7) 55%, rgba(5,12,8,0.1) 100%); }
 .hero-overlay-v { position: absolute; inset: 0; background: linear-gradient(to top, rgba(5,12,8,1) 0%, transparent 50%); }
 .hero-particles { position: absolute; inset: 0; pointer-events: none; }

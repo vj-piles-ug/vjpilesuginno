@@ -13,7 +13,7 @@
             </div>
           </RouterLink>
           <nav class="hidden items-center gap-0.5 lg:flex">
-            <RouterLink v-for="item in navItems" :key="item.path" :to="item.path" class="nav-item" :class="{ 'nav-item--active': $route.path === item.path }">{{ item.label }}</RouterLink>
+            <RouterLink v-for="item in navItems" :key="item.path" :to="item.path" class="nav-item" :class="{ 'nav-item--active': $route.path === item.path, 'nav-item--admin': item.label === 'ADMIN' }">{{ item.label }}</RouterLink>
           </nav>
         </div>
 
@@ -90,7 +90,7 @@ const mobileOpen = ref(false)
 const menuOpen = ref(false)
 const searchQuery = ref('')
 
-const { currentUser, isLoggedIn, logOut } = useAuth()
+const { currentUser, isLoggedIn, isAdmin, logOut } = useAuth()
 
 const userInitial = computed(() => {
   const name = currentUser.value?.displayName || currentUser.value?.email || '?'
@@ -108,12 +108,13 @@ async function handleLogout() {
   mobileOpen.value = false
 }
 
-const navItems = [
+const navItems = computed(() => [
   { label: 'HOME', path: '/' },
   { label: 'MOVIES', path: '/movies' },
   { label: 'SERIES', path: '/series' },
   { label: 'ANIMATION', path: '/animation' },
-]
+  ...(isAdmin.value ? [{ label: 'ADMIN', path: '/admin' }] : []),
+])
 
 function doSearch() {
   if (searchQuery.value.trim()) {
@@ -141,6 +142,9 @@ function doSearch() {
 .nav-item { padding: 4px 11px; border-radius: 7px; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; color: rgba(255,255,255,0.48); text-decoration: none; transition: color 0.15s, background 0.15s; }
 .nav-item:hover { color: rgba(255,255,255,0.9); background: rgba(255,255,255,0.06); }
 .nav-item--active { color: #fff; background: rgba(0,255,157,0.1); border: 1px solid rgba(0,255,157,0.18); }
+.nav-item--admin { color: #ffa600; }
+.nav-item--admin:hover { color: #ffbe42; background: rgba(255,166,0,0.08); }
+.nav-item--admin.nav-item--active { color: #ffa600; background: rgba(255,166,0,0.1); border-color: rgba(255,166,0,0.25); }
 .header-search {
   flex: 1; max-width: 440px; display: flex; align-items: center;
   background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
