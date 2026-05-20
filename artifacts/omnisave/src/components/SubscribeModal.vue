@@ -226,8 +226,9 @@ async function startPayment() {
       amount: plan.price,
       description: `VJ PILES UG - ${plan.name}`,
       email: user.email || '',
-      phone: normalizedPhone,
+      phone: phoneInput.value.trim(),
       firstName: user.displayName?.split(' ')[0] || 'Customer',
+      lastName: user.displayName?.split(' ').slice(1).join(' ') || '',
       callbackUrl: `${origin}/?pp_done=1`,
       cancellationUrl: `${origin}/`,
     })
@@ -332,10 +333,14 @@ function stopPolling() {
   transition: max-width 0.3s ease;
 }
 .modal-box--paying {
-  max-width: 360px;
+  max-width: 380px;
   padding: 0;
   overflow: hidden;
   border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  height: min(92vh, 680px);
+  max-height: min(92vh, 680px);
 }
 
 .modal-close {
@@ -442,8 +447,14 @@ function stopPolling() {
   color: rgba(0,255,157,0.75); letter-spacing: 0.03em;
 }
 .pay-iframe {
-  width: 100%; height: 420px;
-  border: none; background: #fff; display: block;
+  width: 100%;
+  flex: 1;
+  height: 0;
+  min-height: 0;
+  border: none;
+  background: #fff;
+  display: block;
+  overflow: hidden;
 }
 .pp-status-bar {
   display: flex; align-items: center; justify-content: space-between;

@@ -54,6 +54,7 @@ export async function pesapalSubmitOrder(
     email: string
     phone: string
     firstName: string
+    lastName?: string
     callbackUrl: string
     cancellationUrl: string
   }
@@ -77,7 +78,13 @@ export async function pesapalSubmitOrder(
           phone_number: params.phone || '',
           country_code: 'UG',
           first_name: params.firstName || 'Customer',
-          last_name: '',
+          last_name: params.lastName || '',
+          line_1: '',
+          line_2: '',
+          city: '',
+          state: '',
+          postal_code: '',
+          zip_code: '',
         },
       }),
     })
