@@ -9,21 +9,19 @@
       </div>
     </div>
 
-    <div class="section-container pb-16 pt-8">
+    <div class="page-container">
       <div class="filter-row">
         <button v-for="genre in genres" :key="genre" class="filter-chip" :class="{ active: activeGenre === genre }" @click="activeGenre = genre">{{ genre }}</button>
       </div>
-      <div class="grid-header mt-6">
+      <div class="section-header">
         <div>
           <p class="section-kicker">ALL ANIMATION</p>
           <h2 class="section-title">{{ activeGenre === 'ALL' ? 'Full Collection' : activeGenre }}</h2>
         </div>
-        <span class="result-count">{{ filteredList.length }} TITLES</span>
+        <span class="count-badge">{{ filteredList.length }} TITLES</span>
       </div>
-      <div class="movie-grid">
-        <div v-for="movie in filteredList" :key="movie.id" class="movie-card cursor-pointer" @click="openDownload(movie)">
-          <MovieCard :movie="movie" />
-        </div>
+      <div class="poster-grid">
+        <MovieCard v-for="movie in filteredList" :key="movie.id" :movie="movie" @click="openDownload(movie)" />
       </div>
     </div>
 
@@ -51,22 +49,34 @@ const filteredList = computed(() =>
 
 <style scoped>
 .page-main { min-height: 80vh; }
-.page-banner { position: relative; height: 260px; display: flex; align-items: flex-end; overflow: hidden; }
-@media (min-width: 768px) { .page-banner { height: 300px; } }
+.page-banner { position: relative; height: 220px; display: flex; align-items: flex-end; overflow: hidden; }
+@media (min-width: 768px) { .page-banner { height: 250px; } }
 .page-banner-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(5,12,8,1) 0%, transparent 60%); }
-.page-banner-content { position: relative; z-index: 10; max-width: 1380px; width: 100%; margin: 0 auto; padding: 0 32px 36px; }
-@media (min-width: 768px) { .page-banner-content { padding: 0 48px 44px; } }
-.page-title { font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 800; color: #fff; letter-spacing: -0.01em; margin-bottom: 8px; }
-.page-subtitle { font-size: 0.95rem; color: rgba(255,255,255,0.5); }
-.section-container { max-width: 1380px; margin: 0 auto; padding: 0 24px; }
-@media (min-width: 768px) { .section-container { padding: 0 48px; } }
-@media (min-width: 1280px) { .section-container { padding: 0 64px; } }
-.filter-row { display: flex; flex-wrap: wrap; gap: 8px; }
-.filter-chip { padding: 6px 16px; border-radius: 9999px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.55); font-size: 0.74rem; font-weight: 700; letter-spacing: 0.06em; cursor: pointer; transition: all 0.15s; }
+.page-banner-content { position: relative; z-index: 10; max-width: 1600px; width: 100%; margin: 0 auto; padding: 0 24px 28px; }
+@media (min-width: 768px) { .page-banner-content { padding: 0 48px 36px; } }
+.page-title { font-size: clamp(1.8rem, 5vw, 3rem); font-weight: 800; color: #fff; letter-spacing: -0.01em; margin-bottom: 6px; }
+.page-subtitle { font-size: 0.9rem; color: rgba(255,255,255,0.48); }
+
+.page-container { max-width: 1600px; margin: 0 auto; padding: 20px 16px 60px; }
+@media (min-width: 640px) { .page-container { padding: 24px 24px 60px; } }
+@media (min-width: 1024px) { .page-container { padding: 28px 48px 60px; } }
+@media (min-width: 1280px) { .page-container { padding: 28px 64px 60px; } }
+
+.filter-row { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 20px; }
+.filter-chip { padding: 5px 14px; border-radius: 9999px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.55); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; cursor: pointer; transition: all 0.15s; }
 .filter-chip:hover { border-color: rgba(255,255,255,0.2); color: rgba(255,255,255,0.9); }
 .filter-chip.active { border-color: rgba(255,107,222,0.4); background: rgba(255,107,222,0.1); color: #ff6bde; }
-.grid-header { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 20px; }
-.result-count { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em; color: rgba(255,255,255,0.3); margin-bottom: 4px; }
-.movie-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; }
-@media (min-width: 768px) { .movie-grid { gap: 20px; } }
+
+.section-header { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 14px; }
+.count-badge { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em; color: rgba(255,255,255,0.3); margin-bottom: 4px; }
+
+.poster-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 10px;
+}
+@media (min-width: 480px) { .poster-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 11px; } }
+@media (min-width: 768px) { .poster-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; } }
+@media (min-width: 1024px) { .poster-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 14px; } }
+@media (min-width: 1280px) { .poster-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; } }
 </style>
