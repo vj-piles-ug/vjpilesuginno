@@ -17,7 +17,6 @@
             @error="(e) => (e.target as HTMLImageElement).style.display = 'none'"
           />
         </div>
-        <div class="hero-overlay-h"></div>
         <div class="hero-overlay-v"></div>
       </div>
 
@@ -225,7 +224,7 @@ function particleStyle(n: number) {
 .hero-slide-bg { position: absolute; inset: 0; overflow: hidden; }
 .hero-slide-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center top; }
 .hero-overlay-h { position: absolute; inset: 0; background: linear-gradient(to right, rgba(5,12,8,0.96) 0%, rgba(5,12,8,0.7) 55%, rgba(5,12,8,0.1) 100%); }
-.hero-overlay-v { position: absolute; inset: 0; background: linear-gradient(to top, rgba(5,12,8,1) 0%, transparent 50%); }
+.hero-overlay-v { position: absolute; inset: 0; background: linear-gradient(to top, rgba(5,12,8,1) 0%, rgba(5,12,8,0.15) 30%, transparent 55%); }
 .hero-particles { position: absolute; inset: 0; pointer-events: none; }
 .particle { position: absolute; border-radius: 50%; background: rgba(0,255,157,0.6); animation: pp 4s ease-in-out infinite; }
 @keyframes pp { 0%,100% { transform: scale(1); } 50% { transform: scale(2); } }
