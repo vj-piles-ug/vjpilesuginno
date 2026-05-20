@@ -37,7 +37,7 @@
             <p class="cancel-note">Secure PesaPal payment · MTN / Airtel Money</p>
           </template>
 
-          <!-- STEP 2: Phone number + payment instructions -->
+          <!-- STEP 2: Phone number -->
           <template v-else-if="step === 2">
             <button class="back-btn" @click="step = 1">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
@@ -45,44 +45,21 @@
             </button>
 
             <div class="pay-header">
-              <div class="pesapal-badge">PesaPal</div>
-              <h2 class="hdr-title mt-1">{{ activePlan?.name }}</h2>
-              <p class="hdr-sub">{{ activePlan?.price.toLocaleString() }} UGX · {{ activePlan?.period }}</p>
-            </div>
-
-            <div class="pay-instructions">
-              <div class="pay-row">
-                <span class="pay-num">1</span>
-                <span class="pay-text">Open <strong>MTN / Airtel Money</strong> → Send Money</span>
-              </div>
-              <div class="pay-row">
-                <span class="pay-num">2</span>
-                <div class="pay-text">
-                  Send <strong>{{ activePlan?.price.toLocaleString() }} UGX</strong> to:
-                  <div class="phone-chip">
-                    <span class="phone-num">0774 356 888</span>
-                    <button class="copy-btn" @click="copyPhone">{{ copied ? '✓' : 'Copy' }}</button>
-                  </div>
-                </div>
-              </div>
-              <div class="pay-row">
-                <span class="pay-num">3</span>
-                <span class="pay-text">Use your <strong>email</strong> as payment reference</span>
-              </div>
+              <h2 class="hdr-title">{{ activePlan?.name }} — {{ activePlan?.price.toLocaleString() }} UGX</h2>
+              <p class="hdr-sub">{{ activePlan?.period }}</p>
             </div>
 
             <div class="field">
-              <label class="field-label">Your phone number (for confirmation)</label>
+              <label class="field-label">Phone number</label>
               <input v-model="phoneInput" class="field-input" placeholder="e.g. 0771234567" type="tel" />
             </div>
 
             <button class="pay-btn" :disabled="submitting || !phoneInput.trim()" @click="submitPayment">
               <svg v-if="submitting" class="spin-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg>
-              <svg v-else width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-              {{ submitting ? 'Sending...' : "I'VE PAID — CONFIRM" }}
+              <svg v-else width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+              {{ submitting ? 'Processing...' : 'PROCEED' }}
             </button>
             <p v-if="errMsg" class="err-msg">{{ errMsg }}</p>
-            <p class="cancel-note">Subscription activates within 1 hour after confirmation</p>
           </template>
 
           <!-- STEP 3: Success -->
