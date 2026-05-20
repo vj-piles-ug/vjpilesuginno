@@ -1,0 +1,31 @@
+{
+  "buildCommand": "pnpm install --frozen-lockfile && pnpm --filter @workspace/omnisave run build",
+  "outputDirectory": "artifacts/omnisave/dist/public",
+  "rewrites": [
+    {
+      "source": "/api/pesapal/:path*",
+      "destination": "https://pay.pesapal.com/v3/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/sw.js",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-cache" },
+        { "key": "Service-Worker-Allowed", "value": "/" }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "X-XSS-Protection", "value": "1; mode=block" }
+      ]
+    }
+  ]
+}
