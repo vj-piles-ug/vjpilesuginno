@@ -240,6 +240,11 @@ body {
 }
 .faq-answer > div { overflow: hidden; }
 
+/* Mobile bottom nav spacing */
+.pb-mobile-nav {
+  padding-bottom: calc(60px + env(safe-area-inset-bottom));
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }

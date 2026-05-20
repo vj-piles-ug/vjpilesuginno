@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen w-full flex flex-col">
     <AppHeader v-if="!isAdminRoute" />
-    <div class="flex-1">
+    <div class="flex-1 pb-mobile-nav lg:pb-0">
       <RouterView />
     </div>
     <AppFooter v-if="!isAdminRoute" />
