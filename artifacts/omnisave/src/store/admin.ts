@@ -1,5 +1,7 @@
 import { reactive, watch } from 'vue'
 
+export const SUB_DURATIONS = ['1-Day', '2-Days', '1-Week', '2-Weeks', '1-Month'] as const
+export type SubDuration = typeof SUB_DURATIONS[number]
 export const PLANS = ['Basic', 'Standard', 'Premium'] as const
 export type Plan = typeof PLANS[number]
 export type UserStatus = 'active' | 'inactive' | 'blocked'
@@ -7,11 +9,12 @@ export type UserStatus = 'active' | 'inactive' | 'blocked'
 export interface AdminMovie {
   id: number
   title: string
-  type: 'MOVIES' | 'TV SERIES' | 'ANIMATION'
-  url: string
+  category: string
+  streamUrl: string
+  posterUrl: string
   rating: number
-  genres: string
-  date: string
+  year: number
+  trending: boolean
   createdAt: string
 }
 
@@ -27,10 +30,10 @@ export interface Episode {
 export interface AdminSeries {
   id: number
   title: string
-  url: string
+  category: string
+  posterUrl: string
   rating: number
-  genres: string
-  date: string
+  year: number
   createdAt: string
 }
 
@@ -39,8 +42,12 @@ export interface AdminUser {
   name: string
   email: string
   status: UserStatus
-  subscription: Plan | null
+  subscription: SubDuration | null
+  subStart: string | null
+  subExpires: string | null
   joinedAt: string
+  lastLogin: string | null
+  avatarUrl?: string
 }
 
 export interface Activity {
@@ -52,12 +59,25 @@ export interface Activity {
   watchedAt: string
 }
 
-export interface HeroSlide {
+export interface CarouselItem {
   id: number
   title: string
-  type: string
-  bg: string
-  accent: string
+  subtitle: string
+  imageUrl: string
+  linkContent: string
+}
+
+export interface Transaction {
+  id: number
+  userId: string
+  userName: string
+  phone: string
+  email: string
+  plan: string
+  amount: number
+  method: string
+  status: 'Successful' | 'Failed' | 'Pending'
+  createdAt: string
 }
 
 function load<T>(key: string, def: T): T {
@@ -72,72 +92,71 @@ function save(key: string, val: unknown) {
 }
 
 export const adminStore = reactive({
-  movies: load<AdminMovie[]>('movies', [
-    { id: 1, title: 'The Expendables 2', type: 'MOVIES', url: 'https://example.com/expendables2.mp4', rating: 6.6, genres: 'Action, Adventure', date: '2012-08-17', createdAt: '2024-01-10' },
-    { id: 2, title: 'John Wick 4', type: 'MOVIES', url: 'https://example.com/johnwick4.mp4', rating: 7.7, genres: 'Action, Thriller', date: '2023-03-24', createdAt: '2024-01-15' },
-    { id: 3, title: 'Spider-Man: Across the Spider-Verse', type: 'ANIMATION', url: 'https://example.com/spiderman.mp4', rating: 8.6, genres: 'Animation, Action', date: '2023-06-02', createdAt: '2024-02-01' },
-    { id: 4, title: 'Breaking Bad', type: 'TV SERIES', url: 'https://example.com/bb.mp4', rating: 9.5, genres: 'Drama, Crime', date: '2008-01-20', createdAt: '2024-02-05' },
+  movies: load<AdminMovie[]>('movies2', [
+    { id: 1, title: 'The Expendables 2', category: 'Action', streamUrl: 'https://example.com/expendables2.mp4', posterUrl: '', rating: 6.6, year: 2012, trending: false, createdAt: '2024-01-10' },
+    { id: 2, title: 'John Wick 4', category: 'Action', streamUrl: 'https://example.com/johnwick4.mp4', posterUrl: '', rating: 7.7, year: 2023, trending: true, createdAt: '2024-01-15' },
+    { id: 3, title: 'Spider-Man: Across the Spider-Verse', category: 'Animation', streamUrl: 'https://example.com/spiderman.mp4', posterUrl: '', rating: 8.6, year: 2023, trending: true, createdAt: '2024-02-01' },
   ]),
 
-  series: load<AdminSeries[]>('series', [
-    { id: 1, title: 'Breaking Bad', url: 'https://example.com/bb', rating: 9.5, genres: 'Drama, Crime', date: '2008-01-20', createdAt: '2024-01-15' },
-    { id: 2, title: 'Stranger Things', url: 'https://example.com/st', rating: 8.7, genres: 'Drama, Fantasy', date: '2016-07-15', createdAt: '2024-01-20' },
-    { id: 3, title: 'The Last of Us', url: 'https://example.com/tlou', rating: 8.8, genres: 'Drama, Action', date: '2023-01-15', createdAt: '2024-02-10' },
+  series: load<AdminSeries[]>('series2', [
+    { id: 1, title: 'Breaking Bad', category: 'Drama', posterUrl: '', rating: 9.5, year: 2008, createdAt: '2024-01-15' },
+    { id: 2, title: 'Stranger Things', category: 'Drama', posterUrl: '', rating: 8.7, year: 2016, createdAt: '2024-01-20' },
+    { id: 3, title: 'The Last of Us', category: 'Action', posterUrl: '', rating: 8.8, year: 2023, createdAt: '2024-02-10' },
   ]),
 
   episodes: load<Episode[]>('episodes', [
     { id: 1, seriesId: 1, title: 'Pilot', season: 1, episode: 1, url: 'https://example.com/bb-s1e1.mp4' },
     { id: 2, seriesId: 1, title: "Cat's in the Bag", season: 1, episode: 2, url: 'https://example.com/bb-s1e2.mp4' },
-    { id: 3, seriesId: 1, title: '...And the Bag\'s in the River', season: 1, episode: 3, url: 'https://example.com/bb-s1e3.mp4' },
-    { id: 4, seriesId: 2, title: 'The Vanishing of Will Byers', season: 1, episode: 1, url: 'https://example.com/st-s1e1.mp4' },
-    { id: 5, seriesId: 2, title: 'The Weirdo on Maple Street', season: 1, episode: 2, url: 'https://example.com/st-s1e2.mp4' },
-    { id: 6, seriesId: 3, title: 'When You\'re Lost in the Darkness', season: 1, episode: 1, url: 'https://example.com/tlou-s1e1.mp4' },
+    { id: 3, seriesId: 2, title: 'The Vanishing of Will Byers', season: 1, episode: 1, url: 'https://example.com/st-s1e1.mp4' },
   ]),
 
-  users: load<AdminUser[]>('users', [
-    { id: 1, name: 'John Mukasa', email: 'john.mukasa@gmail.com', status: 'active', subscription: 'Premium', joinedAt: '2024-01-05' },
-    { id: 2, name: 'Sarah Nakato', email: 'sarah.n@gmail.com', status: 'active', subscription: 'Standard', joinedAt: '2024-02-12' },
-    { id: 3, name: 'Grace Apio', email: 'grace.apio@gmail.com', status: 'active', subscription: 'Basic', joinedAt: '2024-03-20' },
-    { id: 4, name: 'David Otieno', email: 'david.o@yahoo.com', status: 'inactive', subscription: null, joinedAt: '2024-03-08' },
-    { id: 5, name: 'Michael Bwire', email: 'michael.b@gmail.com', status: 'inactive', subscription: null, joinedAt: '2024-04-01' },
-    { id: 6, name: 'Peter Ssemakula', email: 'peter.s@gmail.com', status: 'blocked', subscription: null, joinedAt: '2024-01-30' },
-    { id: 7, name: 'Amina Namutebi', email: 'amina.n@gmail.com', status: 'inactive', subscription: null, joinedAt: '2024-04-15' },
+  users: load<AdminUser[]>('users2', [
+    { id: 1, name: 'Raza Pro', email: 'djraza256@gmail.com', status: 'active', subscription: '2-Days', subStart: '2026-05-19', subExpires: '2026-05-21', joinedAt: '2025-11-17', lastLogin: '2025-11-26', avatarUrl: '' },
+    { id: 2, name: 'John Mukasa', email: 'john.mukasa@gmail.com', status: 'inactive', subscription: null, subStart: null, subExpires: null, joinedAt: '2024-01-05', lastLogin: '2024-04-12', avatarUrl: '' },
+    { id: 3, name: 'Sarah Nakato', email: 'sarah.n@gmail.com', status: 'inactive', subscription: null, subStart: null, subExpires: null, joinedAt: '2024-02-12', lastLogin: '2024-05-01', avatarUrl: '' },
+    { id: 4, name: 'Grace Apio', email: 'grace.apio@gmail.com', status: 'inactive', subscription: null, subStart: null, subExpires: null, joinedAt: '2024-03-20', lastLogin: null, avatarUrl: '' },
   ]),
 
   activities: load<Activity[]>('activities', [
-    { id: 1, userId: 1, userName: 'John Mukasa', title: 'The Expendables 2', type: 'MOVIES', watchedAt: '2024-05-10 14:30' },
-    { id: 2, userId: 1, userName: 'John Mukasa', title: 'Breaking Bad', type: 'TV SERIES', watchedAt: '2024-05-11 20:15' },
-    { id: 3, userId: 2, userName: 'Sarah Nakato', title: 'Spider-Man: Across the Spider-Verse', type: 'ANIMATION', watchedAt: '2024-05-12 19:00' },
-    { id: 4, userId: 2, userName: 'Sarah Nakato', title: 'Stranger Things', type: 'TV SERIES', watchedAt: '2024-05-13 21:30' },
-    { id: 5, userId: 3, userName: 'Grace Apio', title: 'John Wick 4', type: 'MOVIES', watchedAt: '2024-05-14 18:45' },
-    { id: 6, userId: 3, userName: 'Grace Apio', title: 'The Last of Us', type: 'TV SERIES', watchedAt: '2024-05-15 20:00' },
-    { id: 7, userId: 6, userName: 'Peter Ssemakula', title: 'The Expendables 2', type: 'MOVIES', watchedAt: '2024-04-01 10:00' },
+    { id: 1, userId: 1, userName: 'Raza Pro', title: 'The Expendables 2', type: 'MOVIES', watchedAt: '2024-05-10 14:30' },
+    { id: 2, userId: 1, userName: 'Raza Pro', title: 'Breaking Bad', type: 'TV SERIES', watchedAt: '2024-05-11 20:15' },
+    { id: 3, userId: 2, userName: 'John Mukasa', title: 'Spider-Man: Across the Spider-Verse', type: 'ANIMATION', watchedAt: '2024-05-12 19:00' },
   ]),
 
-  heroSlides: load<HeroSlide[]>('heroSlides', [
-    { id: 1, title: 'The Expendables 2', type: 'ACTION  •  ADVENTURE', bg: 'radial-gradient(ellipse 120% 100% at 80% 20%, #0d2a4a 0%, #071220 60%, #050c08 100%)', accent: '#4db8ff' },
-    { id: 2, title: 'Breaking Bad', type: 'TV SERIES  •  DRAMA', bg: 'radial-gradient(ellipse 120% 100% at 80% 20%, #1a1a08 0%, #100f06 60%, #050c08 100%)', accent: '#ffd700' },
-    { id: 3, title: 'Spider-Man: Across the Spider-Verse', type: 'ANIMATION  •  ACTION', bg: 'radial-gradient(ellipse 120% 100% at 80% 20%, #1a0a3a 0%, #0f0620 60%, #050c08 100%)', accent: '#ff6bde' },
-    { id: 4, title: 'The Last of Us', type: 'TV SERIES  •  DRAMA', bg: 'radial-gradient(ellipse 120% 100% at 80% 20%, #0a1f0a 0%, #071207 60%, #050c08 100%)', accent: '#7aff5c' },
+  carouselItems: load<CarouselItem[]>('carouselItems', [
+    { id: 1, title: '0774356888', subtitle: '', imageUrl: '', linkContent: 'No Link' },
+    { id: 2, title: 'Login or call 0774356888', subtitle: '', imageUrl: '', linkContent: 'No Link' },
+    { id: 3, title: 'For more info call..0774356888', subtitle: '', imageUrl: '', linkContent: 'No Link' },
   ]),
 
-  nextMovieId: load<number>('nextMovieId', 5),
-  nextSeriesId: load<number>('nextSeriesId', 4),
-  nextEpisodeId: load<number>('nextEpisodeId', 7),
-  nextUserId: load<number>('nextUserId', 8),
-  nextActivityId: load<number>('nextActivityId', 8),
-  nextSlideId: load<number>('nextSlideId', 5),
+  transactions: load<Transaction[]>('transactions', [
+    { id: 1, userId: 'ba095346-9681-4290', userName: 'Odong Gilbert', phone: '0762797766', email: 'dgjiritan256@gmail.com', plan: '2 Days Pass', amount: 5000, method: 'MTNUG', status: 'Successful', createdAt: '2026-05-20 12:07' },
+    { id: 2, userId: 'aca33717-ab9a-4b3f-96', userName: 'Oluba Danish', phone: '0786550273', email: 'denisholubaD@gmail.com', plan: '2 Days Pass', amount: 5000, method: 'MTNUG', status: 'Successful', createdAt: '2026-05-20 11:37' },
+    { id: 3, userId: 'a9aa3297-7b1-4999-9', userName: 'Opio Hassan okello', phone: '0783175267', email: 'opiohassanokello05@gmail.com', plan: '2 Days Pass', amount: 5000, method: 'N/A', status: 'Pending', createdAt: '2026-05-20 10:42' },
+    { id: 4, userId: 'admin-17792862023', userName: '', phone: '', email: '', plan: '2 Days Pass', amount: 0, method: 'Admin Activation', status: 'Successful', createdAt: '2026-05-20 10:41' },
+    { id: 5, userId: '0cee2c9b-2b3-491-8', userName: 'Opio Hassan okello', phone: '2567xxx66060', email: 'opiohassanokello05@gmail.com', plan: '2 Days Pass', amount: 5000, method: 'MTNUG', status: 'Failed', createdAt: '2026-05-20 10:30' },
+  ]),
+
+  nextMovieId: load<number>('nextMovieId2', 4),
+  nextSeriesId: load<number>('nextSeriesId2', 4),
+  nextEpisodeId: load<number>('nextEpisodeId', 4),
+  nextUserId: load<number>('nextUserId', 5),
+  nextActivityId: load<number>('nextActivityId', 4),
+  nextCarouselId: load<number>('nextCarouselId', 4),
+  nextTransactionId: load<number>('nextTransactionId', 6),
 })
 
-watch(() => adminStore.movies, v => save('movies', v), { deep: true })
-watch(() => adminStore.series, v => save('series', v), { deep: true })
+watch(() => adminStore.movies, v => save('movies2', v), { deep: true })
+watch(() => adminStore.series, v => save('series2', v), { deep: true })
 watch(() => adminStore.episodes, v => save('episodes', v), { deep: true })
-watch(() => adminStore.users, v => save('users', v), { deep: true })
+watch(() => adminStore.users, v => save('users2', v), { deep: true })
 watch(() => adminStore.activities, v => save('activities', v), { deep: true })
-watch(() => adminStore.heroSlides, v => save('heroSlides', v), { deep: true })
-watch(() => adminStore.nextMovieId, v => save('nextMovieId', v))
-watch(() => adminStore.nextSeriesId, v => save('nextSeriesId', v))
+watch(() => adminStore.carouselItems, v => save('carouselItems', v), { deep: true })
+watch(() => adminStore.transactions, v => save('transactions', v), { deep: true })
+watch(() => adminStore.nextMovieId, v => save('nextMovieId2', v))
+watch(() => adminStore.nextSeriesId, v => save('nextSeriesId2', v))
 watch(() => adminStore.nextEpisodeId, v => save('nextEpisodeId', v))
 watch(() => adminStore.nextUserId, v => save('nextUserId', v))
 watch(() => adminStore.nextActivityId, v => save('nextActivityId', v))
-watch(() => adminStore.nextSlideId, v => save('nextSlideId', v))
+watch(() => adminStore.nextCarouselId, v => save('nextCarouselId', v))
+watch(() => adminStore.nextTransactionId, v => save('nextTransactionId', v))
