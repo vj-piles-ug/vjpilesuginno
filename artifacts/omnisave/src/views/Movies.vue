@@ -70,7 +70,9 @@ const filteredList = computed(() =>
 .section-kicker { font-size: 0.65rem; font-weight: 800; letter-spacing: 0.16em; color: rgba(0,255,157,0.7); text-transform: uppercase; }
 .page-title { font-size: clamp(1.8rem, 5vw, 3rem); font-weight: 800; color: #fff; letter-spacing: -0.01em; margin-bottom: 6px; }
 .page-subtitle { font-size: 0.9rem; color: rgba(255,255,255,0.48); }
-.page-container { width: 100%; padding: 20px 12px 60px; }
+.page-container { width: 100%; padding: 16px 8px 24px; }
+@media (min-width: 360px) { .page-container { padding: 18px 10px 24px; } }
+@media (min-width: 640px) { .page-container { padding: 20px 16px 32px; } }
 .loading-state { display: flex; justify-content: center; padding: 60px; }
 .loading-spinner { width: 32px; height: 32px; border: 3px solid rgba(0,255,157,0.15); border-top-color: #00ff9d; border-radius: 50%; animation: spin 0.8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
@@ -81,8 +83,10 @@ const filteredList = computed(() =>
 .section-header { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 14px; }
 .section-title { font-size: clamp(1rem, 2vw, 1.3rem); font-weight: 800; color: #fff; }
 .count-badge { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em; color: rgba(255,255,255,0.3); margin-bottom: 4px; }
-.poster-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-@media (min-width: 480px) { .poster-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; } }
-@media (min-width: 768px) { .poster-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; } }
-@media (min-width: 1024px) { .poster-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 14px; } }
+.poster-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+@media (min-width: 360px) { .poster-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; } }
+@media (min-width: 540px) { .poster-grid { grid-template-columns: repeat(4, 1fr); gap: 10px; } }
+@media (min-width: 768px) { .poster-grid { grid-template-columns: repeat(5, 1fr); gap: 12px; } }
+@media (min-width: 1024px) { .poster-grid { grid-template-columns: repeat(6, 1fr); gap: 14px; } }
+@media (min-width: 1280px) { .poster-grid { grid-template-columns: repeat(7, 1fr); gap: 14px; } }
 </style>

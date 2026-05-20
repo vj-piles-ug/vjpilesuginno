@@ -170,13 +170,15 @@ function doSearch() {
 }
 .header-inner {
   display: flex; align-items: center; justify-content: space-between;
-  gap: 10px; width: 100%; padding: 0 12px; height: 52px;
+  gap: 6px; width: 100%; padding: 0 10px; height: 52px;
 }
+@media (min-width: 480px) { .header-inner { gap: 10px; padding: 0 12px; } }
 
 /* ── Brand ──────────────────────────────────────────────────── */
 .brand-link { display: flex; align-items: center; gap: 7px; text-decoration: none; flex-shrink: 0; }
 .brand-logo { height: 30px; width: 30px; object-fit: cover; border-radius: 50%; display: block; flex-shrink: 0; }
-.brand-text { display: flex; align-items: baseline; gap: 1px; }
+.brand-text { display: none; align-items: baseline; gap: 1px; }
+@media (min-width: 480px) { .brand-text { display: flex; } }
 .brand-name { font-size: 0.82rem; font-weight: 800; letter-spacing: 0.05em; color: #fff; white-space: nowrap; }
 .brand-dot { font-size: 0.62rem; font-weight: 700; color: #00ff9d; }
 
