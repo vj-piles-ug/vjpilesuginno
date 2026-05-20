@@ -1,13 +1,13 @@
 <template>
   <div class="min-h-screen w-full flex flex-col">
-    <AppHeader v-if="!isAdmin" @open-login="loginOpen = true" @open-subscribe="subscribeOpen = true" />
+    <AppHeader v-if="!isAdminRoute" @open-login="loginOpen = true" @open-subscribe="subscribeOpen = true" />
     <div class="flex-1">
       <RouterView />
     </div>
-    <AppFooter v-if="!isAdmin" />
+    <AppFooter v-if="!isAdminRoute" />
 
-    <LoginModal v-if="!isAdmin" :open="loginOpen" @close="loginOpen = false" />
-    <SubscribeModal v-if="!isAdmin" :open="subscribeOpen" @close="subscribeOpen = false" />
+    <LoginModal v-if="!isAdminRoute" :open="loginOpen" @close="loginOpen = false" @logged-in="loginOpen = false" />
+    <SubscribeModal v-if="!isAdminRoute" :open="subscribeOpen" @close="subscribeOpen = false" />
   </div>
 </template>
 
@@ -23,5 +23,5 @@ const loginOpen = ref(false)
 const subscribeOpen = ref(false)
 
 const route = useRoute()
-const isAdmin = computed(() => route.path.startsWith('/admin'))
+const isAdminRoute = computed(() => route.path.startsWith('/admin'))
 </script>

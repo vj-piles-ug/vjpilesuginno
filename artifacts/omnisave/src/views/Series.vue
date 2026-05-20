@@ -10,19 +10,27 @@
     </div>
 
     <div class="page-container">
-      <div class="filter-row">
-        <button v-for="genre in genres" :key="genre" class="filter-chip" :class="{ active: activeGenre === genre }" @click="activeGenre = genre">{{ genre }}</button>
+      <div v-if="dbLoading" class="loading-state">
+        <div class="loading-spinner"></div>
       </div>
-      <div class="section-header">
-        <div>
-          <p class="section-kicker">ALL SERIES</p>
-          <h2 class="section-title">{{ activeGenre === 'ALL' ? 'Full Collection' : activeGenre }}</h2>
+      <template v-else>
+        <div class="filter-row">
+          <button v-for="genre in genres" :key="genre" class="filter-chip" :class="{ active: activeGenre === genre }" @click="activeGenre = genre">{{ genre }}</button>
         </div>
-        <span class="count-badge">{{ filteredList.length }} TITLES</span>
-      </div>
-      <div class="poster-grid">
-        <MovieCard v-for="movie in filteredList" :key="movie.id" :movie="movie" @click="openDownload(movie)" />
-      </div>
+        <div class="section-header">
+          <div>
+            <p class="section-kicker">ALL SERIES</p>
+            <h2 class="section-title">{{ activeGenre === 'ALL' ? 'Full Collection' : activeGenre }}</h2>
+          </div>
+          <span class="count-badge">{{ filteredList.length }} TITLES</span>
+        </div>
+        <div v-if="filteredList.length > 0" class="poster-grid">
+          <MovieCard v-for="movie in filteredList" :key="movie.id" :movie="movie" @click="openDownload(movie)" />
+        </div>
+        <div v-else class="empty-state">
+          <p class="text-white/30 text-sm text-center py-16">No series yet. Add them from the admin panel.</p>
+        </div>
+      </template>
     </div>
 
     <DownloadModal :movie="downloadTarget" @close="downloadTarget = null" />
@@ -33,17 +41,23 @@
 import { ref, computed } from 'vue'
 import MovieCard from '../components/MovieCard.vue'
 import DownloadModal from '../components/DownloadModal.vue'
-import { series, type Movie } from '../data/movies'
+import type { Movie } from '../data/movies'
+import { publicSeries, dbLoading } from '../store/db'
 
 const downloadTarget = ref<Movie | null>(null)
 function openDownload(m: Movie) { downloadTarget.value = m }
 
-const allGenres = [...new Set(series.flatMap(m => m.genres))]
-const genres = ['ALL', ...allGenres]
+const genres = computed(() => {
+  const cats = [...new Set(publicSeries.value.map(m => m.category || '').filter(Boolean))]
+  return ['ALL', ...cats]
+})
+
 const activeGenre = ref('ALL')
 
 const filteredList = computed(() =>
-  activeGenre.value === 'ALL' ? series : series.filter(m => m.genres.includes(activeGenre.value))
+  activeGenre.value === 'ALL'
+    ? publicSeries.value
+    : publicSeries.value.filter(m => m.category === activeGenre.value)
 )
 </script>
 
@@ -53,26 +67,22 @@ const filteredList = computed(() =>
 @media (min-width: 768px) { .page-banner { height: 250px; } }
 .page-banner-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(5,12,8,1) 0%, transparent 60%); }
 .page-banner-content { position: relative; z-index: 10; width: 100%; padding: 0 12px 28px; }
+.section-kicker { font-size: 0.65rem; font-weight: 800; letter-spacing: 0.16em; color: rgba(0,255,157,0.7); text-transform: uppercase; }
 .page-title { font-size: clamp(1.8rem, 5vw, 3rem); font-weight: 800; color: #fff; letter-spacing: -0.01em; margin-bottom: 6px; }
 .page-subtitle { font-size: 0.9rem; color: rgba(255,255,255,0.48); }
-
 .page-container { width: 100%; padding: 20px 12px 60px; }
-
+.loading-state { display: flex; justify-content: center; padding: 60px; }
+.loading-spinner { width: 32px; height: 32px; border: 3px solid rgba(0,255,157,0.15); border-top-color: #00ff9d; border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
 .filter-row { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 20px; }
 .filter-chip { padding: 5px 14px; border-radius: 9999px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.55); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; cursor: pointer; transition: all 0.15s; }
 .filter-chip:hover { border-color: rgba(255,255,255,0.2); color: rgba(255,255,255,0.9); }
 .filter-chip.active { border-color: rgba(161,78,255,0.4); background: rgba(161,78,255,0.1); color: #c07cff; }
-
 .section-header { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 14px; }
+.section-title { font-size: clamp(1rem, 2vw, 1.3rem); font-weight: 800; color: #fff; }
 .count-badge { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em; color: rgba(255,255,255,0.3); margin-bottom: 4px; }
-
-.poster-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-  gap: 10px;
-}
+.poster-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; }
 @media (min-width: 480px) { .poster-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 11px; } }
 @media (min-width: 768px) { .poster-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; } }
 @media (min-width: 1024px) { .poster-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 14px; } }
-@media (min-width: 1280px) { .poster-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; } }
 </style>
