@@ -1,5 +1,5 @@
 <template>
-  <main class="relative overflow-x-hidden">
+  <main class="relative w-full overflow-x-hidden">
 
     <!-- ===== HERO SLIDESHOW ===== -->
     <section class="hero-section">

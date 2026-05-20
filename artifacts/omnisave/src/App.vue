@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen flex flex-col">
+  <div class="min-h-screen w-full flex flex-col">
     <AppHeader @open-login="loginOpen = true" @open-subscribe="subscribeOpen = true" />
     <div class="flex-1">
       <RouterView />

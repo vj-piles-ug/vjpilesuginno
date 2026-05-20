@@ -92,6 +92,7 @@ function doSearch() {
 
 <style scoped>
 .header-bar {
+  width: 100%;
   background: rgba(0,0,0,0.65);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);

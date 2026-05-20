@@ -5,15 +5,33 @@
   font-family: 'Inter', sans-serif;
 }
 
+html {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
 body {
+  width: 100%;
+  margin: 0;
+  padding: 0;
   background-color: #050c08;
   color: #fff;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
 }
 
-#app { min-height: 100vh; }
+#app {
+  width: 100%;
+  min-height: 100vh;
+}
 
 /* Glass chip */
 .glass-chip {
