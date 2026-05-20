@@ -88,14 +88,16 @@ export const dbUsers = ref<AdminUser[]>([])
 export const dbTransactions = ref<AdminTransaction[]>([])
 export const dbLoading = ref(true)
 
-// Track how many of the 5 content listeners have fired at least once
-let firedFlags = { movies: false, series: false, animation: false, carousel: false, paymentLogs: false }
+// Track which of the 5 content listeners have resolved (success OR error)
+const firedFlags = { movies: false, series: false, animation: false, carousel: false, paymentLogs: false }
 function checkLoaded(key: keyof typeof firedFlags) {
   firedFlags[key] = true
   if (Object.values(firedFlags).every(Boolean)) {
     dbLoading.value = false
   }
 }
+// Safety timeout: never leave the user on a loading screen
+setTimeout(() => { dbLoading.value = false }, 8000)
 
 function normalizeStatus(status: string | undefined): 'Successful' | 'Failed' | 'Pending' {
   if (!status) return 'Pending'
@@ -110,7 +112,6 @@ onValue(dbRef(db, 'movies'), (snap) => {
   const list: AdminMovie[] = []
   snap.forEach((child) => {
     const d = child.val()
-    // Only include non-animation/series entries, or all — keep everything, views filter by type
     list.push({
       key: child.key!,
       title: d.title || '',
@@ -125,7 +126,7 @@ onValue(dbRef(db, 'movies'), (snap) => {
   })
   dbMovies.value = list
   checkLoaded('movies')
-})
+}, () => { checkLoaded('movies') })
 
 // ─── Series ────────────────────────────────────────────────────────────────
 onValue(dbRef(db, 'series'), (snap) => {
@@ -155,7 +156,7 @@ onValue(dbRef(db, 'series'), (snap) => {
   })
   dbSeries.value = list
   checkLoaded('series')
-})
+}, () => { checkLoaded('series') })
 
 // ─── Animation ─────────────────────────────────────────────────────────────
 onValue(dbRef(db, 'animation'), (snap) => {
@@ -176,7 +177,7 @@ onValue(dbRef(db, 'animation'), (snap) => {
   })
   dbAnimation.value = list
   checkLoaded('animation')
-})
+}, () => { checkLoaded('animation') })
 
 // ─── Carousel ──────────────────────────────────────────────────────────────
 onValue(dbRef(db, 'carousel'), (snap) => {
@@ -193,7 +194,7 @@ onValue(dbRef(db, 'carousel'), (snap) => {
   })
   dbCarousel.value = list
   checkLoaded('carousel')
-})
+}, () => { checkLoaded('carousel') })
 
 // ─── Transactions (paymentLogs + subscriptions merged) ─────────────────────
 let logsData: Record<string, any> | null = null
@@ -258,7 +259,7 @@ onValue(dbRef(db, 'paymentLogs'), (snap) => {
   logsData = snap.exists() ? snap.val() : null
   logsReady = true
   buildTransactions()
-})
+}, () => { logsReady = true; buildTransactions() })
 
 onValue(dbRef(db, 'subscriptions'), (snap) => {
   subsData = snap.exists() ? snap.val() : null
@@ -280,7 +281,7 @@ onValue(dbRef(db, 'subscriptions'), (snap) => {
     })
   }
   dbUsers.value = dbUsers.value.map((u) => ({ ...u, subscription: subs[u.uid] || null }))
-})
+}, () => { subsReady = true; buildTransactions() })
 
 // ─── Users (with subscriptions merged) ────────────────────────────────────
 onValue(dbRef(db, 'users'), (snap) => {
