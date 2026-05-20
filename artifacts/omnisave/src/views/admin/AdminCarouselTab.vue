@@ -42,7 +42,7 @@
     <div class="items-list">
       <div v-for="item in dbCarousel" :key="item.key" class="carousel-row">
         <div class="ci-thumb">
-          <img v-if="item.imageUrl" :src="item.imageUrl" alt="" class="ci-img" @error="onImgErr" />
+          <img v-if="item.imageUrl" :src="toDisplayImage(item.imageUrl)" alt="" class="ci-img" @error="onImgErr" />
           <div v-else class="ci-placeholder">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
           </div>
@@ -82,6 +82,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { dbCarousel, addCarousel, updateCarousel, removeCarousel, type AdminCarousel } from '../../store/db'
+import { toDisplayImage } from '../../lib/utils'
 
 const form = ref({ title: '', subtitle: '', imageUrl: '', linkContent: 'No Link' })
 const editData = ref<AdminCarousel | null>(null)
