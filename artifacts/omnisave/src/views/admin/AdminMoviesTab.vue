@@ -5,9 +5,12 @@
       <p class="tab-sub">Total: {{ adminStore.movies.length }} movies</p>
     </div>
 
-    <!-- Add Form -->
-    <div class="form-card">
-      <h2 class="form-title">Add New Movie</h2>
+    <!-- Add / Edit Form -->
+    <div class="form-card" :class="{ editing: editingId !== null }">
+      <div class="form-title-row">
+        <h2 class="form-title">{{ editingId !== null ? 'Edit Movie' : 'Add New Movie' }}</h2>
+        <button v-if="editingId !== null" class="cancel-edit-btn" @click="cancelEdit">✕ Cancel Edit</button>
+      </div>
       <div class="form-row-3">
         <div class="field">
           <label>Movie Title <span class="req">*</span></label>
@@ -50,12 +53,14 @@
           Mark as Trending
         </label>
       </div>
-      <button class="btn-add" @click="addMovie" :disabled="!form.title || !form.streamUrl">Add Movie</button>
+      <button class="btn-add" @click="submitForm" :disabled="!form.title || !form.streamUrl">
+        {{ editingId !== null ? 'Update Movie' : 'Add Movie' }}
+      </button>
     </div>
 
     <!-- Movies Grid -->
     <div class="movies-grid">
-      <div v-for="m in adminStore.movies" :key="m.id" class="movie-card">
+      <div v-for="m in adminStore.movies" :key="m.id" class="movie-card" :class="{ 'is-editing': editingId === m.id }">
         <div class="mc-poster">
           <img v-if="m.posterUrl" :src="m.posterUrl" alt="" class="mc-img" @error="onImgErr" />
           <div v-else class="mc-no-poster">
@@ -68,7 +73,7 @@
           <p class="mc-title">{{ m.title }}</p>
           <p class="mc-year">{{ m.year }}</p>
           <div class="mc-actions">
-            <button class="mc-btn-edit" @click="openEdit(m)">
+            <button class="mc-btn-edit" @click="loadEdit(m)">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
               Edit
             </button>
@@ -85,44 +90,6 @@
       </div>
       <div v-if="adminStore.movies.length === 0" class="empty">No movies added yet. Use the form above to add your first movie.</div>
     </div>
-
-    <!-- Edit Modal -->
-    <div v-if="editMovie" class="modal-overlay" @click.self="editMovie = null">
-      <div class="modal">
-        <h3 class="modal-title">Edit Movie</h3>
-        <div class="form-row-3">
-          <div class="field"><label>Title</label><input v-model="editMovie.title" /></div>
-          <div class="field">
-            <label>Category</label>
-            <div class="select-wrap">
-              <select v-model="editMovie.category">
-                <option v-for="c in CATEGORIES" :key="c" :value="c">{{ c }}</option>
-              </select>
-              <svg class="sel-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-            </div>
-          </div>
-          <div class="field"><label>Download URL</label><input v-model="editMovie.streamUrl" /></div>
-        </div>
-        <div class="form-row-3">
-          <div class="field"><label>Rating</label><input v-model.number="editMovie.rating" type="number" min="0" max="10" step="0.1" /></div>
-          <div class="field"><label>Year</label><input v-model.number="editMovie.year" type="number" /></div>
-          <div class="field"><label>Poster Image URL</label><input v-model="editMovie.posterUrl" /></div>
-        </div>
-        <div class="check-row">
-          <label class="check-label">
-            <input type="checkbox" v-model="editMovie.trending" class="check-input" />
-            <span class="check-box" :class="{ checked: editMovie.trending }">
-              <svg v-if="editMovie.trending" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
-            </span>
-            Mark as Trending
-          </label>
-        </div>
-        <div class="modal-actions">
-          <button class="btn-ghost" @click="editMovie = null">Cancel</button>
-          <button class="btn-add sm" @click="saveEdit">Save Changes</button>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -132,26 +99,40 @@ import { adminStore, type AdminMovie } from '../../store/admin'
 
 const CATEGORIES = ['Action', 'Animation', 'Comedy', 'Drama', 'Horror', 'Romance', 'Sci-Fi', 'Thriller']
 
-const form = ref({ title: '', category: 'Animation', streamUrl: '', posterUrl: '', rating: 7.5, year: new Date().getFullYear(), trending: false })
-const editMovie = ref<AdminMovie | null>(null)
+const defaultForm = () => ({ title: '', category: 'Animation', streamUrl: '', posterUrl: '', rating: 7.5, year: new Date().getFullYear(), trending: false })
 
-function addMovie() {
+const form = ref(defaultForm())
+const editingId = ref<number | null>(null)
+
+function loadEdit(m: AdminMovie) {
+  editingId.value = m.id
+  form.value = { title: m.title, category: m.category, streamUrl: m.streamUrl, posterUrl: m.posterUrl, rating: m.rating, year: m.year, trending: m.trending }
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+function cancelEdit() {
+  editingId.value = null
+  form.value = defaultForm()
+}
+
+function submitForm() {
   if (!form.value.title || !form.value.streamUrl) return
-  adminStore.movies.push({
-    id: adminStore.nextMovieId++,
-    title: form.value.title,
-    category: form.value.category,
-    streamUrl: form.value.streamUrl,
-    posterUrl: form.value.posterUrl,
-    rating: form.value.rating,
-    year: form.value.year,
-    trending: form.value.trending,
-    createdAt: new Date().toISOString().slice(0, 10),
-  })
-  form.value = { title: '', category: 'Animation', streamUrl: '', posterUrl: '', rating: 7.5, year: new Date().getFullYear(), trending: false }
+  if (editingId.value !== null) {
+    const i = adminStore.movies.findIndex(m => m.id === editingId.value)
+    if (i !== -1) Object.assign(adminStore.movies[i], { ...form.value })
+    editingId.value = null
+  } else {
+    adminStore.movies.push({
+      id: adminStore.nextMovieId++,
+      ...form.value,
+      createdAt: new Date().toISOString().slice(0, 10),
+    })
+  }
+  form.value = defaultForm()
 }
 
 function deleteMovie(id: number) {
+  if (editingId.value === id) cancelEdit()
   if (!confirm('Delete this movie?')) return
   const i = adminStore.movies.findIndex(m => m.id === id)
   if (i !== -1) adminStore.movies.splice(i, 1)
@@ -159,17 +140,6 @@ function deleteMovie(id: number) {
 
 function toggleTrending(m: AdminMovie) {
   m.trending = !m.trending
-}
-
-function openEdit(m: AdminMovie) {
-  editMovie.value = { ...m }
-}
-
-function saveEdit() {
-  if (!editMovie.value) return
-  const i = adminStore.movies.findIndex(m => m.id === editMovie.value!.id)
-  if (i !== -1) Object.assign(adminStore.movies[i], editMovie.value)
-  editMovie.value = null
 }
 
 function catCls(cat: string) {
@@ -194,8 +164,13 @@ function onImgErr(e: Event) {
 .tab-title { font-size: 1.5rem; font-weight: 900; color: #fff; margin-bottom: 4px; }
 .tab-sub { font-size: 0.78rem; color: rgba(255,255,255,0.4); }
 
-.form-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 24px; margin-bottom: 28px; display: flex; flex-direction: column; gap: 14px; }
+.form-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 24px; margin-bottom: 28px; display: flex; flex-direction: column; gap: 14px; transition: border-color 0.2s; }
+.form-card.editing { border-color: rgba(0,255,157,0.25); background: rgba(0,255,157,0.02); }
+.form-title-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .form-title { font-size: 0.95rem; font-weight: 700; color: #fff; }
+.cancel-edit-btn { padding: 5px 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); border-radius: 7px; color: rgba(255,255,255,0.5); font-size: 0.72rem; font-weight: 600; cursor: pointer; transition: background 0.15s; }
+.cancel-edit-btn:hover { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.8); }
+
 .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
 .field { display: flex; flex-direction: column; gap: 6px; }
 .field label { font-size: 0.7rem; font-weight: 700; color: rgba(255,255,255,0.5); letter-spacing: 0.06em; text-transform: uppercase; }
@@ -217,13 +192,11 @@ function onImgErr(e: Event) {
 .btn-add { padding: 11px 20px; background: #7c3aed; border: none; border-radius: 10px; color: #fff; font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: filter 0.2s; letter-spacing: 0.04em; width: 100%; }
 .btn-add:hover:not(:disabled) { filter: brightness(1.12); }
 .btn-add:disabled { opacity: 0.4; cursor: not-allowed; }
-.btn-add.sm { width: auto; }
-.btn-ghost { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); color: rgba(255,255,255,0.6); border-radius: 8px; padding: 9px 18px; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
 
-/* Cards Grid */
 .movies-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 16px; }
 .movie-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; overflow: hidden; transition: border-color 0.2s, transform 0.15s; display: flex; flex-direction: column; }
 .movie-card:hover { border-color: rgba(255,255,255,0.14); transform: translateY(-2px); }
+.movie-card.is-editing { border-color: rgba(0,255,157,0.35); box-shadow: 0 0 0 1px rgba(0,255,157,0.15); }
 
 .mc-poster { position: relative; aspect-ratio: 2/3; background: #0d1a10; overflow: hidden; flex-shrink: 0; }
 .mc-img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -251,13 +224,7 @@ function onImgErr(e: Event) {
 .mc-btn-del { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 6px; background: rgba(220,38,38,0.12); border: 1px solid rgba(220,38,38,0.3); color: #f87171; border-radius: 7px; font-size: 0.72rem; font-weight: 700; cursor: pointer; transition: background 0.15s; }
 .mc-btn-del:hover { background: rgba(220,38,38,0.22); }
 
-.empty { text-align: center; color: rgba(255,255,255,0.25); padding: 40px 20px; grid-column: 1/-1; font-size: 0.85rem; line-height: 1.6; }
-
-/* Modal */
-.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); display: flex; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(4px); padding: 20px; }
-.modal { background: #0a1610; border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 24px; width: 100%; max-width: 640px; display: flex; flex-direction: column; gap: 14px; max-height: 90vh; overflow-y: auto; }
-.modal-title { font-size: 1rem; font-weight: 700; color: #fff; }
-.modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 4px; }
+.empty { text-align: center; color: rgba(255,255,255,0.25); padding: 40px 20px; grid-column: 1/-1; font-size: 0.85rem; }
 
 @media (max-width: 768px) {
   .tab-page { padding: 16px 12px; }

@@ -5,9 +5,12 @@
       <p class="tab-sub">Total: {{ adminStore.series.length }} series</p>
     </div>
 
-    <!-- Add Form -->
-    <div class="form-card">
-      <h2 class="form-title">Add New Series</h2>
+    <!-- Add / Edit Form -->
+    <div class="form-card" :class="{ editing: editingId !== null }">
+      <div class="form-title-row">
+        <h2 class="form-title">{{ editingId !== null ? 'Edit Series' : 'Add New Series' }}</h2>
+        <button v-if="editingId !== null" class="cancel-edit-btn" @click="cancelEdit">✕ Cancel Edit</button>
+      </div>
       <div class="form-row-3">
         <div class="field">
           <label>Series Title <span class="req">*</span></label>
@@ -50,12 +53,14 @@
         <button class="btn-add-ep" @click="sf.episodes.push({ title: '', url: '' })">+ Add Episode</button>
       </div>
 
-      <button class="btn-add-series" @click="addSeries" :disabled="!sf.title">Add Series</button>
+      <button class="btn-add-series" @click="submitForm" :disabled="!sf.title">
+        {{ editingId !== null ? 'Update Series' : 'Add Series' }}
+      </button>
     </div>
 
     <!-- Series Grid -->
     <div class="series-grid">
-      <div v-for="s in adminStore.series" :key="s.id" class="series-card">
+      <div v-for="s in adminStore.series" :key="s.id" class="series-card" :class="{ 'is-editing': editingId === s.id }">
         <div class="sc-poster">
           <img v-if="s.posterUrl" :src="s.posterUrl" alt="" class="sc-img" @error="onImgErr" />
           <div v-else class="sc-no-poster">
@@ -68,7 +73,7 @@
           <p class="sc-title">{{ s.title }}</p>
           <p class="sc-meta">⭐ {{ s.rating }} · {{ s.year }}</p>
           <div class="sc-actions">
-            <button class="sc-btn-edit" @click="openEditSeries(s)">
+            <button class="sc-btn-edit" @click="loadEdit(s)">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
               Edit
             </button>
@@ -81,91 +86,87 @@
       </div>
       <div v-if="adminStore.series.length === 0" class="empty">No series added yet. Use the form above to add your first series.</div>
     </div>
-
-    <!-- Edit Series Modal -->
-    <div v-if="editSeriesData" class="modal-overlay" @click.self="editSeriesData = null">
-      <div class="modal">
-        <h3 class="modal-title">Edit Series — {{ editSeriesData.title }}</h3>
-
-        <!-- Series fields -->
-        <div class="form-row-3">
-          <div class="field"><label>Title</label><input v-model="editSeriesData.title" /></div>
-          <div class="field">
-            <label>Category</label>
-            <div class="select-wrap">
-              <select v-model="editSeriesData.category">
-                <option v-for="c in CATEGORIES" :key="c" :value="c">{{ c }}</option>
-              </select>
-              <svg class="sel-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-            </div>
-          </div>
-          <div class="field"><label>Poster Image URL</label><input v-model="editSeriesData.posterUrl" /></div>
-        </div>
-        <div class="form-row-2">
-          <div class="field"><label>Rating</label><input v-model.number="editSeriesData.rating" type="number" min="0" max="10" step="0.1" /></div>
-          <div class="field"><label>Year</label><input v-model.number="editSeriesData.year" type="number" /></div>
-        </div>
-
-        <!-- Episodes management in modal -->
-        <div class="ep-section modal-ep">
-          <div class="ep-header-row">
-            <span class="ep-section-label">Episodes ({{ editEpisodes.length }})</span>
-            <button class="btn-add-ep-sm" @click="editEpisodes.push({ id: -Date.now(), seriesId: editSeriesData!.id, title: '', season: 1, episode: editEpisodes.length + 1, url: '' })">+ Add</button>
-          </div>
-          <div v-for="(ep, i) in editEpisodes" :key="ep.id" class="ep-row">
-            <span class="ep-num-label">Ep {{ i + 1 }}</span>
-            <input v-model="ep.title" placeholder="Episode title" class="ep-input" />
-            <input v-model="ep.url" placeholder="Download link URL" class="ep-input" />
-            <button class="ep-remove" @click="editEpisodes.splice(i, 1)">✕</button>
-          </div>
-          <div v-if="editEpisodes.length === 0" class="ep-empty">No episodes yet. Click "+ Add" to add one.</div>
-        </div>
-
-        <div class="modal-actions">
-          <button class="btn-ghost" @click="editSeriesData = null">Cancel</button>
-          <button class="btn-add sm" @click="saveSeriesEdit">Save Changes</button>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { adminStore, type AdminSeries, type Episode } from '../../store/admin'
+import { ref } from 'vue'
+import { adminStore, type AdminSeries } from '../../store/admin'
 
 const CATEGORIES = ['Action', 'Animation', 'Comedy', 'Drama', 'Horror', 'Romance', 'Sci-Fi', 'Thriller']
 
-const sf = ref({ title: '', category: 'Animation', posterUrl: '', rating: 7.5, year: new Date().getFullYear(), episodes: [] as { title: string; url: string }[] })
+const defaultSf = () => ({ title: '', category: 'Animation', posterUrl: '', rating: 7.5, year: new Date().getFullYear(), episodes: [] as { title: string; url: string }[] })
 
-function addSeries() {
+const sf = ref(defaultSf())
+const editingId = ref<number | null>(null)
+
+function loadEdit(s: AdminSeries) {
+  editingId.value = s.id
+  sf.value = {
+    title: s.title,
+    category: s.category,
+    posterUrl: s.posterUrl,
+    rating: s.rating,
+    year: s.year,
+    episodes: episodesFor(s.id).map(e => ({ title: e.title, url: e.url })),
+  }
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+function cancelEdit() {
+  editingId.value = null
+  sf.value = defaultSf()
+}
+
+function submitForm() {
   if (!sf.value.title) return
-  const newId = adminStore.nextSeriesId++
-  adminStore.series.push({
-    id: newId,
-    title: sf.value.title,
-    category: sf.value.category,
-    posterUrl: sf.value.posterUrl,
-    rating: sf.value.rating,
-    year: sf.value.year,
-    createdAt: new Date().toISOString().slice(0, 10),
-  })
-  sf.value.episodes.forEach((ep, i) => {
-    if (ep.title || ep.url) {
-      adminStore.episodes.push({
-        id: adminStore.nextEpisodeId++,
-        seriesId: newId,
-        title: ep.title || `Episode ${i + 1}`,
-        season: 1,
-        episode: i + 1,
-        url: ep.url,
+
+  if (editingId.value !== null) {
+    const i = adminStore.series.findIndex(s => s.id === editingId.value)
+    if (i !== -1) {
+      Object.assign(adminStore.series[i], {
+        title: sf.value.title,
+        category: sf.value.category,
+        posterUrl: sf.value.posterUrl,
+        rating: sf.value.rating,
+        year: sf.value.year,
       })
     }
-  })
-  sf.value = { title: '', category: 'Animation', posterUrl: '', rating: 7.5, year: new Date().getFullYear(), episodes: [] }
+    const sid = editingId.value
+    const toRemove = adminStore.episodes.filter(e => e.seriesId === sid).map(e => e.id)
+    toRemove.forEach(eid => {
+      const idx = adminStore.episodes.findIndex(e => e.id === eid)
+      if (idx !== -1) adminStore.episodes.splice(idx, 1)
+    })
+    sf.value.episodes.forEach((ep, idx) => {
+      if (ep.title || ep.url) {
+        adminStore.episodes.push({ id: adminStore.nextEpisodeId++, seriesId: sid, title: ep.title || `Episode ${idx + 1}`, season: 1, episode: idx + 1, url: ep.url })
+      }
+    })
+    editingId.value = null
+  } else {
+    const newId = adminStore.nextSeriesId++
+    adminStore.series.push({
+      id: newId,
+      title: sf.value.title,
+      category: sf.value.category,
+      posterUrl: sf.value.posterUrl,
+      rating: sf.value.rating,
+      year: sf.value.year,
+      createdAt: new Date().toISOString().slice(0, 10),
+    })
+    sf.value.episodes.forEach((ep, i) => {
+      if (ep.title || ep.url) {
+        adminStore.episodes.push({ id: adminStore.nextEpisodeId++, seriesId: newId, title: ep.title || `Episode ${i + 1}`, season: 1, episode: i + 1, url: ep.url })
+      }
+    })
+  }
+
+  sf.value = defaultSf()
 }
 
 function deleteSeries(id: number) {
+  if (editingId.value === id) cancelEdit()
   if (!confirm('Delete this series and all its episodes?')) return
   const i = adminStore.series.findIndex(s => s.id === id)
   if (i !== -1) adminStore.series.splice(i, 1)
@@ -174,41 +175,10 @@ function deleteSeries(id: number) {
     const idx = adminStore.episodes.findIndex(e => e.id === eid)
     if (idx !== -1) adminStore.episodes.splice(idx, 1)
   })
-  if (editSeriesData.value?.id === id) editSeriesData.value = null
 }
 
 function episodesFor(sid: number) {
   return adminStore.episodes.filter(e => e.seriesId === sid)
-}
-
-const editSeriesData = ref<AdminSeries | null>(null)
-const editEpisodes = ref<Episode[]>([])
-
-function openEditSeries(s: AdminSeries) {
-  editSeriesData.value = { ...s }
-  editEpisodes.value = episodesFor(s.id).map(e => ({ ...e }))
-}
-
-function saveSeriesEdit() {
-  if (!editSeriesData.value) return
-  const i = adminStore.series.findIndex(s => s.id === editSeriesData.value!.id)
-  if (i !== -1) Object.assign(adminStore.series[i], editSeriesData.value)
-
-  const sid = editSeriesData.value.id
-  const toRemove = adminStore.episodes.filter(e => e.seriesId === sid).map(e => e.id)
-  toRemove.forEach(eid => {
-    const idx = adminStore.episodes.findIndex(e => e.id === eid)
-    if (idx !== -1) adminStore.episodes.splice(idx, 1)
-  })
-  editEpisodes.value.forEach((ep, idx) => {
-    if (ep.id < 0) {
-      adminStore.episodes.push({ id: adminStore.nextEpisodeId++, seriesId: sid, title: ep.title, season: ep.season, episode: idx + 1, url: ep.url })
-    } else {
-      adminStore.episodes.push({ ...ep, episode: idx + 1 })
-    }
-  })
-
-  editSeriesData.value = null
 }
 
 function catCls(cat: string) {
@@ -233,8 +203,13 @@ function onImgErr(e: Event) {
 .tab-title { font-size: 1.5rem; font-weight: 900; color: #fff; margin-bottom: 4px; }
 .tab-sub { font-size: 0.78rem; color: rgba(255,255,255,0.4); }
 
-.form-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 24px; margin-bottom: 28px; display: flex; flex-direction: column; gap: 14px; }
+.form-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 24px; margin-bottom: 28px; display: flex; flex-direction: column; gap: 14px; transition: border-color 0.2s; }
+.form-card.editing { border-color: rgba(0,255,157,0.25); background: rgba(0,255,157,0.02); }
+.form-title-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .form-title { font-size: 0.95rem; font-weight: 700; color: #fff; }
+.cancel-edit-btn { padding: 5px 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); border-radius: 7px; color: rgba(255,255,255,0.5); font-size: 0.72rem; font-weight: 600; cursor: pointer; transition: background 0.15s; }
+.cancel-edit-btn:hover { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.8); }
+
 .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
 .form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .field { display: flex; flex-direction: column; gap: 6px; }
@@ -249,9 +224,7 @@ function onImgErr(e: Event) {
 .sel-arrow { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); pointer-events: none; color: rgba(255,255,255,0.4); }
 
 .ep-section { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 8px; }
-.ep-section.modal-ep { margin-top: 4px; }
 .ep-section-label { font-size: 0.75rem; font-weight: 700; color: rgba(255,255,255,0.5); letter-spacing: 0.08em; text-transform: uppercase; }
-.ep-header-row { display: flex; align-items: center; justify-content: space-between; }
 .ep-row { display: flex; align-items: center; gap: 8px; }
 .ep-num-label { font-size: 0.68rem; color: rgba(255,255,255,0.3); white-space: nowrap; min-width: 56px; flex-shrink: 0; }
 .ep-input { flex: 1; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 7px; padding: 8px 10px; color: #fff; font-size: 0.8rem; outline: none; min-width: 0; }
@@ -259,19 +232,17 @@ function onImgErr(e: Event) {
 .ep-input::placeholder { color: rgba(255,255,255,0.18); }
 .ep-remove { background: none; border: none; color: rgba(255,255,255,0.25); cursor: pointer; font-size: 0.85rem; padding: 4px 6px; flex-shrink: 0; transition: color 0.15s; }
 .ep-remove:hover { color: #f87171; }
-.ep-empty { font-size: 0.75rem; color: rgba(255,255,255,0.25); text-align: center; padding: 6px 0; }
 
 .btn-add-ep { width: 100%; padding: 9px; background: #16a34a; border: none; border-radius: 8px; color: #fff; font-size: 0.82rem; font-weight: 700; cursor: pointer; transition: filter 0.2s; }
 .btn-add-ep:hover { filter: brightness(1.12); }
-.btn-add-ep-sm { padding: 4px 12px; background: rgba(0,255,157,0.1); border: 1px solid rgba(0,255,157,0.25); color: #00ff9d; border-radius: 6px; font-size: 0.72rem; font-weight: 700; cursor: pointer; }
 .btn-add-series { padding: 11px 20px; background: #7c3aed; border: none; border-radius: 10px; color: #fff; font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: filter 0.2s; width: 100%; }
 .btn-add-series:hover:not(:disabled) { filter: brightness(1.12); }
 .btn-add-series:disabled { opacity: 0.4; cursor: not-allowed; }
 
-/* Card Grid */
 .series-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 16px; }
 .series-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; overflow: hidden; transition: border-color 0.2s, transform 0.15s; display: flex; flex-direction: column; }
 .series-card:hover { border-color: rgba(255,255,255,0.14); transform: translateY(-2px); }
+.series-card.is-editing { border-color: rgba(0,255,157,0.35); box-shadow: 0 0 0 1px rgba(0,255,157,0.15); }
 
 .sc-poster { position: relative; aspect-ratio: 2/3; background: #0d1a10; overflow: hidden; flex-shrink: 0; }
 .sc-img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -298,15 +269,6 @@ function onImgErr(e: Event) {
 .sc-btn-del:hover { background: rgba(220,38,38,0.22); }
 
 .empty { text-align: center; color: rgba(255,255,255,0.25); padding: 40px 20px; grid-column: 1/-1; font-size: 0.85rem; }
-
-/* Modal */
-.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); display: flex; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(4px); padding: 20px; }
-.modal { background: #0a1610; border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 24px; width: 100%; max-width: 680px; display: flex; flex-direction: column; gap: 14px; max-height: 90vh; overflow-y: auto; }
-.modal-title { font-size: 1rem; font-weight: 700; color: #fff; }
-.modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 4px; }
-.btn-ghost { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); color: rgba(255,255,255,0.6); border-radius: 8px; padding: 9px 18px; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
-.btn-add { padding: 9px 20px; background: #7c3aed; border: none; border-radius: 8px; color: #fff; font-size: 0.82rem; font-weight: 700; cursor: pointer; }
-.btn-add.sm { width: auto; }
 
 @media (max-width: 768px) {
   .tab-page { padding: 16px 12px; }
