@@ -197,8 +197,9 @@ function particleStyle(n: number) {
 </script>
 
 <style scoped>
-.hero-section { position: relative; display: flex; flex-direction: column; overflow: hidden; height: 320px; }
-@media (min-width: 768px) { .hero-section { height: 400px; } }
+.hero-section { position: relative; display: flex; flex-direction: column; overflow: hidden; height: 200px; }
+@media (min-width: 480px) { .hero-section { height: 260px; } }
+@media (min-width: 768px) { .hero-section { height: 360px; } }
 @media (min-width: 1280px) { .hero-section { height: 460px; } }
 
 .hero-slide { position: absolute; inset: 0; transition: opacity 1.2s ease-in-out; opacity: 0; }
@@ -279,8 +280,8 @@ function particleStyle(n: number) {
 .section-kicker { font-size: 0.6rem; font-weight: 800; letter-spacing: 0.14em; color: rgba(0,255,157,0.7); text-transform: uppercase; }
 .section-title { font-size: clamp(0.9rem, 2.5vw, 1.4rem); font-weight: 800; color: #fff; }
 .count-badge { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.1em; color: rgba(255,255,255,0.3); margin-bottom: 4px; }
-.poster-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; width: 100%; box-sizing: border-box; }
-@media (min-width: 400px) { .poster-grid { grid-template-columns: repeat(3, 1fr); gap: 7px; } }
+.poster-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; width: 100%; box-sizing: border-box; }
+@media (min-width: 480px) { .poster-grid { gap: 7px; } }
 @media (min-width: 540px) { .poster-grid { grid-template-columns: repeat(4, 1fr); gap: 9px; } }
 @media (min-width: 768px) { .poster-grid { grid-template-columns: repeat(5, 1fr); gap: 11px; } }
 @media (min-width: 1024px) { .poster-grid { grid-template-columns: repeat(6, 1fr); gap: 13px; } }
