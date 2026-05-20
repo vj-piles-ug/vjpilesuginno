@@ -51,7 +51,8 @@
       <p class="loading-text">Loading transactions…</p>
     </div>
 
-    <div v-else class="table-wrap">
+    <!-- Desktop table -->
+    <div v-else class="table-wrap desktop-table">
       <table class="data-table">
         <thead>
           <tr>
@@ -109,6 +110,49 @@
           </tr>
         </tbody>
       </table>
+    </div>
+
+    <!-- Mobile cards -->
+    <div v-if="!loading" class="mobile-cards">
+      <div v-if="filteredPayments.length === 0" class="empty-row">No transactions found.</div>
+      <div v-for="t in filteredPayments" :key="t.id" class="txn-card">
+        <div class="txn-card-top">
+          <div class="txn-user">
+            <div class="u-avatar">{{ (t.firstName || t.email || '?')[0].toUpperCase() }}</div>
+            <div class="txn-user-info">
+              <span class="u-name">{{ fullName(t) || t.email?.split('@')[0] || '—' }}</span>
+              <span class="txn-contact">{{ t.phoneNumber || t.email || '—' }}</span>
+            </div>
+          </div>
+          <span class="status-badge" :class="statusCls(t.status)">
+            <span class="status-dot"></span>{{ capitalize(t.status) }}
+          </span>
+        </div>
+        <div class="txn-card-mid">
+          <div class="txn-detail">
+            <span class="txn-detail-label">Plan</span>
+            <span class="txn-detail-val">{{ t.planName || t.planId || '—' }}</span>
+          </div>
+          <div class="txn-detail">
+            <span class="txn-detail-label">Amount</span>
+            <span class="txn-detail-val txn-amount">{{ t.amount > 0 ? 'UGX ' + Number(t.amount).toLocaleString() : '—' }}</span>
+          </div>
+          <div class="txn-detail">
+            <span class="txn-detail-label">Method</span>
+            <span class="txn-detail-val">{{ t.paymentMethod || 'N/A' }}</span>
+          </div>
+          <div class="txn-detail">
+            <span class="txn-detail-label">Date</span>
+            <span class="txn-detail-val">{{ fmtDate(t.createdAt) }}</span>
+          </div>
+        </div>
+        <div class="txn-card-bot">
+          <button class="del-btn" @click="deletePayment(t.id)">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
+            Delete
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -303,37 +347,57 @@ onUnmounted(() => stopListeners())
 
 <style scoped>
 @keyframes spin { to { transform: rotate(360deg); } }
-.tab-page { padding: 28px 24px; }
-.tab-header { margin-bottom: 22px; }
-.tab-title { font-size: 1.5rem; font-weight: 900; color: #fff; margin-bottom: 4px; }
-.tab-sub { font-size: 0.78rem; color: rgba(255,255,255,0.4); }
-.summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
-.sum-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 14px; padding: 22px 20px; display: flex; flex-direction: column; gap: 6px; }
+
+/* ── Page ── */
+.tab-page { padding: 12px 10px 16px; width: 100%; box-sizing: border-box; overflow-x: hidden; }
+@media (min-width: 640px) { .tab-page { padding: 20px 18px; } }
+@media (min-width: 1024px) { .tab-page { padding: 28px 24px; } }
+
+.tab-header { margin-bottom: 14px; }
+.tab-title { font-size: 1.1rem; font-weight: 900; color: #fff; margin-bottom: 2px; }
+@media (min-width: 640px) { .tab-title { font-size: 1.4rem; } }
+@media (min-width: 1024px) { .tab-title { font-size: 1.5rem; } }
+.tab-sub { font-size: 0.7rem; color: rgba(255,255,255,0.4); }
+
+/* ── Summary cards ── */
+.summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px; }
+@media (min-width: 640px) { .summary-grid { gap: 14px; margin-bottom: 20px; } }
+.sum-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 10px; padding: 10px 8px; display: flex; flex-direction: column; gap: 4px; }
+@media (min-width: 640px) { .sum-card { border-radius: 14px; padding: 18px 16px; gap: 6px; } }
 .sum-success { border-color: rgba(0,255,157,0.1); }
 .sum-failed { border-color: rgba(248,113,113,0.1); }
 .sum-pending { border-color: rgba(245,158,11,0.1); }
 .sum-icon { display: flex; }
-.sum-val { font-size: 2.2rem; font-weight: 900; line-height: 1; }
+.sum-val { font-size: 1.4rem; font-weight: 900; line-height: 1; }
+@media (min-width: 640px) { .sum-val { font-size: 2rem; } }
 .sum-success .sum-val { color: #00ff9d; }
 .sum-failed .sum-val { color: #f87171; }
 .sum-pending .sum-val { color: #f59e0b; }
-.sum-label { font-size: 0.75rem; color: rgba(255,255,255,0.4); font-weight: 600; }
-.filters-row { display: flex; gap: 12px; margin-bottom: 18px; flex-wrap: wrap; align-items: center; }
-.search-wrap { position: relative; flex: 1; min-width: 200px; }
-.search-ic { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: rgba(255,255,255,0.3); pointer-events: none; }
-.search-input { width: 100%; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 9px 14px 9px 34px; color: #fff; font-size: 0.83rem; outline: none; box-sizing: border-box; }
+.sum-label { font-size: 0.6rem; color: rgba(255,255,255,0.4); font-weight: 600; }
+@media (min-width: 640px) { .sum-label { font-size: 0.72rem; } }
+
+/* ── Filters ── */
+.filters-row { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; align-items: center; }
+.search-wrap { position: relative; flex: 1; min-width: 0; width: 100%; }
+.search-ic { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: rgba(255,255,255,0.3); pointer-events: none; }
+.search-input { width: 100%; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 9px; padding: 8px 12px 8px 30px; color: #fff; font-size: 0.78rem; outline: none; box-sizing: border-box; }
 .search-input::placeholder { color: rgba(255,255,255,0.25); }
-.filter-controls { display: flex; gap: 10px; align-items: center; }
+.filter-controls { display: flex; gap: 7px; align-items: center; flex-wrap: wrap; }
 .select-wrap { position: relative; }
-.filter-sel { appearance: none; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 9px 36px 9px 12px; color: rgba(255,255,255,0.7); font-size: 0.8rem; outline: none; cursor: pointer; min-width: 120px; }
+.filter-sel { appearance: none; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 7px 30px 7px 10px; color: rgba(255,255,255,0.7); font-size: 0.75rem; outline: none; cursor: pointer; min-width: 100px; }
 .filter-sel option { background: #0d1a10; }
-.sel-arrow { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); pointer-events: none; color: rgba(255,255,255,0.4); }
-.sort-btn { display: flex; align-items: center; gap: 6px; padding: 9px 14px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: rgba(255,255,255,0.7); font-size: 0.8rem; font-weight: 600; cursor: pointer; white-space: nowrap; }
+.sel-arrow { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); pointer-events: none; color: rgba(255,255,255,0.4); }
+.sort-btn { display: flex; align-items: center; gap: 5px; padding: 7px 11px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: rgba(255,255,255,0.7); font-size: 0.75rem; font-weight: 600; cursor: pointer; white-space: nowrap; }
 .sort-btn:hover { background: rgba(255,255,255,0.08); }
-.loading-state { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 60px 16px; }
+
+/* ── Loading ── */
+.loading-state { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 48px 16px; }
 .spin-ring { width: 32px; height: 32px; border: 3px solid rgba(0,255,157,0.15); border-top-color: #00ff9d; border-radius: 50%; animation: spin 0.8s linear infinite; }
 .loading-text { font-size: 0.82rem; color: rgba(255,255,255,0.35); }
-.table-wrap { overflow-x: auto; border-radius: 14px; border: 1px solid rgba(255,255,255,0.07); }
+
+/* ── Desktop table (hidden on mobile) ── */
+.desktop-table { display: none; }
+@media (min-width: 768px) { .desktop-table { display: block; overflow-x: auto; border-radius: 14px; border: 1px solid rgba(255,255,255,0.07); } }
 .data-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
 .data-table thead th { background: rgba(255,255,255,0.04); padding: 11px 14px; text-align: left; font-size: 0.65rem; font-weight: 700; color: rgba(255,255,255,0.35); letter-spacing: 0.1em; white-space: nowrap; }
 .data-table tbody tr { border-top: 1px solid rgba(255,255,255,0.05); transition: background 0.15s; }
@@ -350,16 +414,32 @@ onUnmounted(() => stopListeners())
 .amount-cell { font-weight: 700; color: rgba(255,255,255,0.85); white-space: nowrap; }
 .method-cell { color: rgba(255,255,255,0.55); font-size: 0.78rem; white-space: nowrap; }
 .date-cell { color: rgba(255,255,255,0.45); font-size: 0.75rem; white-space: nowrap; }
-.status-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 9999px; font-size: 0.7rem; font-weight: 700; white-space: nowrap; }
-.status-dot { width: 6px; height: 6px; border-radius: 50%; }
+.empty-row { text-align: center; color: rgba(255,255,255,0.25); padding: 36px 16px; }
+
+/* ── Mobile cards (shown on mobile, hidden on desktop) ── */
+.mobile-cards { display: flex; flex-direction: column; gap: 8px; }
+@media (min-width: 768px) { .mobile-cards { display: none; } }
+.txn-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 11px 12px; display: flex; flex-direction: column; gap: 9px; }
+.txn-card-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.txn-user { display: flex; align-items: center; gap: 9px; min-width: 0; }
+.txn-user-info { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.txn-contact { font-size: 0.65rem; color: rgba(255,255,255,0.4); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.txn-card-mid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px; }
+.txn-detail { display: flex; flex-direction: column; gap: 1px; }
+.txn-detail-label { font-size: 0.56rem; font-weight: 700; color: rgba(255,255,255,0.3); letter-spacing: 0.08em; text-transform: uppercase; }
+.txn-detail-val { font-size: 0.72rem; color: rgba(255,255,255,0.75); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.txn-amount { color: #fff; font-weight: 800; }
+.txn-card-bot { display: flex; justify-content: flex-end; }
+
+/* ── Shared status + delete ── */
+.status-badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 9999px; font-size: 0.65rem; font-weight: 700; white-space: nowrap; flex-shrink: 0; }
+.status-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
 .status-success { background: rgba(0,255,157,0.1); border: 1px solid rgba(0,255,157,0.25); color: #00ff9d; }
 .status-success .status-dot { background: #00ff9d; }
 .status-failed { background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.25); color: #f87171; }
 .status-failed .status-dot { background: #f87171; }
 .status-pending { background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.25); color: #f59e0b; }
 .status-pending .status-dot { background: #f59e0b; }
-.del-btn { padding: 6px; background: rgba(220,38,38,0.08); border: 1px solid rgba(220,38,38,0.2); border-radius: 7px; color: #f87171; cursor: pointer; display: flex; }
+.del-btn { display: flex; align-items: center; gap: 5px; padding: 5px 10px; background: rgba(220,38,38,0.08); border: 1px solid rgba(220,38,38,0.2); border-radius: 7px; color: #f87171; font-size: 0.68rem; font-weight: 600; cursor: pointer; }
 .del-btn:hover { background: rgba(220,38,38,0.18); }
-.empty-row { text-align: center; color: rgba(255,255,255,0.25); padding: 36px; }
-@media (max-width: 768px) { .tab-page { padding: 16px 12px; } .summary-grid { grid-template-columns: 1fr; } .filters-row { flex-direction: column; } .search-wrap { width: 100%; } }
 </style>
