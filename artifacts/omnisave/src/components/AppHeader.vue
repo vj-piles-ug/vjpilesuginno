@@ -25,7 +25,10 @@
         <div class="flex items-center gap-2 shrink-0">
           <button class="btn-subscribe hidden lg:flex" @click="handleSubscribeClick">
             <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
-            SUBSCRIBE
+            <span class="flex flex-col items-start leading-tight">
+              <span>SUBSCRIBE TO DOWNLOAD</span>
+              <span class="sub-from">FROM 500 UGX</span>
+            </span>
           </button>
 
           <div class="h-4 w-px bg-white/15 hidden sm:block"></div>
@@ -67,7 +70,7 @@
         </form>
         <div class="flex flex-col gap-0.5">
           <RouterLink v-for="item in navItems" :key="item.path" :to="item.path" class="mobile-nav-item" :class="{ 'mobile-nav-item--active': $route.path === item.path }" @click="mobileOpen = false">{{ item.label }}</RouterLink>
-          <button class="mobile-nav-item text-left" @click="handleSubscribeClick(); mobileOpen = false">SUBSCRIBE</button>
+          <button class="mobile-nav-item text-left" @click="handleSubscribeClick(); mobileOpen = false">SUBSCRIBE TO DOWNLOAD</button>
           <button v-if="isLoggedIn" class="mobile-nav-item text-left text-red-400" @click="handleLogout">Sign out</button>
         </div>
       </div>
@@ -161,8 +164,9 @@ function doSearch() {
 .hs-input::placeholder { color: rgba(255,255,255,0.3); }
 .hs-btn { flex-shrink: 0; margin: 3px; padding: 0 14px; height: 26px; border-radius: 9999px; background: linear-gradient(135deg, #00ff9d, #00c8b8, #00d4ff); color: #021a10; font-size: 0.65rem; font-weight: 800; letter-spacing: 0.1em; border: none; cursor: pointer; transition: filter 0.2s; }
 .hs-btn:hover { filter: brightness(1.06); }
-.btn-subscribe { display: inline-flex; align-items: center; gap: 5px; padding: 5px 12px; border-radius: 9999px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.68); font-size: 0.67rem; font-weight: 700; letter-spacing: 0.1em; cursor: pointer; transition: background 0.2s, color 0.2s; }
+.btn-subscribe { display: inline-flex; align-items: center; gap: 5px; padding: 5px 14px; border-radius: 9999px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.68); font-size: 0.67rem; font-weight: 700; letter-spacing: 0.08em; cursor: pointer; transition: background 0.2s, color 0.2s; }
 .btn-subscribe:hover { background: rgba(255,255,255,0.09); color: #fff; }
+.sub-from { font-size: 0.55rem; font-weight: 500; letter-spacing: 0.06em; color: #00ff9d; opacity: 0.85; }
 .btn-login { display: inline-flex; align-items: center; gap: 5px; padding: 5px 12px; border-radius: 9999px; border: 1px solid rgba(255,255,255,0.1); background: transparent; color: rgba(255,255,255,0.65); font-size: 0.67rem; font-weight: 700; letter-spacing: 0.1em; cursor: pointer; transition: background 0.2s, color 0.2s; }
 .btn-login:hover { background: rgba(255,255,255,0.07); color: #fff; }
 

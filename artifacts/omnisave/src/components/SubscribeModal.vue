@@ -12,7 +12,7 @@
             <div class="modal-header-row">
               <img src="/logo.png" alt="" class="hdr-logo" />
               <div>
-                <h2 class="hdr-title">Subscribe</h2>
+                <h2 class="hdr-title">Subscribe to Download</h2>
                 <p class="hdr-sub">Unlimited HD downloads · Powered by PesaPal</p>
               </div>
             </div>
@@ -26,7 +26,7 @@
                 </div>
                 <p class="plan-period">{{ plan.duration }}</p>
                 <p class="plan-feature">Unlimited Downloads</p>
-                <button class="plan-sub-btn" @click="pickPlan(plan.id)">Subscribe</button>
+                <button class="plan-sub-btn" @click="pickPlan(plan.id)">Subscribe to Download</button>
               </div>
             </div>
             <p class="footer-note">Secure payment via PesaPal · MTN / Airtel / Visa</p>
