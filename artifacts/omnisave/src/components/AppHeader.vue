@@ -46,18 +46,14 @@
 
           <!-- Logged in -->
           <div v-if="isLoggedIn" class="user-menu">
-            <button class="user-btn" @click="menuOpen = !menuOpen">
+            <div class="user-avatar-wrap">
               <div class="user-avatar">{{ userInitial }}</div>
               <span class="hidden sm:inline user-name-short">{{ userName }}</span>
-              <svg class="h-3 w-3 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M19 9l-7 7-7-7"/></svg>
-            </button>
-            <div v-if="menuOpen" class="user-dropdown">
-              <div class="dropdown-email">{{ currentUser?.email }}</div>
-              <button class="dropdown-item" @click="handleLogout">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
-                Sign out
-              </button>
             </div>
+            <button class="btn-logout" @click="handleLogout" title="Sign out">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+              <span class="logout-label">LOGOUT</span>
+            </button>
           </div>
 
           <!-- Logged out -->
@@ -255,19 +251,22 @@ function doSearch() {
 @media (min-width: 320px) { .login-label { display: inline; } }
 
 /* ── User menu ──────────────────────────────────────────────── */
-.user-menu { position: relative; }
-.user-btn { display: flex; align-items: center; gap: 6px; padding: 4px 8px; border-radius: 9999px; border: 1px solid rgba(0,255,157,0.25); background: rgba(0,255,157,0.07); cursor: pointer; transition: background 0.15s; }
-.user-btn:hover { background: rgba(0,255,157,0.12); }
+.user-menu { display: flex; align-items: center; gap: 6px; }
+.user-avatar-wrap { display: flex; align-items: center; gap: 6px; padding: 3px 7px 3px 3px; border-radius: 9999px; border: 1px solid rgba(0,255,157,0.25); background: rgba(0,255,157,0.07); }
 .user-avatar { width: 22px; height: 22px; border-radius: 50%; background: linear-gradient(135deg, #00ff9d, #00d4ff); display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: 800; color: #021a10; flex-shrink: 0; }
 .user-name-short { font-size: 0.67rem; font-weight: 600; color: rgba(255,255,255,0.8); max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.user-dropdown {
-  position: absolute; top: calc(100% + 6px); right: 0;
-  min-width: 180px; background: rgba(7,14,10,0.98); border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 12px; padding: 8px; box-shadow: 0 12px 32px rgba(0,0,0,0.5); z-index: 200;
+.btn-logout {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px 9px; border-radius: 9999px;
+  border: 1px solid rgba(248,113,113,0.35); background: rgba(248,113,113,0.1);
+  color: #f87171; font-size: 0.6rem; font-weight: 700;
+  letter-spacing: 0.08em; cursor: pointer; flex-shrink: 0;
+  transition: background 0.2s, border-color 0.2s;
+  white-space: nowrap;
 }
-.dropdown-email { font-size: 0.68rem; color: rgba(255,255,255,0.38); padding: 4px 8px 8px; border-bottom: 1px solid rgba(255,255,255,0.06); margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.dropdown-item { display: flex; align-items: center; gap: 8px; width: 100%; padding: 8px 10px; border-radius: 8px; background: transparent; border: none; color: #f87171; font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: background 0.15s; }
-.dropdown-item:hover { background: rgba(220,38,38,0.1); }
+.btn-logout:hover { background: rgba(248,113,113,0.2); border-color: rgba(248,113,113,0.55); }
+.logout-label { display: none; }
+@media (min-width: 360px) { .logout-label { display: inline; } }
 
 /* ── Mobile bottom navigation bar ──────────────────────────── */
 @media (min-width: 1024px) {

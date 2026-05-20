@@ -59,6 +59,7 @@
           </template>
         </div>
       </div>
+
     </section>
 
     <!-- MOBILE SEARCH BAR (below carousel, hidden on desktop) -->
@@ -245,13 +246,18 @@ function particleStyle(n: number) {
 .particle { position: absolute; border-radius: 50%; background: rgba(0,255,157,0.6); animation: pp 4s ease-in-out infinite; }
 @keyframes pp { 0%,100% { transform: scale(1); } 50% { transform: scale(2); } }
 
-.hero-content-wrap { position: relative; z-index: 10; flex: 1; display: flex; align-items: center; }
-.hero-content { width: 100%; padding: 32px 16px 28px; }
+.hero-content-wrap { position: relative; z-index: 10; flex: 1; display: flex; align-items: flex-end; }
+.hero-content { width: 100%; padding: 10px 12px 12px; }
+@media (min-width: 768px) { .hero-content-wrap { align-items: center; } }
 @media (min-width: 768px) { .hero-content { padding: 36px 24px 32px; } }
-.hero-text-block { max-width: 540px; }
-.hero-category { font-size: 0.7rem; font-weight: 800; letter-spacing: 0.2em; margin-bottom: 10px; text-transform: uppercase; }
-.hero-title { font-size: clamp(1.8rem, 4vw, 3.2rem); font-weight: 800; line-height: 1.06; color: #fff; margin-bottom: 14px; letter-spacing: -0.01em; }
-.hero-dots { display: flex; align-items: center; gap: 7px; margin-top: 28px; }
+.hero-text-block { max-width: 540px; background: rgba(10,40,120,0.72); border-radius: 10px; padding: 8px 12px 6px; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+@media (min-width: 768px) { .hero-text-block { background: transparent; border-radius: 0; padding: 0; backdrop-filter: none; -webkit-backdrop-filter: none; } }
+.hero-category { font-size: 0.58rem; font-weight: 800; letter-spacing: 0.2em; margin-bottom: 4px; text-transform: uppercase; }
+@media (min-width: 768px) { .hero-category { font-size: 0.7rem; margin-bottom: 10px; } }
+.hero-title { font-size: clamp(0.95rem, 3.5vw, 3.2rem); font-weight: 800; line-height: 1.1; color: #fff; margin-bottom: 6px; letter-spacing: -0.01em; }
+@media (min-width: 768px) { .hero-title { font-size: clamp(1.8rem, 4vw, 3.2rem); margin-bottom: 14px; } }
+.hero-dots { display: flex; align-items: center; gap: 7px; margin-top: 8px; }
+@media (min-width: 768px) { .hero-dots { margin-top: 28px; } }
 .hero-dot { height: 4px; border-radius: 2px; border: none; cursor: pointer; background: rgba(255,255,255,0.22); width: 5px; transition: background 0.3s, width 0.3s; }
 .hero-dot.active { background: #00ff9d; width: 24px; }
 
