@@ -1,7 +1,7 @@
 <template>
   <Teleport to="body">
     <Transition name="modal">
-      <div v-if="open" class="modal-backdrop" @click.self="maybeClose">
+      <div v-if="open" class="modal-backdrop" :class="{ 'modal-backdrop--paying': step === 'paying' }" @click.self="maybeClose">
         <div class="modal-box" :class="{ 'modal-box--paying': step === 'paying' }">
           <button v-if="step !== 'paying'" class="modal-close" @click="maybeClose">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
@@ -333,6 +333,11 @@ function stopPolling() {
   display: flex; align-items: center; justify-content: center; padding: 16px;
   background: rgba(0,0,0,0.85); backdrop-filter: blur(16px);
 }
+/* When paying: remove padding so iframe modal can go edge-to-edge on mobile */
+.modal-backdrop--paying {
+  padding: 0;
+  align-items: stretch;
+}
 .modal-box {
   position: relative; width: 100%; max-width: 360px;
   border-radius: 18px; border: 1px solid rgba(255,255,255,0.1);
@@ -342,14 +347,27 @@ function stopPolling() {
   transition: max-width 0.3s ease;
 }
 .modal-box--paying {
-  max-width: 380px;
+  max-width: 100%;
   padding: 0;
   overflow: hidden;
-  border-radius: 16px;
+  border-radius: 0;
   display: flex;
   flex-direction: column;
-  height: min(92vh, 680px);
-  max-height: min(92vh, 680px);
+  height: 100dvh;
+  max-height: 100dvh;
+}
+/* On larger screens, restore floating modal look */
+@media (min-width: 600px) {
+  .modal-backdrop--paying {
+    padding: 16px;
+    align-items: center;
+  }
+  .modal-box--paying {
+    max-width: 420px;
+    border-radius: 16px;
+    height: min(92vh, 700px);
+    max-height: min(92vh, 700px);
+  }
 }
 
 .modal-close {
