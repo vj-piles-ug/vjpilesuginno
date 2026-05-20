@@ -163,6 +163,8 @@ function doSearch() {
 /* ── Header bar ─────────────────────────────────────────────── */
 .header-bar {
   width: 100%;
+  max-width: 100%;
+  overflow: hidden;
   background: rgba(0,0,0,0.72);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
@@ -170,9 +172,11 @@ function doSearch() {
 }
 .header-inner {
   display: flex; align-items: center; justify-content: space-between;
-  gap: 6px; width: 100%; padding: 0 10px; height: 52px;
+  gap: 4px; width: 100%; max-width: 100%; padding: 0 8px; height: 48px;
+  box-sizing: border-box; overflow: hidden;
 }
-@media (min-width: 480px) { .header-inner { gap: 10px; padding: 0 12px; } }
+@media (min-width: 360px) { .header-inner { gap: 6px; padding: 0 10px; height: 50px; } }
+@media (min-width: 480px) { .header-inner { gap: 10px; padding: 0 12px; height: 52px; } }
 
 /* ── Brand ──────────────────────────────────────────────────── */
 .brand-link { display: flex; align-items: center; gap: 7px; text-decoration: none; flex-shrink: 0; }
@@ -192,16 +196,23 @@ function doSearch() {
 
 /* ── Search bar ─────────────────────────────────────────────── */
 .header-search {
-  flex: 1; max-width: 440px; display: flex; align-items: center;
+  flex: 1; min-width: 0; max-width: 440px; display: flex; align-items: center;
   background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 9999px; overflow: hidden; height: 32px;
+  border-radius: 9999px; overflow: hidden; height: 28px;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
+@media (min-width: 360px) { .header-search { height: 30px; } }
+@media (min-width: 480px) { .header-search { height: 32px; } }
 .header-search:focus-within { border-color: rgba(0,255,157,0.35); box-shadow: 0 0 0 3px rgba(0,255,157,0.08); }
-.hs-icon { width: 13px; height: 13px; flex-shrink: 0; margin-left: 10px; color: rgba(255,255,255,0.35); }
-.hs-input { flex: 1; background: transparent; border: none; outline: none; color: #fff; font-size: 0.75rem; padding: 0 6px; min-width: 0; }
-.hs-input::placeholder { color: rgba(255,255,255,0.3); }
-.hs-btn { flex-shrink: 0; margin: 3px; padding: 0 12px; height: 24px; border-radius: 9999px; background: linear-gradient(135deg, #00ff9d, #00c8b8, #00d4ff); color: #021a10; font-size: 0.62rem; font-weight: 800; letter-spacing: 0.1em; border: none; cursor: pointer; transition: filter 0.2s; }
+.hs-icon { width: 11px; height: 11px; flex-shrink: 0; margin-left: 7px; color: rgba(255,255,255,0.35); }
+@media (min-width: 360px) { .hs-icon { width: 13px; height: 13px; margin-left: 10px; } }
+.hs-input { flex: 1; background: transparent; border: none; outline: none; color: #fff; font-size: 0.7rem; padding: 0 4px; min-width: 0; }
+@media (min-width: 360px) { .hs-input { font-size: 0.75rem; padding: 0 6px; } }
+.hs-input::placeholder { color: rgba(255,255,255,0.3); font-size: 0.68rem; }
+@media (min-width: 360px) { .hs-input::placeholder { font-size: 0.72rem; } }
+.hs-btn { flex-shrink: 0; margin: 2px; padding: 0 8px; height: 22px; border-radius: 9999px; background: linear-gradient(135deg, #00ff9d, #00c8b8, #00d4ff); color: #021a10; font-size: 0.55rem; font-weight: 800; letter-spacing: 0.1em; border: none; cursor: pointer; transition: filter 0.2s; }
+@media (min-width: 360px) { .hs-btn { margin: 3px; padding: 0 10px; height: 24px; font-size: 0.6rem; } }
+@media (min-width: 480px) { .hs-btn { padding: 0 12px; font-size: 0.62rem; } }
 .hs-btn:hover { filter: brightness(1.06); }
 
 /* ── Install App button ─────────────────────────────────────── */
@@ -221,29 +232,33 @@ function doSearch() {
 
 /* ── Subscribe button ───────────────────────────────────────── */
 .btn-subscribe {
-  display: inline-flex; align-items: center; gap: 4px;
-  padding: 5px 12px; border-radius: 9999px;
+  display: inline-flex; align-items: center; gap: 3px;
+  padding: 4px 7px; border-radius: 9999px;
   border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.05);
-  color: rgba(255,255,255,0.68); font-size: 0.65rem; font-weight: 700;
-  letter-spacing: 0.08em; cursor: pointer; transition: background 0.2s, color 0.2s;
+  color: rgba(255,255,255,0.68); font-size: 0.6rem; font-weight: 700;
+  letter-spacing: 0.06em; cursor: pointer; transition: background 0.2s, color 0.2s;
   white-space: nowrap; flex-shrink: 0;
 }
+@media (min-width: 360px) { .btn-subscribe { padding: 4px 10px; gap: 4px; font-size: 0.63rem; } }
+@media (min-width: 480px) { .btn-subscribe { padding: 5px 12px; font-size: 0.65rem; } }
 .btn-subscribe:hover { background: rgba(255,255,255,0.09); color: #fff; }
 .sub-label { display: none; }
-@media (min-width: 380px) { .sub-label { display: inline; } }
+@media (min-width: 340px) { .sub-label { display: inline; } }
 
 /* ── Login button ───────────────────────────────────────────── */
 .btn-login {
-  display: inline-flex; align-items: center; gap: 5px;
-  padding: 5px 10px; border-radius: 9999px;
+  display: inline-flex; align-items: center; gap: 3px;
+  padding: 4px 7px; border-radius: 9999px;
   border: 1px solid rgba(255,255,255,0.1); background: transparent;
-  color: rgba(255,255,255,0.65); font-size: 0.65rem; font-weight: 700;
-  letter-spacing: 0.1em; cursor: pointer; transition: background 0.2s, color 0.2s;
+  color: rgba(255,255,255,0.65); font-size: 0.6rem; font-weight: 700;
+  letter-spacing: 0.08em; cursor: pointer; transition: background 0.2s, color 0.2s;
   white-space: nowrap; flex-shrink: 0;
 }
+@media (min-width: 360px) { .btn-login { padding: 4px 9px; gap: 4px; font-size: 0.63rem; } }
+@media (min-width: 480px) { .btn-login { padding: 5px 10px; font-size: 0.65rem; } }
 .btn-login:hover { background: rgba(255,255,255,0.07); color: #fff; }
 .login-label { display: none; }
-@media (min-width: 360px) { .login-label { display: inline; } }
+@media (min-width: 320px) { .login-label { display: inline; } }
 
 /* ── User menu ──────────────────────────────────────────────── */
 .user-menu { position: relative; }

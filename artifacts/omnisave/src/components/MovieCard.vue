@@ -79,7 +79,7 @@ const shortType = computed(() => {
 </script>
 
 <style scoped>
-.poster-card { cursor: pointer; display: flex; flex-direction: column; gap: 5px; }
+.poster-card { cursor: pointer; display: flex; flex-direction: column; gap: 5px; width: 100%; min-width: 0; overflow: hidden; box-sizing: border-box; }
 
 .poster-art {
   position: relative; aspect-ratio: 2 / 3; border-radius: 8px; overflow: hidden;
