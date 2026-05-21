@@ -124,7 +124,7 @@ const shortType = computed(() => {
 .poster-rating { display: inline-flex; align-items: center; gap: 3px; font-size: 0.62rem; font-weight: 700; color: #fff; }
 
 .poster-info { padding: 0 1px; display: flex; flex-direction: column; gap: 2px; }
-.poster-title { font-size: 0.72rem; font-weight: 600; color: rgba(255,255,255,0.88); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.25; }
+.poster-title { font-size: 0.72rem; font-weight: 600; color: rgba(255,255,255,0.88); white-space: normal; overflow: visible; text-overflow: unset; line-height: 1.3; word-break: break-word; }
 .poster-type { font-size: 0.6rem; color: rgba(255,255,255,0.36); font-weight: 500; margin-bottom: 3px; }
 .poster-dl-btn {
   width: 100%; padding: 6px 0; border-radius: 7px; border: none;
