@@ -142,15 +142,21 @@
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(0,255,157,0.8)" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
               <span class="viewer-title">{{ viewerTitle }}</span>
             </div>
-            <button class="viewer-close-btn" @click="closeViewer">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
-            </button>
+            <div class="viewer-bar-actions">
+              <a :href="viewerDirectUrl" target="_blank" rel="noopener" class="viewer-open-btn">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                Open
+              </a>
+              <button class="viewer-close-btn" @click="closeViewer">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+              </button>
+            </div>
           </div>
           <div class="viewer-frame-wrap" @contextmenu.prevent>
             <div v-if="iframeLoading" class="viewer-loading">
               <div class="viewer-spinner"></div>
               <span>Loading…</span>
-              <span class="viewer-loading-hint">If it doesn't load, use "Open directly" above</span>
+              <span class="viewer-loading-hint">Tap "Open" in the top-right if the file doesn't load</span>
             </div>
             <iframe
               :key="viewerUrl"
@@ -206,9 +212,23 @@ const iframeLoading = ref(false)
 
 let loadTimer: ReturnType<typeof setTimeout> | null = null
 
+// iOS Safari cannot download files via iframes — open directly instead
+function isIOS(): boolean {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+}
+
 function openViewer(rawUrl: string, title: string) {
-  viewerUrl.value = toDirectDownload(rawUrl)
-  viewerDirectUrl.value = toDirectDownload(rawUrl)
+  const url = toDirectDownload(rawUrl)
+  viewerDirectUrl.value = url
+
+  if (isIOS()) {
+    // On iOS, iframes block downloads — open in Safari directly
+    window.open(url, '_blank', 'noopener')
+    return
+  }
+
+  viewerUrl.value = url
   viewerTitle.value = title
   iframeLoading.value = true
   showViewer.value = true
@@ -389,8 +409,18 @@ onMounted(() => {})
   padding: 12px 16px; background: rgba(255,255,255,0.03);
   border-bottom: 1px solid rgba(255,255,255,0.07); flex-shrink: 0;
 }
-.viewer-bar-left { display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1; }
+.viewer-bar-left { display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1; overflow: hidden; }
+.viewer-bar-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
 .viewer-title { font-size: 0.75rem; font-weight: 700; color: rgba(255,255,255,0.75); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.viewer-open-btn {
+  display: flex; align-items: center; gap: 4px;
+  padding: 4px 10px; border-radius: 6px;
+  border: 1px solid rgba(0,255,157,0.3); background: rgba(0,255,157,0.08);
+  color: #00ff9d; font-size: 0.65rem; font-weight: 800; letter-spacing: 0.06em;
+  cursor: pointer; text-decoration: none; transition: background 0.15s;
+  white-space: nowrap;
+}
+.viewer-open-btn:hover { background: rgba(0,255,157,0.15); }
 .viewer-close-btn {
   display: flex; align-items: center; justify-content: center;
   width: 26px; height: 26px; border-radius: 50%;
