@@ -57,8 +57,17 @@
       </button>
     </div>
 
+    <div class="search-bar-wrap">
+      <div class="search-bar">
+        <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        <input v-model="searchQuery" type="text" placeholder="Search series by title…" class="search-input" />
+        <button v-if="searchQuery" class="search-clear" @click="searchQuery = ''">✕</button>
+      </div>
+      <span class="search-count">{{ filteredSeries.length }} / {{ dbSeries.length }}</span>
+    </div>
+
     <div class="series-grid">
-      <div v-for="s in dbSeries" :key="s.key" class="series-card" :class="{ 'is-editing': editingKey === s.key }">
+      <div v-for="s in filteredSeries" :key="s.key" class="series-card" :class="{ 'is-editing': editingKey === s.key }">
         <div class="sc-poster">
           <img v-if="s.image" :src="s.image" alt="" class="sc-img" @error="onImgErr" />
           <div v-else class="sc-no-poster">
@@ -82,14 +91,21 @@
           </div>
         </div>
       </div>
-      <div v-if="dbSeries.length === 0" class="empty">No series added yet. Use the form above to add your first series.</div>
+      <div v-if="filteredSeries.length === 0" class="empty">{{ searchQuery ? 'No series match your search.' : 'No series added yet. Use the form above to add your first series.' }}</div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { dbSeries, addSeries, updateSeries, removeSeries, type AdminSeries, type FbEpisode } from '../../store/db'
+
+const searchQuery = ref('')
+const filteredSeries = computed(() => {
+  const q = searchQuery.value.trim().toLowerCase()
+  if (!q) return dbSeries.value
+  return dbSeries.value.filter(s => s.title.toLowerCase().includes(q))
+})
 
 const CATEGORIES = ['Action', 'Comedy', 'Drama', 'Horror', 'Romance', 'Sci-Fi', 'Thriller', 'Documentary', 'Reality TV']
 
@@ -230,5 +246,14 @@ function onImgErr(e: Event) {
 .sc-btn-del { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 6px; background: rgba(220,38,38,0.12); border: 1px solid rgba(220,38,38,0.3); color: #f87171; border-radius: 7px; font-size: 0.72rem; font-weight: 700; cursor: pointer; }
 .sc-btn-del:hover { background: rgba(220,38,38,0.22); }
 .empty { text-align: center; color: rgba(255,255,255,0.25); padding: 40px 20px; grid-column: 1/-1; font-size: 0.85rem; }
+.search-bar-wrap { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+.search-bar { flex: 1; display: flex; align-items: center; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; height: 38px; transition: border-color 0.2s; }
+.search-bar:focus-within { border-color: rgba(0,255,157,0.4); }
+.search-icon { flex-shrink: 0; margin: 0 10px; color: rgba(255,255,255,0.35); }
+.search-input { flex: 1; background: transparent; border: none; outline: none; color: #fff; font-size: 0.83rem; padding: 0 6px; min-width: 0; }
+.search-input::placeholder { color: rgba(255,255,255,0.25); }
+.search-clear { flex-shrink: 0; background: none; border: none; color: rgba(255,255,255,0.35); cursor: pointer; padding: 0 12px; font-size: 0.75rem; height: 100%; transition: color 0.15s; }
+.search-clear:hover { color: rgba(255,255,255,0.7); }
+.search-count { font-size: 0.72rem; font-weight: 600; color: rgba(255,255,255,0.3); white-space: nowrap; flex-shrink: 0; }
 @media (max-width: 768px) { .tab-page { padding: 16px 12px; } .form-row-3 { grid-template-columns: 1fr; } .form-row-2 { grid-template-columns: 1fr; } .ep-row { flex-wrap: wrap; } }
 </style>

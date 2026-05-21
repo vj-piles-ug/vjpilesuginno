@@ -56,8 +56,17 @@
         {{ saving ? 'Saving...' : (editingKey !== null ? 'Update' : 'Add Animation') }}
       </button>
     </div>
+    <div class="search-bar-wrap">
+      <div class="search-bar">
+        <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        <input v-model="searchQuery" type="text" placeholder="Search animation by title…" class="search-input" />
+        <button v-if="searchQuery" class="search-clear" @click="searchQuery = ''">✕</button>
+      </div>
+      <span class="search-count">{{ filteredAnimation.length }} / {{ dbAnimation.length }}</span>
+    </div>
+
     <div class="items-grid">
-      <div v-for="item in dbAnimation" :key="item.key" class="item-card" :class="{ 'is-editing': editingKey === item.key }">
+      <div v-for="item in filteredAnimation" :key="item.key" class="item-card" :class="{ 'is-editing': editingKey === item.key }">
         <div class="ic-poster">
           <img v-if="item.image" :src="item.image" alt="" class="ic-img" @error="onImgErr" />
           <div v-else class="ic-no-poster">
@@ -75,14 +84,21 @@
           </div>
         </div>
       </div>
-      <div v-if="dbAnimation.length === 0" class="empty">No animation added yet.</div>
+      <div v-if="filteredAnimation.length === 0" class="empty">{{ searchQuery ? 'No animation matches your search.' : 'No animation added yet.' }}</div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { dbAnimation, addAnimation, updateAnimation, removeAnimation, type AdminAnimation } from '../../store/db'
+
+const searchQuery = ref('')
+const filteredAnimation = computed(() => {
+  const q = searchQuery.value.trim().toLowerCase()
+  if (!q) return dbAnimation.value
+  return dbAnimation.value.filter(a => a.title.toLowerCase().includes(q))
+})
 
 const defaultForm = () => ({ title: '', category: 'Anime', streamlink: '', image: '', rating: 7.5, year: new Date().getFullYear(), isTrending: false })
 const form = ref(defaultForm())
@@ -177,5 +193,14 @@ function onImgErr(e: Event) { (e.target as HTMLImageElement).style.display = 'no
 .ic-btn-edit { flex: 1; padding: 5px 8px; background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.3); color: #4ade80; border-radius: 6px; font-size: 0.68rem; font-weight: 700; cursor: pointer; }
 .ic-btn-del { flex: 1; padding: 5px 8px; background: rgba(220,38,38,0.1); border: 1px solid rgba(220,38,38,0.25); color: #f87171; border-radius: 6px; font-size: 0.68rem; font-weight: 700; cursor: pointer; }
 .empty { text-align: center; color: rgba(255,255,255,0.25); padding: 40px; grid-column: 1/-1; }
+.search-bar-wrap { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+.search-bar { flex: 1; display: flex; align-items: center; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; height: 38px; transition: border-color 0.2s; }
+.search-bar:focus-within { border-color: rgba(0,255,157,0.4); }
+.search-icon { flex-shrink: 0; margin: 0 10px; color: rgba(255,255,255,0.35); }
+.search-input { flex: 1; background: transparent; border: none; outline: none; color: #fff; font-size: 0.83rem; padding: 0 6px; min-width: 0; }
+.search-input::placeholder { color: rgba(255,255,255,0.25); }
+.search-clear { flex-shrink: 0; background: none; border: none; color: rgba(255,255,255,0.35); cursor: pointer; padding: 0 12px; font-size: 0.75rem; height: 100%; transition: color 0.15s; }
+.search-clear:hover { color: rgba(255,255,255,0.7); }
+.search-count { font-size: 0.72rem; font-weight: 600; color: rgba(255,255,255,0.3); white-space: nowrap; flex-shrink: 0; }
 @media (max-width: 640px) { .tab-page { padding: 16px 12px; } .form-grid { grid-template-columns: 1fr; } .col-2 { grid-column: span 1; } }
 </style>
