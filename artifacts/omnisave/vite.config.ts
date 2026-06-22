@@ -3,7 +3,6 @@ import vue from "@vitejs/plugin-vue";
 import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
-import { pesapalMiddlewarePlugin } from "./pesapal-middleware-plugin";
 
 const port = Number(process.env.PORT ?? "5000");
 const basePath = process.env.BASE_PATH ?? "/";
@@ -11,7 +10,6 @@ const basePath = process.env.BASE_PATH ?? "/";
 export default defineConfig({
   base: basePath,
   plugins: [
-    pesapalMiddlewarePlugin(),
     vue(),
     tailwindcss(),
     runtimeErrorOverlay(),
@@ -46,6 +44,29 @@ export default defineConfig({
     allowedHosts: true,
     fs: {
       strict: true,
+    },
+    proxy: {
+      "/pesapal-proxy": {
+        target: "https://pay.pesapal.com/v3",
+        changeOrigin: true,
+        secure: true,
+        rewrite: (p) => p.replace(/^\/pesapal-proxy/, ""),
+        configure: (proxy) => {
+          proxy.on("proxyReq", (proxyReq) => {
+            // Remove Accept-Encoding so PesaPal returns plain JSON (not gzip)
+            proxyReq.removeHeader("accept-encoding");
+            console.log(
+              `[pesapal-proxy] ${proxyReq.method} ${proxyReq.path}`,
+            );
+          });
+          proxy.on("proxyRes", (proxyRes) => {
+            console.log(`[pesapal-proxy] → ${proxyRes.statusCode}`);
+          });
+          proxy.on("error", (err) => {
+            console.error("[pesapal-proxy] error:", err.message);
+          });
+        },
+      },
     },
   },
   preview: {
