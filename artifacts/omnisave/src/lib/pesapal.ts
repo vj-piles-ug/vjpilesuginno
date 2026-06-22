@@ -1,9 +1,9 @@
 const CONSUMER_KEY = 'vTibxQeLvkiJ0aBZQk3Ci5gL2BUx1dP0'
 const CONSUMER_SECRET = 'kdwghPqFeT5dxwnhrpVccfY9B7o='
 
-// In dev, Vite proxies /api/pesapal → https://pay.pesapal.com/v3 (avoiding CORS).
-// In production (static build), call the PesaPal API directly.
-const BASE = import.meta.env.DEV ? '/api/pesapal' : 'https://pay.pesapal.com/v3'
+// Vite proxies /api/pesapal → https://pay.pesapal.com/v3 in both dev and preview servers.
+// This avoids CORS since the proxy makes the request server-side.
+const BASE = '/api/pesapal'
 
 export interface PesapalOrder {
   orderTrackingId: string
@@ -21,16 +21,24 @@ export interface PesapalStatus {
 }
 
 export async function pesapalGetToken(): Promise<string> {
-  const res = await fetch(`${BASE}/api/Auth/RequestToken`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-    body: JSON.stringify({ consumer_key: CONSUMER_KEY, consumer_secret: CONSUMER_SECRET }),
-  })
+  let res: Response
+  try {
+    res = await fetch(`${BASE}/api/Auth/RequestToken`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ consumer_key: CONSUMER_KEY, consumer_secret: CONSUMER_SECRET }),
+    })
+  } catch (err: any) {
+    console.error('[PesaPal] Network error on GetToken:', err)
+    throw new Error(`Network error reaching PesaPal: ${err.message}. If this is a CORS issue, payment requires the live site to be hosted with a backend proxy.`)
+  }
   if (!res.ok) {
     const text = await res.text().catch(() => res.statusText)
+    console.error('[PesaPal] Auth HTTP error:', res.status, text)
     throw new Error(`PesaPal auth failed (${res.status}): ${text}`)
   }
   const data = await res.json()
+  console.log('[PesaPal] Auth response:', data)
   if (!data.token) throw new Error(`PesaPal auth error: ${data.error || data.message || JSON.stringify(data)}`)
   return data.token
 }
