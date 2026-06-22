@@ -1,9 +1,9 @@
 const CONSUMER_KEY = 'vTibxQeLvkiJ0aBZQk3Ci5gL2BUx1dP0'
 const CONSUMER_SECRET = 'kdwghPqFeT5dxwnhrpVccfY9B7o='
 
-// Vite proxies /api/pesapal → https://pay.pesapal.com/v3 in both dev and preview servers.
-// This avoids CORS since the proxy makes the request server-side.
-const BASE = '/api/pesapal'
+// Vite proxies /pesapal-proxy → https://pay.pesapal.com/v3 server-side (avoids CORS).
+// Using /pesapal-proxy instead of /api/... to avoid Replit's reverse proxy intercepting /api/ paths.
+const BASE = '/pesapal-proxy'
 
 export interface PesapalOrder {
   orderTrackingId: string

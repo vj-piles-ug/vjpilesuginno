@@ -46,10 +46,10 @@ export default defineConfig({
       strict: true,
     },
     proxy: {
-      "/api/pesapal": {
+      "/pesapal-proxy": {
         target: "https://pay.pesapal.com/v3",
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/pesapal/, ""),
+        rewrite: (path) => path.replace(/^\/pesapal-proxy/, ""),
         secure: true,
       },
     },
@@ -59,10 +59,10 @@ export default defineConfig({
     host: "0.0.0.0",
     allowedHosts: true,
     proxy: {
-      "/api/pesapal": {
+      "/pesapal-proxy": {
         target: "https://pay.pesapal.com/v3",
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/pesapal/, ""),
+        rewrite: (path) => path.replace(/^\/pesapal-proxy/, ""),
         secure: true,
       },
     },
