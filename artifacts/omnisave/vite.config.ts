@@ -3,6 +3,7 @@ import vue from "@vitejs/plugin-vue";
 import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
+import { pesapalMiddlewarePlugin } from "./pesapal-middleware-plugin";
 
 const port = Number(process.env.PORT ?? "5000");
 const basePath = process.env.BASE_PATH ?? "/";
@@ -10,6 +11,7 @@ const basePath = process.env.BASE_PATH ?? "/";
 export default defineConfig({
   base: basePath,
   plugins: [
+    pesapalMiddlewarePlugin(),
     vue(),
     tailwindcss(),
     runtimeErrorOverlay(),
@@ -45,26 +47,10 @@ export default defineConfig({
     fs: {
       strict: true,
     },
-    proxy: {
-      "/pesapal-proxy": {
-        target: "https://pay.pesapal.com/v3",
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/pesapal-proxy/, ""),
-        secure: true,
-      },
-    },
   },
   preview: {
     port,
     host: "0.0.0.0",
     allowedHosts: true,
-    proxy: {
-      "/pesapal-proxy": {
-        target: "https://pay.pesapal.com/v3",
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/pesapal-proxy/, ""),
-        secure: true,
-      },
-    },
   },
 });
