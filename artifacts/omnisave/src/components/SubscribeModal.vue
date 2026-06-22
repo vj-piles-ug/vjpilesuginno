@@ -221,14 +221,12 @@ async function startPayment() {
   const normalizedPhone = normalizePhone(phoneInput.value.trim())
 
   try {
+    const origin = window.location.origin
     const token = await pesapalGetToken()
-    if (!token) throw new Error('Could not connect to PesaPal. Check your internet and try again.')
     authToken = token
 
-    const origin = window.location.origin
     const ipnUrl = `${origin}/api/pesapal-ipn`
     const ipnId = await pesapalRegisterIPN(token, ipnUrl)
-    if (!ipnId) throw new Error('Failed to register payment notification. Please try again.')
 
     const order = await pesapalSubmitOrder(token, ipnId, {
       amount: plan.price,
@@ -240,7 +238,6 @@ async function startPayment() {
       callbackUrl: `${origin}/?pp_done=1`,
       cancellationUrl: `${origin}/`,
     })
-    if (!order) throw new Error('Failed to create payment order. Please try again.')
 
     trackingId = order.orderTrackingId
 
