@@ -52,9 +52,16 @@ export default defineConfig({
         secure: true,
         rewrite: (p) => p.replace(/^\/pesapal-proxy/, ""),
         configure: (proxy) => {
-          proxy.on("proxyReq", (proxyReq) => {
-            // Remove Accept-Encoding so PesaPal returns plain JSON (not gzip)
-            proxyReq.removeHeader("accept-encoding");
+          proxy.on("proxyReq", (proxyReq, req) => {
+            // Strip headers that cause PesaPal to reject browser requests
+            // (PesaPal returns 405 when it sees an Origin/Referer it doesn't recognise)
+            proxyReq.removeHeader("accept-encoding"); // ensure plain JSON, not gzip
+            proxyReq.removeHeader("origin");
+            proxyReq.removeHeader("referer");
+            proxyReq.removeHeader("sec-fetch-site");
+            proxyReq.removeHeader("sec-fetch-mode");
+            proxyReq.removeHeader("sec-fetch-dest");
+            proxyReq.removeHeader("sec-fetch-user");
             console.log(
               `[pesapal-proxy] ${proxyReq.method} ${proxyReq.path}`,
             );

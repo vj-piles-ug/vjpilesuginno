@@ -1,0 +1,1 @@
+- [PesaPal proxy header stripping](pesapal-proxy-headers.md) — PesaPal returns 405 if Origin/Sec-Fetch-* headers are forwarded; must be stripped by Vite proxy.
