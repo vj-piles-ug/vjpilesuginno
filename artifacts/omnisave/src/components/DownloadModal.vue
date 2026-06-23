@@ -148,13 +148,18 @@
             </div>
           </div>
           <div class="viewer-frame-wrap" @contextmenu.prevent>
+            <div v-if="iframeLoading" class="iframe-loading-overlay">
+              <div class="iframe-loading-spinner"></div>
+              <p class="iframe-loading-text">Loading, please wait…</p>
+            </div>
             <iframe
               :key="viewerUrl"
               :src="viewerUrl"
               class="viewer-iframe"
               frameborder="0"
-              sandbox="allow-scripts allow-forms allow-same-origin allow-downloads allow-popups allow-popups-to-escape-sandbox"
-              allow="autoplay; fullscreen; encrypted-media; downloads"
+              referrerpolicy="no-referrer"
+              allow="autoplay; fullscreen; encrypted-media; downloads *"
+              @load="onIframeLoad"
             ></iframe>
           </div>
         </div>
@@ -197,18 +202,31 @@ const showViewer = ref(false)
 const viewerUrl = ref('')
 const viewerDirectUrl = ref('')
 const viewerTitle = ref('')
+const iframeLoading = ref(false)
+
+let loadTimer: ReturnType<typeof setTimeout> | null = null
 
 function openViewer(rawUrl: string, title: string) {
   const url = toDirectDownload(rawUrl)
   viewerDirectUrl.value = url
   viewerUrl.value = url
   viewerTitle.value = title
+  iframeLoading.value = true
   showViewer.value = true
+  if (loadTimer) clearTimeout(loadTimer)
+  loadTimer = setTimeout(() => { iframeLoading.value = false }, 8000)
+}
+
+function onIframeLoad() {
+  if (loadTimer) { clearTimeout(loadTimer); loadTimer = null }
+  iframeLoading.value = false
 }
 
 function closeViewer() {
   showViewer.value = false
   viewerUrl.value = ''
+  iframeLoading.value = false
+  if (loadTimer) { clearTimeout(loadTimer); loadTimer = null }
 }
 
 // ── Right-click + DevTools blocking (active while viewer is open) ──
@@ -398,6 +416,21 @@ onUnmounted(() => {
 .viewer-close-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
 .viewer-frame-wrap {
   flex: 1; position: relative; overflow: hidden; border-radius: 0 0 22px 22px;
+}
+.iframe-loading-overlay {
+  position: absolute; inset: 0; z-index: 3;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+  background: rgba(8,16,12,0.97);
+}
+.iframe-loading-spinner {
+  width: 36px; height: 36px; border-radius: 50%;
+  border: 3px solid rgba(0,255,157,0.15);
+  border-top-color: #00ff9d;
+  animation: spin 0.8s linear infinite;
+}
+.iframe-loading-text {
+  color: rgba(255,255,255,0.6); font-size: 0.8rem; font-weight: 500;
+  letter-spacing: 0.02em; margin: 0;
 }
 .viewer-loading {
   position: absolute; inset: 0; z-index: 2;
