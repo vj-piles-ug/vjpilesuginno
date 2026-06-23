@@ -240,7 +240,7 @@ function onImgErr(e: Event) {
 .mc-rating-badge { position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.75); color: #f59e0b; font-size: 0.72rem; font-weight: 800; padding: 3px 7px; border-radius: 4px; z-index: 1; }
 .mc-trend-badge { position: absolute; bottom: 8px; left: 8px; background: rgba(124,58,237,0.9); color: #fff; font-size: 0.55rem; font-weight: 800; padding: 2px 6px; border-radius: 4px; z-index: 1; letter-spacing: 0.06em; }
 .mc-body { padding: 12px; display: flex; flex-direction: column; gap: 2px; flex: 1; }
-.mc-title { font-size: 0.82rem; font-weight: 700; color: #fff; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 2px; }
+.mc-title { font-size: 0.82rem; font-weight: 700; color: #fff; line-height: 1.3; word-break: break-word; margin-bottom: 2px; }
 .mc-year { font-size: 0.7rem; color: rgba(255,255,255,0.35); margin-bottom: 10px; }
 .mc-actions { display: flex; flex-direction: column; gap: 5px; margin-top: auto; }
 .mc-btn-edit { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 6px; background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.3); color: #4ade80; border-radius: 7px; font-size: 0.72rem; font-weight: 700; cursor: pointer; }

@@ -142,10 +142,6 @@
               <span class="viewer-title">{{ viewerTitle }}</span>
             </div>
             <div class="viewer-bar-actions">
-              <a :href="viewerDirectUrl" target="_blank" rel="noopener" class="viewer-open-btn">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-                Open
-              </a>
               <button class="viewer-close-btn" @click="closeViewer">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
               </button>
