@@ -175,7 +175,7 @@ import type { Movie } from '../data/movies'
 import { useAuth } from '../store/auth'
 import { isSubscribed } from '../store/subscription'
 import { loginOpen, subscribeOpen } from '../store/ui'
-import { toDirectDownload, toEmbedUrl } from '../lib/utils'
+import { toDirectDownload } from '../lib/utils'
 
 const props = defineProps<{ movie: Movie | null }>()
 defineEmits(['close'])
@@ -208,9 +208,9 @@ const iframeLoading = ref(false)
 let loadTimer: ReturnType<typeof setTimeout> | null = null
 
 function openViewer(rawUrl: string, title: string) {
-  const embedUrl = toEmbedUrl(rawUrl)
-  viewerDirectUrl.value = toDirectDownload(rawUrl)
-  viewerUrl.value = embedUrl
+  const url = toDirectDownload(rawUrl)
+  viewerDirectUrl.value = url
+  viewerUrl.value = url
   viewerTitle.value = title
   iframeLoading.value = true
   showViewer.value = true
