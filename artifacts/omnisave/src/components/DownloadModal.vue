@@ -200,15 +200,20 @@ const posterThumbStyle = computed(() => {
 // ── Embedded viewer ────────────────────────────────────────────
 const showViewer = ref(false)
 const viewerUrl = ref('')
-const viewerDirectUrl = ref('')
 const viewerTitle = ref('')
 const iframeLoading = ref(false)
+
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
 
 let loadTimer: ReturnType<typeof setTimeout> | null = null
 
 function openViewer(rawUrl: string, title: string) {
   const url = toDirectDownload(rawUrl)
-  viewerDirectUrl.value = url
+  if (isIOS) {
+    window.open(url, '_blank', 'noopener')
+    return
+  }
   viewerUrl.value = url
   viewerTitle.value = title
   iframeLoading.value = true
