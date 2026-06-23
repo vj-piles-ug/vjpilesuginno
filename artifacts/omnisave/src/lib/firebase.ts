@@ -4,14 +4,14 @@ import { getDatabase } from "firebase/database"
 import { getStorage } from "firebase/storage"
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
+  apiKey: "AIzaSyBsz3RyI6H9M70i-qG6HOAuvnyup_oOaaI",
+  authDomain: "vj-pilesug.firebaseapp.com",
+  databaseURL: "https://vj-pilesug-default-rtdb.firebaseio.com",
+  projectId: "vj-pilesug",
+  storageBucket: "vj-pilesug.firebasestorage.app",
+  messagingSenderId: "916407856446",
+  appId: "1:916407856446:web:0df28d7255061b7ee1906f",
+  measurementId: "G-P73D3NMZCN",
 }
 
 const app = initializeApp(firebaseConfig)
