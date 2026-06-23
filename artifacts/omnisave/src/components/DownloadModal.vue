@@ -142,17 +142,16 @@
               <span class="viewer-title">{{ viewerTitle }}</span>
             </div>
             <div class="viewer-bar-actions">
+              <a v-if="isIOS" :href="viewerDirectUrl" class="ios-dl-btn" @click.prevent="iosDownload">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Download
+              </a>
               <button class="viewer-close-btn" @click="closeViewer">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
               </button>
             </div>
           </div>
           <div class="viewer-frame-wrap" @contextmenu.prevent>
-            <div v-if="iframeLoading" class="viewer-loading">
-              <div class="viewer-spinner"></div>
-              <span>Loading…</span>
-              <span class="viewer-loading-hint">Tap "Open" in the top-right if the file doesn't load</span>
-            </div>
             <iframe
               :key="viewerUrl"
               :src="viewerUrl"
@@ -160,7 +159,6 @@
               frameborder="0"
               allowfullscreen
               allow="autoplay; fullscreen; encrypted-media"
-              @load="onIframeLoad"
             ></iframe>
           </div>
         </div>
@@ -170,7 +168,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onUnmounted } from 'vue'
 import type { Movie } from '../data/movies'
 import { useAuth } from '../store/auth'
 import { isSubscribed } from '../store/subscription'
@@ -203,32 +201,27 @@ const showViewer = ref(false)
 const viewerUrl = ref('')
 const viewerDirectUrl = ref('')
 const viewerTitle = ref('')
-const iframeLoading = ref(false)
 
-let loadTimer: ReturnType<typeof setTimeout> | null = null
+const isIOS = computed(() =>
+  /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+)
+
+function iosDownload() {
+  window.open(viewerDirectUrl.value, '_blank', 'noopener')
+}
 
 function openViewer(rawUrl: string, title: string) {
   const url = toDirectDownload(rawUrl)
   viewerDirectUrl.value = url
   viewerUrl.value = url
   viewerTitle.value = title
-  iframeLoading.value = true
   showViewer.value = true
-  // Fallback: hide spinner after 3s in case @load doesn't fire (cross-origin)
-  if (loadTimer) clearTimeout(loadTimer)
-  loadTimer = setTimeout(() => { iframeLoading.value = false }, 3000)
-}
-
-function onIframeLoad() {
-  if (loadTimer) { clearTimeout(loadTimer); loadTimer = null }
-  iframeLoading.value = false
 }
 
 function closeViewer() {
   showViewer.value = false
   viewerUrl.value = ''
-  iframeLoading.value = false
-  if (loadTimer) { clearTimeout(loadTimer); loadTimer = null }
 }
 
 // ── Right-click + DevTools blocking (active while viewer is open) ──
@@ -259,9 +252,6 @@ onUnmounted(() => {
   document.removeEventListener('contextmenu', blockMenu)
   document.removeEventListener('keydown', blockDevTools, true)
 })
-
-// Also block globally while page has the viewer open
-onMounted(() => {})
 </script>
 
 <style scoped>
@@ -403,6 +393,15 @@ onMounted(() => {})
   white-space: nowrap;
 }
 .viewer-open-btn:hover { background: rgba(0,255,157,0.15); }
+.ios-dl-btn {
+  display: flex; align-items: center; gap: 5px;
+  padding: 5px 12px; border-radius: 7px;
+  border: 1px solid rgba(0,255,157,0.4); background: rgba(0,255,157,0.12);
+  color: #00ff9d; font-size: 0.68rem; font-weight: 800; letter-spacing: 0.05em;
+  cursor: pointer; text-decoration: none; white-space: nowrap;
+  transition: background 0.15s;
+}
+.ios-dl-btn:active { background: rgba(0,255,157,0.22); }
 .viewer-close-btn {
   display: flex; align-items: center; justify-content: center;
   width: 26px; height: 26px; border-radius: 50%;
