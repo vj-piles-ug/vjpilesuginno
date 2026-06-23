@@ -175,7 +175,7 @@ import type { Movie } from '../data/movies'
 import { useAuth } from '../store/auth'
 import { isSubscribed } from '../store/subscription'
 import { loginOpen, subscribeOpen } from '../store/ui'
-import { toDirectDownload } from '../lib/utils'
+import { toDirectDownload, toEmbedUrl } from '../lib/utils'
 
 const props = defineProps<{ movie: Movie | null }>()
 defineEmits(['close'])
@@ -207,23 +207,10 @@ const iframeLoading = ref(false)
 
 let loadTimer: ReturnType<typeof setTimeout> | null = null
 
-// iOS Safari cannot download files via iframes — open directly instead
-function isIOS(): boolean {
-  return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
-}
-
 function openViewer(rawUrl: string, title: string) {
-  const url = toDirectDownload(rawUrl)
-  viewerDirectUrl.value = url
-
-  if (isIOS()) {
-    // On iOS, iframes block downloads — open in Safari directly
-    window.open(url, '_blank', 'noopener')
-    return
-  }
-
-  viewerUrl.value = url
+  const embedUrl = toEmbedUrl(rawUrl)
+  viewerDirectUrl.value = toDirectDownload(rawUrl)
+  viewerUrl.value = embedUrl
   viewerTitle.value = title
   iframeLoading.value = true
   showViewer.value = true
