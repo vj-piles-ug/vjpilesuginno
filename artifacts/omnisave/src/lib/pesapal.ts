@@ -1,5 +1,5 @@
-const CONSUMER_KEY = 'vTibxQeLvkiJ0aBZQk3Ci5gL2BUx1dP0'
-const CONSUMER_SECRET = 'kdwghPqFeT5dxwnhrpVccfY9B7o='
+const CONSUMER_KEY = import.meta.env.VITE_PESAPAL_CONSUMER_KEY as string
+const CONSUMER_SECRET = import.meta.env.VITE_PESAPAL_CONSUMER_SECRET as string
 const BASE = '/api/pesapal'
 
 export interface PesapalOrder {
