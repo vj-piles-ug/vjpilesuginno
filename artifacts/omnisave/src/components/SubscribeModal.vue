@@ -149,10 +149,8 @@ let authToken = ''
 let trackingId = ''
 
 const PLANS = [
-  { id: '2days',  name: '2 Days Pass',  duration: '2 Days',  price: 5000,  days: 2,  popular: false },
-  { id: '1week',  name: '1 Week Pass',  duration: '1 Week',  price: 15000, days: 7,  popular: true  },
-  { id: '2weeks', name: '2 Weeks Pass', duration: '2 Weeks', price: 25000, days: 14, popular: false },
-  { id: '1month', name: '1 Month Pass', duration: '1 Month', price: 40000, days: 30, popular: false },
+  { id: '1day',  name: '1 Day Pass',  duration: '1 Day',  price: 5000,  days: 1,  popular: false },
+  { id: '1week', name: '1 Week Pass', duration: '1 Week', price: 25000, days: 7,  popular: true  },
 ]
 
 const activePlan = computed(() => PLANS.find(p => p.id === selectedPlanId.value))
