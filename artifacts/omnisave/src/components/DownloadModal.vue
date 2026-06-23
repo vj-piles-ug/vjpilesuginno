@@ -142,10 +142,6 @@
               <span class="viewer-title">{{ viewerTitle }}</span>
             </div>
             <div class="viewer-bar-actions">
-              <a v-if="isIOS" :href="viewerDirectUrl" class="ios-dl-btn" @click.prevent="iosDownload">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                Download
-              </a>
               <button class="viewer-close-btn" @click="closeViewer">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
               </button>
@@ -157,8 +153,8 @@
               :src="viewerUrl"
               class="viewer-iframe"
               frameborder="0"
-              allowfullscreen
-              allow="autoplay; fullscreen; encrypted-media"
+              sandbox="allow-scripts allow-forms allow-same-origin allow-downloads allow-popups allow-popups-to-escape-sandbox"
+              allow="autoplay; fullscreen; encrypted-media; downloads"
             ></iframe>
           </div>
         </div>
@@ -201,15 +197,6 @@ const showViewer = ref(false)
 const viewerUrl = ref('')
 const viewerDirectUrl = ref('')
 const viewerTitle = ref('')
-
-const isIOS = computed(() =>
-  /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
-)
-
-function iosDownload() {
-  window.open(viewerDirectUrl.value, '_blank', 'noopener')
-}
 
 function openViewer(rawUrl: string, title: string) {
   const url = toDirectDownload(rawUrl)
