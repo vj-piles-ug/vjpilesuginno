@@ -28,7 +28,10 @@
           <MovieCard v-for="movie in filteredList" :key="movie.id" :movie="movie" @click="openDownload(movie)" />
         </div>
         <div v-else class="empty-state">
-          <p class="text-white/30 text-sm text-center py-16">No series yet. Add them from the admin panel.</p>
+            <div class="loading-msg">
+              <div class="loading-dots"><span></span><span></span><span></span></div>
+              <p>LOADING PLEASE WAIT</p>
+            </div>
         </div>
       </template>
     </div>

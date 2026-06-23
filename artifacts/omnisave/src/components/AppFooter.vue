@@ -71,4 +71,10 @@
   white-space: nowrap;
 }
 .care-phone:hover { filter: brightness(1.15); }
+
+@media (max-width: 1023px) {
+  .footer-root {
+    padding-bottom: calc(60px + env(safe-area-inset-bottom));
+  }
+}
 </style>

@@ -137,7 +137,10 @@
             />
           </div>
           <div v-else class="empty-state">
-            <p class="text-white/30 text-sm">No content available yet. Add movies and series in the admin panel.</p>
+            <div class="loading-msg">
+              <div class="loading-dots"><span></span><span></span><span></span></div>
+              <p>LOADING PLEASE WAIT</p>
+            </div>
           </div>
         </section>
       </template>
