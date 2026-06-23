@@ -42,8 +42,9 @@ export default defineConfig({
     strictPort: true,
     host: "0.0.0.0",
     allowedHosts: true,
+    hmr: false,
     fs: {
-      strict: true,
+      strict: false,
     },
     proxy: {
       "/api/pesapal": {
