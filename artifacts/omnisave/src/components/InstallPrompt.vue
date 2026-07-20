@@ -2,7 +2,7 @@
   <Transition name="install-prompt">
     <div v-if="visible" class="install-prompt">
       <div class="install-icon">
-        <img src="/favicon.ico" alt="VJ Piles UG" class="install-logo" @error="logoErr = true" />
+        <img src="/favicon.svg" alt="VJ Piles UG" class="install-logo" @error="logoErr = true" />
         <div v-if="logoErr" class="install-logo-fallback">▶</div>
       </div>
       <div class="install-text">
