@@ -97,6 +97,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useAuth } from '../store/auth'
+import { trackActivity } from '../store/activity'
 
 const props = defineProps<{ open: boolean }>()
 const emit = defineEmits(['close', 'loggedIn'])
@@ -138,13 +139,16 @@ async function handleSubmit() {
   try {
     if (isRegister.value) {
       await signUpEmail(email.value, password.value, name.value)
+      trackActivity('Signed Up', `Email: ${email.value}`)
     } else {
       await signInEmail(email.value, password.value)
+      trackActivity('Signed In', `Email: ${email.value}`)
     }
     emit('loggedIn')
     emit('close')
   } catch (e: any) {
     errorMsg.value = friendlyError(e.code)
+    trackActivity(isRegister.value ? 'Sign Up Failed' : 'Sign In Failed', e.code || '')
   } finally {
     loading.value = false
   }
@@ -155,6 +159,7 @@ async function handleGoogle() {
   loading.value = true
   try {
     await signInGoogle()
+    trackActivity('Signed In', 'Google')
     emit('loggedIn')
     emit('close')
   } catch (e: any) {

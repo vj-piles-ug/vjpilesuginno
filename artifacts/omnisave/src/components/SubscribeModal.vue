@@ -17,7 +17,7 @@
               </div>
             </div>
             <div class="plan-grid">
-              <div v-for="plan in PLANS" :key="plan.id" class="plan-card" :class="{ popular: plan.popular }">
+              <div v-for="plan in PLANS" :key="plan.id" class="plan-card" :class="{ popular: plan.popular }" @click="pickPlan(plan.id)">
                 <div v-if="plan.popular" class="popular-badge">POPULAR</div>
                 <p class="plan-name">{{ plan.name }}</p>
                 <div class="plan-price-row">
@@ -125,6 +125,8 @@ import { set as dbSet, ref as dbRef, push as dbPush } from 'firebase/database'
 import { db } from '../lib/firebase'
 import { useAuth } from '../store/auth'
 import { activateSubscription } from '../store/subscription'
+import { getActivePlans } from '../store/subscriptionPlans'
+import { trackActivity } from '../store/activity'
 import {
   pesapalGetToken,
   pesapalRegisterIPN,
@@ -148,12 +150,17 @@ let pollTimer: ReturnType<typeof setInterval> | null = null
 let authToken = ''
 let trackingId = ''
 
-const PLANS = [
-  { id: '1day',  name: '1 Day Pass',  duration: '1 Day',  price: 5000,  days: 1,  popular: false },
-  { id: '1week', name: '1 Week Pass', duration: '1 Week', price: 25000, days: 7,  popular: true  },
-]
+// Plans from Firebase (admin-configurable). Falls back to defaults if none set.
+const PLANS = computed(() => getActivePlans().map(p => ({
+  id: p.key,
+  name: p.name,
+  duration: p.duration,
+  price: p.price,
+  days: p.days,
+  popular: p.popular,
+})))
 
-const activePlan = computed(() => PLANS.find(p => p.id === selectedPlanId.value))
+const activePlan = computed(() => PLANS.value.find(p => p.id === selectedPlanId.value))
 
 watch(() => props.open, (v) => {
   if (!v) { stopPolling(); resetToPlans() }
@@ -175,6 +182,8 @@ function pickPlan(id: string) {
   selectedPlanId.value = id
   step.value = 'phone'
   errMsg.value = ''
+  const plan = PLANS.value.find(p => p.id === id)
+  if (plan) trackActivity('Selected Plan', `${plan.name} - ${plan.price.toLocaleString()} UGX`)
 }
 
 function maybeClose() {
@@ -217,6 +226,8 @@ async function startPayment() {
   errMsg.value = ''
 
   const normalizedPhone = normalizePhone(phoneInput.value.trim())
+
+  trackActivity('Payment Started', `${plan.name} - ${plan.price.toLocaleString()} UGX`)
 
   try {
     const token = await pesapalGetToken()
@@ -293,7 +304,7 @@ function startPolling(
   token: string,
   tId: string,
   userId: string,
-  plan: typeof PLANS[0]
+  plan: { id: string; name: string; price: number; days: number; duration: string; popular: boolean }
 ) {
   stopPolling()
   let attempts = 0
@@ -311,12 +322,14 @@ function startPolling(
       if (status.statusCode === 1) {
         stopPolling()
         await activateSubscription(userId, plan, tId, status)
+        trackActivity('Payment Success', `${plan.name} - ${plan.price.toLocaleString()} UGX`)
         localStorage.removeItem('pendingSubscription')
         step.value = 'success'
         // Auto-close after 2 seconds
         setTimeout(() => emit('close'), 2000)
       } else if (status.statusCode === 2 || status.statusCode === 3) {
         stopPolling()
+        trackActivity('Payment Failed', `${plan.name} - code ${status.statusCode}`)
         localStorage.removeItem('pendingSubscription')
         errMsg.value = status.statusCode === 3 ? 'Payment was reversed.' : 'Payment failed. Please try again.'
         step.value = 'failed'

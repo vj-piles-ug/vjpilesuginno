@@ -1,0 +1,1 @@
+- [Firebase Rules Required](firebase-rules.md) — activities and subscriptionPlans paths need manual Firebase Console rules update before they work.

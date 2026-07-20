@@ -41,11 +41,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import MovieCard from '../components/MovieCard.vue'
 import DownloadModal from '../components/DownloadModal.vue'
 import type { Movie } from '../data/movies'
 import { publicAnimation, dbLoading } from '../store/db'
+import { trackActivity } from '../store/activity'
+
+onMounted(() => { trackActivity('Page Visit', 'Animation', '/animation') })
 
 const downloadTarget = ref<Movie | null>(null)
 function openDownload(m: Movie) { downloadTarget.value = m }

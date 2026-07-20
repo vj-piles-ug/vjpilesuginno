@@ -109,6 +109,7 @@ import { RouterLink, useRouter } from 'vue-router'
 import { useAuth } from '../store/auth'
 import { loginOpen, subscribeOpen } from '../store/ui'
 import { usePWAInstall } from '../composables/usePWAInstall'
+import { trackActivity } from '../store/activity'
 
 const router = useRouter()
 const menuOpen = ref(false)
@@ -128,6 +129,7 @@ const userName = computed(() => {
 })
 
 async function handleLogout() {
+  trackActivity('Signed Out', currentUser.value?.email || '')
   await logOut()
   menuOpen.value = false
 }
@@ -141,6 +143,7 @@ const navItems = computed(() => [
 ])
 
 function handleSubscribeClick() {
+  trackActivity('Clicked Subscribe Button', '', window.location.pathname)
   if (!isLoggedIn.value) {
     loginOpen.value = true
   } else {
@@ -149,8 +152,10 @@ function handleSubscribeClick() {
 }
 
 function doSearch() {
-  if (searchQuery.value.trim()) {
-    router.push({ path: '/', query: { q: searchQuery.value.trim() } })
+  const q = searchQuery.value.trim()
+  if (q) {
+    trackActivity('Search', q, window.location.pathname)
+    router.push({ path: '/', query: { q } })
   }
 }
 </script>

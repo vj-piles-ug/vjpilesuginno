@@ -1,5 +1,5 @@
 <template>
-  <div class="poster-card" @click="$emit('click')">
+  <div class="poster-card" @click="handleClick">
     <div class="poster-art">
       <img v-if="movie.image" :src="movie.image" :alt="movie.title" class="poster-img" @error="imgErr = true" />
       <div v-if="!movie.image || imgErr" class="poster-gradient" :style="posterStyle">
@@ -34,9 +34,15 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import type { Movie } from '../data/movies'
+import { trackActivity } from '../store/activity'
 
 const props = defineProps<{ movie: Movie }>()
-defineEmits(['click'])
+const emit = defineEmits(['click'])
+
+function handleClick() {
+  trackActivity('Opened Content', `${props.movie.title} (${props.movie.type})`, window.location.pathname)
+  emit('click')
+}
 
 const imgErr = ref(false)
 

@@ -175,6 +175,7 @@ import { useAuth } from '../store/auth'
 import { isSubscribed } from '../store/subscription'
 import { loginOpen, subscribeOpen } from '../store/ui'
 import { toDirectDownload } from '../lib/utils'
+import { trackActivity } from '../store/activity'
 
 const props = defineProps<{ movie: Movie | null }>()
 defineEmits(['close'])
@@ -209,6 +210,7 @@ const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
 let loadTimer: ReturnType<typeof setTimeout> | null = null
 
 function openViewer(rawUrl: string, title: string) {
+  trackActivity('Clicked Download', title, window.location.pathname)
   const url = toDirectDownload(rawUrl)
   if (isIOS) {
     window.open(url, '_blank', 'noopener')

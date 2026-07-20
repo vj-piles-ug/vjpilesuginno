@@ -158,6 +158,7 @@ import MovieCard from '../components/MovieCard.vue'
 import DownloadModal from '../components/DownloadModal.vue'
 import type { Movie } from '../data/movies'
 import { publicAll, dbLoading, dbCarousel } from '../store/db'
+import { trackActivity } from '../store/activity'
 
 const route = useRoute()
 const router = useRouter()
@@ -204,7 +205,10 @@ watch(() => heroSlides.value.length, (len) => {
   if (currentSlide.value >= len) currentSlide.value = 0
 })
 
-onMounted(() => { autoTimer = setInterval(nextSlide, SLIDE_MS) })
+onMounted(() => {
+  autoTimer = setInterval(nextSlide, SLIDE_MS)
+  trackActivity('Page Visit', 'Home', '/')
+})
 onUnmounted(() => { if (autoTimer) clearInterval(autoTimer) })
 
 function particleStyle(n: number) {
