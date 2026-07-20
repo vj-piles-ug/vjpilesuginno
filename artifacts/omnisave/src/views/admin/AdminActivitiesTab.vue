@@ -30,23 +30,6 @@
       </select>
     </div>
 
-    <!-- Firebase rules notice -->
-    <div class="rules-notice">
-      <div class="rules-notice-header">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-        <strong>Firebase Rules Required</strong> — Add these rules in Firebase Console → Realtime Database → Rules:
-      </div>
-      <pre class="rules-code">
-"activities": {
-  ".write": "auth != null",
-  ".read": "auth != null &amp;&amp; auth.token.email == 'okotstephen57@gmail.com'"
-},
-"subscriptionPlans": {
-  ".read": true,
-  ".write": "auth != null &amp;&amp; auth.token.email == 'okotstephen57@gmail.com'"
-}</pre>
-    </div>
-
     <!-- Stats row -->
     <div class="stats-row">
       <div class="stat-pill">
@@ -79,6 +62,7 @@
             <th>Page</th>
             <th>Device</th>
             <th>Time</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
@@ -102,9 +86,14 @@
               </span>
             </td>
             <td class="td-date">{{ fmtTime(a.timestamp) }}</td>
+            <td class="td-del">
+              <button class="del-row-btn" @click="deleteOne(a.key)" :disabled="deleting === a.key" title="Delete">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+              </button>
+            </td>
           </tr>
           <tr v-if="filtered.length === 0">
-            <td colspan="7" class="empty-row">
+            <td colspan="8" class="empty-row">
               {{ dbActivities.length === 0 ? 'No activity recorded yet. Activities are logged as users interact with the site.' : 'No events match your filters.' }}
             </td>
           </tr>
@@ -161,6 +150,7 @@ const deviceFilter = ref('')
 const page = ref(0)
 const PAGE_SIZE = 50
 const confirmClear = ref(false)
+const deleting = ref<string | null>(null)
 
 const actionTypes = computed(() => {
   const set = new Set(dbActivities.value.map(a => a.action).filter(Boolean))
@@ -220,6 +210,15 @@ function actionCls(action: string): string {
   return 'act-default'
 }
 
+async function deleteOne(key: string) {
+  if (!key) return
+  deleting.value = key
+  try {
+    await remove(dbRef(db, `activities/${key}`))
+  } catch (_) {}
+  deleting.value = null
+}
+
 async function clearAll() {
   try {
     await remove(dbRef(db, 'activities'))
@@ -236,18 +235,6 @@ async function clearAll() {
 .tab-title { font-size: 1.4rem; font-weight: 900; color: #fff; margin-bottom: 4px; }
 .tab-sub { font-size: 0.78rem; color: rgba(255,255,255,0.38); }
 .header-actions { display: flex; gap: 8px; flex-shrink: 0; }
-.rules-notice {
-  background: rgba(251,191,36,0.07); border: 1px solid rgba(251,191,36,0.25);
-  border-radius: 10px; padding: 12px 16px; margin-bottom: 18px; font-size: 0.75rem;
-  color: rgba(255,255,255,0.6); line-height: 1.5;
-}
-.rules-notice-header { display: flex; align-items: center; gap: 7px; margin-bottom: 8px; color: #fbbf24; font-weight: 600; flex-wrap: wrap; }
-.rules-notice-header strong { color: #fbbf24; }
-.rules-code {
-  background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 7px; padding: 10px 12px; font-family: monospace; font-size: 0.72rem;
-  color: #a3e635; white-space: pre-wrap; word-break: break-all; margin: 0; overflow-x: auto;
-}
 .clear-btn {
   display: inline-flex; align-items: center; gap: 5px;
   padding: 7px 14px; background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.25);
@@ -280,6 +267,15 @@ async function clearAll() {
 .td-details { max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: rgba(255,255,255,0.55); font-size: 0.75rem; }
 .td-page { color: rgba(255,255,255,0.35); font-size: 0.7rem; }
 .td-date { color: rgba(255,255,255,0.35); font-size: 0.72rem; white-space: nowrap; }
+.td-del { width: 36px; text-align: center; }
+.del-row-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px; border-radius: 6px; border: 1px solid rgba(248,113,113,0.2);
+  background: rgba(248,113,113,0.07); color: rgba(248,113,113,0.6);
+  cursor: pointer; transition: all 0.15s; flex-shrink: 0;
+}
+.del-row-btn:hover { background: rgba(248,113,113,0.18); color: #f87171; border-color: rgba(248,113,113,0.4); }
+.del-row-btn:disabled { opacity: 0.3; cursor: default; }
 .empty-row { text-align: center; color: rgba(255,255,255,0.2); padding: 32px; font-size: 0.82rem; }
 
 .user-cell { display: flex; align-items: center; gap: 8px; min-width: 140px; }
