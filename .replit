@@ -1,4 +1,4 @@
-modules = ["nodejs-24", "python-3.11"]
+modules = ["vue-node-20", "nodejs-20", "web"]
 
 [deployment]
 router = "application"
@@ -65,3 +65,6 @@ VITE_FIREBASE_APP_ID = "1:916407856446:web:0df28d7255061b7ee1906f"
 VITE_FIREBASE_MEASUREMENT_ID = "G-P73D3NMZCN"
 VITE_PESAPAL_CONSUMER_KEY = "vTibxQeLvkiJ0aBZQk3Ci5gL2BUx1dP0"
 VITE_PESAPAL_CONSUMER_SECRET = "kdwghPqFeT5dxwnhrpVccfY9B7o="
+
+[nix]
+channel = "stable-25_05"

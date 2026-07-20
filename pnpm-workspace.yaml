@@ -72,6 +72,10 @@ onlyBuiltDependencies:
   - unrs-resolver
 
 overrides:
+  # websocket-driver@0.7.4 is blocked by the Replit Package Firewall (security).
+  # It is only used by faye-websocket in Node.js server contexts; this browser-only
+  # Vue app uses native WebSocket via Firebase SDK, so a local stub is safe.
+  "websocket-driver": "link:stubs/websocket-driver"
   # replit uses linux-x64 only, we can exclude all other platforms
   "esbuild>@esbuild/darwin-arm64": "-"
   "esbuild>@esbuild/darwin-x64": "-"

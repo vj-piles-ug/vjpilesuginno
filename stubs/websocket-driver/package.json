@@ -1,0 +1,6 @@
+{
+  "name": "websocket-driver",
+  "version": "0.7.4",
+  "description": "Local stub — browser app does not use this in Node.js context",
+  "main": "index.js"
+}
