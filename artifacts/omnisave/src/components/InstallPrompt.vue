@@ -35,7 +35,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 
-const STORAGE_KEY = 'vjpiles_install_dismissed'
+const STORAGE_KEY = 'vjpiles_install_closed_v2'
 const DURATION = 10 // seconds
 
 const visible = ref(false)
