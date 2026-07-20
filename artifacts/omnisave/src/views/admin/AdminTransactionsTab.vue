@@ -1,8 +1,26 @@
 <template>
   <div class="tab-page">
     <div class="tab-header">
-      <h1 class="tab-title">Transactions</h1>
-      <p class="tab-sub">All payment transactions with real-time updates</p>
+      <div>
+        <h1 class="tab-title">Transactions</h1>
+        <p class="tab-sub">All payment transactions with real-time updates</p>
+      </div>
+      <button class="clear-all-btn" @click="confirmClear = true" v-if="payments.length > 0">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+        Clear All
+      </button>
+    </div>
+
+    <!-- Confirm clear all modal -->
+    <div v-if="confirmClear" class="overlay-confirm" @click.self="confirmClear = false">
+      <div class="confirm-box">
+        <h3 class="confirm-title">Clear All Transactions?</h3>
+        <p class="confirm-sub">This will permanently delete all {{ payments.length }} transaction records from payment logs. This cannot be undone.</p>
+        <div class="confirm-btns">
+          <button class="btn-cancel" @click="confirmClear = false">Cancel</button>
+          <button class="btn-confirm-del" @click="clearAllTransactions">Delete All</button>
+        </div>
+      </div>
     </div>
 
     <div class="summary-grid">
@@ -184,6 +202,7 @@ const loading = ref(true)
 const search = ref('')
 const statusFilter = ref('')
 const sortNewest = ref(true)
+const confirmClear = ref(false)
 
 let unsubLogs: (() => void) | null = null
 let unsubSubs: (() => void) | null = null
@@ -340,6 +359,15 @@ async function deletePayment(id: string) {
   }
 }
 
+async function clearAllTransactions() {
+  try {
+    await remove(fbRef(db, 'paymentLogs'))
+    confirmClear.value = false
+  } catch {
+    alert('Failed to clear transactions')
+  }
+}
+
 watch(isAdmin, (val) => { if (val) startListeners() }, { immediate: false })
 onMounted(() => { if (isAdmin.value) startListeners() })
 onUnmounted(() => stopListeners())
@@ -353,7 +381,7 @@ onUnmounted(() => stopListeners())
 @media (min-width: 640px) { .tab-page { padding: 20px 18px; } }
 @media (min-width: 1024px) { .tab-page { padding: 28px 24px; } }
 
-.tab-header { margin-bottom: 14px; }
+.tab-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
 .tab-title { font-size: 1.1rem; font-weight: 900; color: #fff; margin-bottom: 2px; }
 @media (min-width: 640px) { .tab-title { font-size: 1.4rem; } }
 @media (min-width: 1024px) { .tab-title { font-size: 1.5rem; } }
@@ -442,4 +470,28 @@ onUnmounted(() => stopListeners())
 .status-pending .status-dot { background: #f59e0b; }
 .del-btn { display: flex; align-items: center; gap: 5px; padding: 5px 10px; background: rgba(220,38,38,0.08); border: 1px solid rgba(220,38,38,0.2); border-radius: 7px; color: #f87171; font-size: 0.68rem; font-weight: 600; cursor: pointer; }
 .del-btn:hover { background: rgba(220,38,38,0.18); }
+
+.clear-all-btn {
+  display: inline-flex; align-items: center; gap: 5px; flex-shrink: 0;
+  padding: 7px 14px; background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.25);
+  color: #f87171; border-radius: 8px; font-size: 0.72rem; font-weight: 700; cursor: pointer;
+  transition: background 0.15s;
+}
+.clear-all-btn:hover { background: rgba(248,113,113,0.2); }
+
+.overlay-confirm {
+  position: fixed; inset: 0; z-index: 600;
+  display: flex; align-items: center; justify-content: center; padding: 16px;
+  background: rgba(0,0,0,0.8); backdrop-filter: blur(12px);
+}
+.confirm-box {
+  background: rgba(8,16,12,0.99); border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 16px; padding: 24px 20px; max-width: 340px; width: 100%;
+}
+.confirm-title { font-size: 1rem; font-weight: 800; color: #fff; margin-bottom: 8px; }
+.confirm-sub { font-size: 0.8rem; color: rgba(255,255,255,0.5); margin-bottom: 20px; line-height: 1.5; }
+.confirm-btns { display: flex; gap: 10px; }
+.btn-cancel { flex: 1; padding: 9px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 9px; color: rgba(255,255,255,0.6); font-size: 0.78rem; font-weight: 700; cursor: pointer; }
+.btn-confirm-del { flex: 1; padding: 9px; background: rgba(239,68,68,0.9); border: none; border-radius: 9px; color: #fff; font-size: 0.78rem; font-weight: 800; cursor: pointer; }
+.btn-confirm-del:hover { background: rgba(239,68,68,1); }
 </style>

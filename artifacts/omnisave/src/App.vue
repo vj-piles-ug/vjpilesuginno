@@ -210,9 +210,12 @@ async function checkPendingPaymentSilently() {
 }
 
 onMounted(async () => {
-  // ── Global right-click + DevTools protection ──────────────
-  document.addEventListener('contextmenu', (e) => e.preventDefault())
+  // ── Global right-click + DevTools protection (non-admin pages only) ──
+  document.addEventListener('contextmenu', (e) => {
+    if (!window.location.pathname.startsWith('/admin')) e.preventDefault()
+  })
   document.addEventListener('keydown', (e) => {
+    if (window.location.pathname.startsWith('/admin')) return
     const ctrl = e.ctrlKey || e.metaKey
     if (
       e.key === 'F12' ||
