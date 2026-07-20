@@ -128,8 +128,7 @@
               <div class="latest-title-wrap">
                 <span class="live-dot"></span>
                 <div>
-                  <p class="section-kicker latest-kicker">JUST ADDED</p>
-                  <h2 class="section-title">Latest Movies &amp; Episodes</h2>
+                  <h2 class="section-title">Latest Movies</h2>
                 </div>
               </div>
               <span class="count-badge">{{ latestUploads.length }} NEW</span>
