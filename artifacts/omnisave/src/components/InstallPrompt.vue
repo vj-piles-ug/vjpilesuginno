@@ -48,11 +48,17 @@ let tickInterval: ReturnType<typeof setInterval> | null = null
 let secondsLeft = DURATION
 const circumference = 94.25 // 2 * π * 15
 
-function dismiss() {
+function hide() {
+  // Just hide for this visit — will show again next visit
   visible.value = false
-  localStorage.setItem(STORAGE_KEY, '1')
   if (timer) clearTimeout(timer)
   if (tickInterval) clearInterval(tickInterval)
+}
+
+function dismiss() {
+  // User explicitly closed — remember so it never shows again
+  localStorage.setItem(STORAGE_KEY, '1')
+  hide()
 }
 
 async function doInstall() {
@@ -62,7 +68,7 @@ async function doInstall() {
     if (outcome === 'accepted') localStorage.setItem(STORAGE_KEY, '1')
     deferredPrompt = null
   }
-  dismiss()
+  hide()
 }
 
 function startCountdown() {
@@ -79,7 +85,7 @@ function startCountdown() {
   }, 1000)
 
   timer = setTimeout(() => {
-    dismiss()
+    hide()
   }, DURATION * 1000)
 }
 
@@ -89,7 +95,7 @@ function handleBeforeInstall(e: Event) {
 }
 
 onMounted(() => {
-  // Only show on first visit
+  // Don't show if user already dismissed or installed
   if (localStorage.getItem(STORAGE_KEY)) return
 
   window.addEventListener('beforeinstallprompt', handleBeforeInstall)
