@@ -120,29 +120,60 @@
           </div>
         </template>
 
-        <section v-else class="content-section">
-          <div class="section-header">
-            <div>
-              <p class="section-kicker">ALL CONTENT</p>
-              <h2 class="section-title">Movies, Series &amp; Animation</h2>
+        <template v-else>
+
+          <!-- ── LATEST UPLOADS (last 48 hours) ───────────────────── -->
+          <section v-if="latestUploads.length > 0" class="content-section latest-section">
+            <div class="section-header">
+              <div class="latest-title-wrap">
+                <span class="live-dot"></span>
+                <div>
+                  <p class="section-kicker latest-kicker">JUST ADDED</p>
+                  <h2 class="section-title">Latest Movies &amp; Episodes</h2>
+                </div>
+              </div>
+              <span class="count-badge">{{ latestUploads.length }} NEW</span>
             </div>
-            <span class="count-badge">{{ publicAll.length }}</span>
-          </div>
-          <div v-if="publicAll.length > 0" class="poster-grid">
-            <MovieCard
-              v-for="movie in publicAll"
-              :key="movie.id"
-              :movie="movie"
-              @click="openDownload(movie)"
-            />
-          </div>
-          <div v-else class="empty-state">
-            <div class="loading-msg">
-              <div class="loading-dots"><span></span><span></span><span></span></div>
-              <p>LOADING PLEASE WAIT</p>
+            <div class="latest-scroll-track">
+              <div
+                v-for="movie in latestUploads"
+                :key="movie.id"
+                class="latest-card-wrap"
+                @click="openDownload(movie)"
+              >
+                <div class="latest-new-badge">NEW</div>
+                <MovieCard :movie="movie" />
+                <div class="latest-type-tag">{{ movie.type === 'TV SERIES' ? 'SERIES' : movie.type }}</div>
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+
+          <!-- ── ALL CONTENT ──────────────────────────────────────── -->
+          <section class="content-section">
+            <div class="section-header">
+              <div>
+                <p class="section-kicker">ALL CONTENT</p>
+                <h2 class="section-title">Movies, Series &amp; Animation</h2>
+              </div>
+              <span class="count-badge">{{ publicAll.length }}</span>
+            </div>
+            <div v-if="publicAll.length > 0" class="poster-grid">
+              <MovieCard
+                v-for="movie in publicAll"
+                :key="movie.id"
+                :movie="movie"
+                @click="openDownload(movie)"
+              />
+            </div>
+            <div v-else class="empty-state">
+              <div class="loading-msg">
+                <div class="loading-dots"><span></span><span></span><span></span></div>
+                <p>LOADING PLEASE WAIT</p>
+              </div>
+            </div>
+          </section>
+
+        </template>
       </template>
 
     </div>
@@ -179,6 +210,15 @@ const searchResults = computed(() => {
 
 const downloadTarget = ref<Movie | null>(null)
 function openDownload(item: Movie) { downloadTarget.value = item }
+
+// ─── Latest uploads: anything added in the last 48 hours ───────────────────
+const TWO_DAYS_MS = 2 * 24 * 60 * 60 * 1000
+const latestUploads = computed<Movie[]>(() => {
+  const cutoff = Date.now() - TWO_DAYS_MS
+  return publicAll.value
+    .filter(m => m.createdAt && new Date(m.createdAt).getTime() >= cutoff)
+    .sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime())
+})
 
 // ─── Hero carousel ─────────────────────────────────────────────────────────
 const heroSlides = computed(() =>
@@ -333,4 +373,76 @@ function particleStyle(n: number) {
 .hero-fade-enter-active, .hero-fade-leave-active { transition: opacity 0.45s ease, transform 0.45s ease; }
 .hero-fade-enter-from { opacity: 0; transform: translateY(16px); }
 .hero-fade-leave-to { opacity: 0; transform: translateY(-10px); }
+
+/* ─── Latest section ──────────────────────────────────────── */
+.latest-section {
+  margin-bottom: 28px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid rgba(0,255,157,0.08);
+}
+.latest-title-wrap {
+  display: flex; align-items: center; gap: 10px;
+}
+.live-dot {
+  width: 9px; height: 9px; border-radius: 50%;
+  background: #00ff9d; flex-shrink: 0;
+  box-shadow: 0 0 0 0 rgba(0,255,157,0.6);
+  animation: live-pulse 1.8s ease-in-out infinite;
+}
+@keyframes live-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(0,255,157,0.6); }
+  60%  { box-shadow: 0 0 0 7px rgba(0,255,157,0); }
+  100% { box-shadow: 0 0 0 0 rgba(0,255,157,0); }
+}
+.latest-kicker { color: #00ff9d !important; }
+
+/* Horizontal scroll track */
+.latest-scroll-track {
+  display: flex;
+  gap: 7px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  scroll-snap-type: x mandatory;
+}
+.latest-scroll-track::-webkit-scrollbar { display: none; }
+
+/* Each card wrapper */
+.latest-card-wrap {
+  position: relative;
+  flex: 0 0 calc(33.333% - 5px);
+  min-width: 100px;
+  max-width: 160px;
+  cursor: pointer;
+  scroll-snap-align: start;
+}
+@media (min-width: 480px)  { .latest-card-wrap { flex: 0 0 calc(25% - 6px); } }
+@media (min-width: 640px)  { .latest-card-wrap { flex: 0 0 calc(20% - 7px); } }
+@media (min-width: 768px)  { .latest-card-wrap { flex: 0 0 calc(16.666% - 7px); } }
+@media (min-width: 1024px) { .latest-card-wrap { flex: 0 0 calc(14.285% - 8px); max-width: 180px; } }
+
+/* NEW badge */
+.latest-new-badge {
+  position: absolute; top: 6px; left: 6px; z-index: 20;
+  background: linear-gradient(135deg, #00ff9d, #00d4ff);
+  color: #021a10; font-size: 0.52rem; font-weight: 900;
+  letter-spacing: 0.1em; padding: 2px 7px; border-radius: 4px;
+  pointer-events: none;
+}
+
+/* Type tag */
+.latest-type-tag {
+  font-size: 0.56rem; font-weight: 700; letter-spacing: 0.08em;
+  color: rgba(255,255,255,0.35); text-transform: uppercase;
+  margin-top: 4px; padding: 0 2px; text-align: center;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+.loading-msg { display: flex; flex-direction: column; align-items: center; gap: 10px; color: rgba(255,255,255,0.3); font-size: 0.75rem; letter-spacing: 0.1em; }
+.loading-dots { display: flex; gap: 5px; }
+.loading-dots span { width: 6px; height: 6px; border-radius: 50%; background: rgba(0,255,157,0.4); animation: dot-bounce 1.2s ease-in-out infinite; }
+.loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+.loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes dot-bounce { 0%,80%,100% { transform: scale(0.6); opacity: 0.4; } 40% { transform: scale(1); opacity: 1; } }
 </style>
