@@ -95,6 +95,12 @@ function handleBeforeInstall(e: Event) {
 }
 
 onMounted(() => {
+  // Don't show if already running as an installed PWA
+  const isStandalone =
+    window.matchMedia('(display-mode: standalone)').matches ||
+    ('standalone' in window.navigator && (window.navigator as any).standalone === true)
+  if (isStandalone) return
+
   // Don't show if user already dismissed or installed
   if (localStorage.getItem(STORAGE_KEY)) return
 
