@@ -142,7 +142,6 @@
               >
                 <div class="latest-new-badge">NEW</div>
                 <MovieCard :movie="movie" />
-                <div class="latest-type-tag">{{ movie.type === 'TV SERIES' ? 'SERIES' : movie.type }}</div>
               </div>
             </div>
           </section>

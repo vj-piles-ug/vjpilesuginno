@@ -8,7 +8,6 @@
       </div>
 
       <div class="poster-top">
-        <span class="poster-badge" :class="typeBadgeClass">{{ shortType }}</span>
         <span v-if="movie.rating >= 8.5" class="poster-badge badge-hot">HOT</span>
       </div>
 
@@ -22,7 +21,6 @@
 
     <div class="poster-info">
       <p class="poster-title">{{ movie.title }}</p>
-      <p class="poster-type">{{ movie.type }}</p>
       <button class="poster-dl-btn">
         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         DOWNLOAD
