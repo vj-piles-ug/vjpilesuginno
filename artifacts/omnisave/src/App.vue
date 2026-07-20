@@ -8,6 +8,7 @@
 
     <LoginModal v-if="!isAdminRoute" :open="loginOpen" @close="loginOpen = false" @logged-in="loginOpen = false" />
     <SubscribeModal v-if="!isAdminRoute" :open="subscribeOpen" @close="subscribeOpen = false" />
+    <InstallPrompt v-if="!isAdminRoute" />
 
     <!-- Silent payment activation toast -->
     <Transition name="pay-toast">
@@ -28,6 +29,7 @@ import AppHeader from './components/AppHeader.vue'
 import AppFooter from './components/AppFooter.vue'
 import LoginModal from './components/LoginModal.vue'
 import SubscribeModal from './components/SubscribeModal.vue'
+import InstallPrompt from './components/InstallPrompt.vue'
 import { loginOpen, subscribeOpen, toastMsg, toastType, showToast } from './store/ui'
 import { pesapalGetToken, pesapalGetStatus } from './lib/pesapal'
 import { activateSubscription, userSubscription, subLoading } from './store/subscription'
