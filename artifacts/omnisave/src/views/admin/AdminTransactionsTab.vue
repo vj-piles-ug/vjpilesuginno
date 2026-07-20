@@ -361,7 +361,10 @@ async function deletePayment(id: string) {
 
 async function clearAllTransactions() {
   try {
-    await remove(fbRef(db, 'paymentLogs'))
+    await Promise.all([
+      remove(fbRef(db, 'paymentLogs')),
+      remove(fbRef(db, 'subscriptions')),
+    ])
     confirmClear.value = false
   } catch {
     alert('Failed to clear transactions')
