@@ -2,7 +2,7 @@
   <Transition name="install-prompt">
     <div v-if="visible" class="install-prompt">
       <div class="install-icon">
-        <img src="/favicon.svg" alt="VJ Piles UG" class="install-logo" @error="logoErr = true" />
+        <img src="/logo.png" alt="VJ Piles UG" class="install-logo" @error="logoErr = true" />
         <div v-if="logoErr" class="install-logo-fallback">▶</div>
       </div>
       <div class="install-text">
@@ -36,7 +36,7 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 
 const STORAGE_KEY = 'vjpiles_install_dismissed'
-const DURATION = 5 // seconds
+const DURATION = 10 // seconds
 
 const visible = ref(false)
 const logoErr = ref(false)
