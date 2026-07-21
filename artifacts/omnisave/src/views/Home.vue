@@ -62,10 +62,10 @@
 
       <!-- Carousel arrows — positioned relative to .hero-section -->
       <template v-if="heroSlides.length > 1">
-        <button class="hero-arrow hero-arrow--left" @click="prevSlide" aria-label="Previous slide">
+        <button class="hero-arrow hero-arrow--left" @click="prevSlide(); resetTimer()" aria-label="Previous slide">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <button class="hero-arrow hero-arrow--right" @click="nextSlide" aria-label="Next slide">
+        <button class="hero-arrow hero-arrow--right" @click="nextSlide(); resetTimer()" aria-label="Next slide">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
         </button>
       </template>
@@ -143,16 +143,24 @@
               </div>
               <span class="count-badge">{{ latestUploads.length }} NEW</span>
             </div>
-            <div class="latest-scroll-track">
-              <div
-                v-for="movie in latestUploads"
-                :key="movie.id"
-                class="latest-card-wrap"
-                @click="openDownload(movie)"
-              >
-                <div class="latest-new-badge">NEW</div>
-                <MovieCard :movie="movie" />
+            <div class="latest-scroll-wrap">
+              <button class="scroll-arrow scroll-arrow--left" @click="scrollLatest(-1)" aria-label="Scroll left">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+              </button>
+              <div class="latest-scroll-track" ref="latestTrackRef">
+                <div
+                  v-for="movie in latestUploads"
+                  :key="movie.id"
+                  class="latest-card-wrap"
+                  @click="openDownload(movie)"
+                >
+                  <div class="latest-new-badge">NEW</div>
+                  <MovieCard :movie="movie" />
+                </div>
               </div>
+              <button class="scroll-arrow scroll-arrow--right" @click="scrollLatest(1)" aria-label="Scroll right">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+              </button>
             </div>
           </section>
 
@@ -191,7 +199,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, type Ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import MovieCard from '../components/MovieCard.vue'
 import DownloadModal from '../components/DownloadModal.vue'
@@ -243,10 +251,29 @@ const currentSlide = ref(0)
 const SLIDE_MS = 6000
 let autoTimer: ReturnType<typeof setInterval> | null = null
 
-function goToSlide(i: number) { currentSlide.value = i }
+function resetTimer() {
+  if (autoTimer) clearInterval(autoTimer)
+  autoTimer = setInterval(nextSlide, SLIDE_MS)
+}
+
+function goToSlide(i: number) { currentSlide.value = i; resetTimer() }
 function nextSlide() {
   if (heroSlides.value.length > 0)
     currentSlide.value = (currentSlide.value + 1) % heroSlides.value.length
+}
+function prevSlide() {
+  if (heroSlides.value.length > 0)
+    currentSlide.value = (currentSlide.value - 1 + heroSlides.value.length) % heroSlides.value.length
+  resetTimer()
+}
+
+// ─── Latest scroll ──────────────────────────────────────────────────────────
+const latestTrackRef = ref<HTMLElement | null>(null)
+function scrollLatest(dir: 1 | -1) {
+  const el = latestTrackRef.value
+  if (!el) return
+  const cardWidth = (el.firstElementChild as HTMLElement)?.offsetWidth || 120
+  el.scrollBy({ left: dir * cardWidth * 3, behavior: 'smooth' })
 }
 
 watch(() => heroSlides.value.length, (len) => {
@@ -452,8 +479,7 @@ function particleStyle(n: number) {
   z-index: 2;
 }
 .scroll-arrow:hover { background: rgba(0,255,157,0.2); border-color: rgba(0,255,157,0.4); }
-/* hide on larger screens where all cards are visible */
-@media (min-width: 768px) { .scroll-arrow { display: none; } }
+/* arrows visible on all screen sizes */
 
 /* Horizontal scroll track */
 .latest-scroll-track {
