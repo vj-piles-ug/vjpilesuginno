@@ -11,7 +11,7 @@
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#00ff9d" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="16 12 12 8 8 12"/><line x1="12" y1="16" x2="12" y2="8"/></svg>
           Active: {{ activeCount }}
         </span>
-        <button class="refresh-btn" @click="loadUsers" :disabled="loading">
+        <button class="refresh-btn" @click="startListeners" :disabled="loading">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" :style="loading ? 'animation: spin 0.8s linear infinite' : ''"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
           Refresh
         </button>
@@ -34,7 +34,7 @@
     <!-- Error -->
     <div v-else-if="error" class="error-state">
       <p>{{ error }}</p>
-      <button class="refresh-btn mt-4" @click="loadUsers">Retry</button>
+      <button class="refresh-btn mt-4" @click="startListeners">Retry</button>
     </div>
 
     <!-- List -->
@@ -115,8 +115,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
-import { ref as dbRef, get, set, remove } from 'firebase/database'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref as dbRef, onValue, set, remove } from 'firebase/database'
 import { db } from '../../lib/firebase'
 import { isAdmin } from '../../store/auth'
 
@@ -142,6 +142,63 @@ const error = ref('')
 const search = ref('')
 const toast = ref('')
 const actionLoading = ref<string | null>(null)
+
+// Real-time listener state (mirrors TransactionsTab pattern)
+let unsubUsers: (() => void) | null = null
+let unsubSubs: (() => void) | null = null
+let rawUsers: any = null
+let rawSubs: any = null
+let gotUsers = false
+let gotSubs = false
+
+function buildUserList() {
+  if (!gotUsers || !gotSubs) return
+  if (!rawUsers) { users.value = []; loading.value = false; return }
+  const subsData = rawSubs || {}
+  const list: UserItem[] = Object.entries(rawUsers).map(([id, v]: any) => ({
+    id,
+    email: v.email || v.Email || '',
+    displayName: v.displayName || v.name || v.email?.split('@')[0] || 'User',
+    createdAt: v.createdAt || v.joinedAt || '',
+    lastLogin: v.lastLogin,
+    subscription: subsData[id] || undefined,
+  }))
+  users.value = list
+  loading.value = false
+}
+
+function startListeners() {
+  if (unsubUsers) { unsubUsers(); unsubUsers = null }
+  if (unsubSubs) { unsubSubs(); unsubSubs = null }
+  loading.value = true
+  error.value = ''
+  rawUsers = null; rawSubs = null
+  gotUsers = false; gotSubs = false
+
+  unsubUsers = onValue(dbRef(db, 'users'), (snap) => {
+    rawUsers = snap.exists() ? snap.val() : null
+    gotUsers = true
+    buildUserList()
+  }, (err) => {
+    error.value = err.message || 'Failed to load users.'
+    loading.value = false
+    gotUsers = true
+  })
+
+  unsubSubs = onValue(dbRef(db, 'subscriptions'), (snap) => {
+    rawSubs = snap.exists() ? snap.val() : null
+    gotSubs = true
+    buildUserList()
+  }, () => {
+    // subscriptions unreadable — still show users without subscription info
+    rawSubs = null; gotSubs = true; buildUserList()
+  })
+}
+
+function stopListeners() {
+  if (unsubUsers) { unsubUsers(); unsubUsers = null }
+  if (unsubSubs) { unsubSubs(); unsubSubs = null }
+}
 
 const PLANS = [
   { id: 'admin-1day-pass',   days: 1,  name: '1 Day Pass',    label: '1-Day',   cls: 'btn-1d' },
@@ -199,45 +256,6 @@ function showToast(msg: string) {
   setTimeout(() => { toast.value = '' }, 2500)
 }
 
-async function loadUsers() {
-  if (!isAdmin.value) return
-  loading.value = true
-  error.value = ''
-  try {
-    const usersSnap = await get(dbRef(db, 'users'))
-
-    if (!usersSnap.exists()) {
-      users.value = []
-      loading.value = false
-      return
-    }
-
-    // Fetch subscriptions separately so a permission error here never
-    // prevents the user list from loading.
-    let subsData: Record<string, any> = {}
-    try {
-      const subsSnap = await get(dbRef(db, 'subscriptions'))
-      if (subsSnap.exists()) subsData = subsSnap.val()
-    } catch (_) { /* rules may restrict full-tree read; users still load */ }
-
-    const usersData = usersSnap.val()
-
-    const list: UserItem[] = Object.entries(usersData).map(([id, v]: any) => ({
-      id,
-      email: v.email || v.Email || '',
-      displayName: v.displayName || v.name || v.email?.split('@')[0] || 'User',
-      createdAt: v.createdAt || v.joinedAt || '',
-      lastLogin: v.lastLogin,
-      subscription: subsData[id] || undefined,
-    }))
-
-    users.value = list
-  } catch (e: any) {
-    error.value = e?.message || 'Failed to load users. Check Firebase rules.'
-  }
-  loading.value = false
-}
-
 async function handleActivate(uid: string, planId: string, days: number, planName: string) {
   actionLoading.value = uid
   try {
@@ -251,7 +269,7 @@ async function handleActivate(uid: string, planId: string, days: number, planNam
       active: true,
     }
     await set(dbRef(db, `subscriptions/${uid}`), sub)
-    users.value = users.value.map(u => u.id === uid ? { ...u, subscription: sub } : u)
+    // onValue listener will auto-update the list
     showToast(`✓ Activated ${planName} for user`)
   } catch (e: any) {
     showToast(`Error: ${e?.message || 'Failed'}`)
@@ -263,7 +281,7 @@ async function handleDeactivate(uid: string) {
   actionLoading.value = uid
   try {
     await remove(dbRef(db, `subscriptions/${uid}`))
-    users.value = users.value.map(u => u.id === uid ? { ...u, subscription: undefined } : u)
+    // onValue listener will auto-update the list
     showToast('Subscription deactivated')
   } catch (e: any) {
     showToast(`Error: ${e?.message || 'Failed'}`)
@@ -271,9 +289,10 @@ async function handleDeactivate(uid: string) {
   actionLoading.value = null
 }
 
-// Load when admin is confirmed
-watch(isAdmin, (val) => { if (val) loadUsers() }, { immediate: false })
-onMounted(() => { if (isAdmin.value) loadUsers() })
+// Start real-time listeners when admin auth is confirmed
+watch(isAdmin, (val) => { if (val) startListeners(); else stopListeners() }, { immediate: false })
+onMounted(() => { if (isAdmin.value) startListeners() })
+onUnmounted(() => stopListeners())
 </script>
 
 <style scoped>
