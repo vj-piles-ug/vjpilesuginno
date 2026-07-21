@@ -60,6 +60,16 @@
         </div>
       </div>
 
+      <!-- Carousel arrows — positioned relative to .hero-section -->
+      <template v-if="heroSlides.length > 1">
+        <button class="hero-arrow hero-arrow--left" @click="prevSlide" aria-label="Previous slide">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <button class="hero-arrow hero-arrow--right" @click="nextSlide" aria-label="Next slide">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </template>
+
     </section>
 
     <!-- MOBILE SEARCH BAR (below carousel, hidden on desktop) -->
@@ -393,6 +403,57 @@ function particleStyle(n: number) {
   100% { box-shadow: 0 0 0 0 rgba(0,255,157,0); }
 }
 .latest-kicker { color: #00ff9d !important; }
+
+/* ─── Carousel arrows ─────────────────────────────────────── */
+.hero-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 20;
+  background: rgba(0,0,0,0.45);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: #fff;
+  border-radius: 50%;
+  width: 34px; height: 34px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  transition: background 0.2s, border-color 0.2s;
+  padding: 0;
+}
+.hero-arrow:hover { background: rgba(0,255,157,0.2); border-color: rgba(0,255,157,0.4); }
+.hero-arrow--left  { left: 10px; }
+.hero-arrow--right { right: 10px; }
+@media (min-width: 768px) {
+  .hero-arrow { width: 42px; height: 42px; }
+  .hero-arrow--left  { left: 20px; }
+  .hero-arrow--right { right: 20px; }
+}
+
+/* ─── Latest scroll wrapper + arrows ─────────────────────── */
+.latest-scroll-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.scroll-arrow {
+  flex-shrink: 0;
+  background: rgba(0,0,0,0.5);
+  border: 1px solid rgba(255,255,255,0.13);
+  color: #fff;
+  border-radius: 50%;
+  width: 30px; height: 30px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  transition: background 0.2s, border-color 0.2s;
+  padding: 0;
+  z-index: 2;
+}
+.scroll-arrow:hover { background: rgba(0,255,157,0.2); border-color: rgba(0,255,157,0.4); }
+/* hide on larger screens where all cards are visible */
+@media (min-width: 768px) { .scroll-arrow { display: none; } }
 
 /* Horizontal scroll track */
 .latest-scroll-track {
