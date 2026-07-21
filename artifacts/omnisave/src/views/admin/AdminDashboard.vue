@@ -174,6 +174,7 @@ const quickActions = [
 
 <style scoped>
 .admin-wrap { min-height: 100vh; background: #050c08; display: flex; flex-direction: column; }
+@media (min-width: 1024px) { .admin-wrap { height: 100vh; overflow: hidden; } }
 
 /* ── Desktop top nav (hidden on mobile) ── */
 .admin-topnav { display: none; }
@@ -199,7 +200,7 @@ const quickActions = [
 .mob-topbar-logo { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; }
 
 /* ── Content ── */
-.admin-content { flex: 1; min-width: 0; padding-bottom: 70px; }
+.admin-content { flex: 1; min-width: 0; min-height: 0; padding-bottom: 70px; overflow-y: auto; }
 @media (min-width: 1024px) { .admin-content { padding-bottom: 0; } }
 
 /* ── Overview tab ── */
