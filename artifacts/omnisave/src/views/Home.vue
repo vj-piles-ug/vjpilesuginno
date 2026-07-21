@@ -460,14 +460,14 @@ function particleStyle(n: number) {
 /* ─── Latest scroll wrapper + arrows ─────────────────────── */
 .latest-scroll-wrap {
   position: relative;
-  display: flex;
-  align-items: center;
-  gap: 4px;
 }
 .scroll-arrow {
-  flex-shrink: 0;
-  background: rgba(0,0,0,0.5);
-  border: 1px solid rgba(255,255,255,0.13);
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  background: rgba(0,0,0,0.55);
+  border: 1px solid rgba(255,255,255,0.15);
   color: #fff;
   border-radius: 50%;
   width: 30px; height: 30px;
@@ -476,10 +476,10 @@ function particleStyle(n: number) {
   backdrop-filter: blur(6px);
   transition: background 0.2s, border-color 0.2s;
   padding: 0;
-  z-index: 2;
 }
 .scroll-arrow:hover { background: rgba(0,255,157,0.2); border-color: rgba(0,255,157,0.4); }
-/* arrows visible on all screen sizes */
+.scroll-arrow--left  { left: 4px; }
+.scroll-arrow--right { right: 4px; }
 
 /* Horizontal scroll track */
 .latest-scroll-track {
