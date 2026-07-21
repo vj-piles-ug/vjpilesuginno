@@ -170,9 +170,11 @@ const filteredUsers = computed(() => {
   })
 })
 
-function isSubActive(sub?: Subscription): boolean {
-  if (!sub?.active) return false
+function isSubActive(sub?: any): boolean {
+  if (!sub) return false
   if (!sub.endDate) return false
+  // Don't gate on the `active` flag — it may be missing or stale.
+  // A subscription is live if endDate is in the future.
   return new Date(sub.endDate) > new Date()
 }
 
@@ -202,10 +204,7 @@ async function loadUsers() {
   loading.value = true
   error.value = ''
   try {
-    const [usersSnap, subsSnap] = await Promise.all([
-      get(dbRef(db, 'users')),
-      get(dbRef(db, 'subscriptions')),
-    ])
+    const usersSnap = await get(dbRef(db, 'users'))
 
     if (!usersSnap.exists()) {
       users.value = []
@@ -213,8 +212,15 @@ async function loadUsers() {
       return
     }
 
+    // Fetch subscriptions separately so a permission error here never
+    // prevents the user list from loading.
+    let subsData: Record<string, any> = {}
+    try {
+      const subsSnap = await get(dbRef(db, 'subscriptions'))
+      if (subsSnap.exists()) subsData = subsSnap.val()
+    } catch (_) { /* rules may restrict full-tree read; users still load */ }
+
     const usersData = usersSnap.val()
-    const subsData: Record<string, Subscription> = subsSnap.exists() ? subsSnap.val() : {}
 
     const list: UserItem[] = Object.entries(usersData).map(([id, v]: any) => ({
       id,
