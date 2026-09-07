@@ -42,13 +42,13 @@ const isAdminRoute = computed(() => route.path.startsWith('/admin'))
 
 // ── Shared: activate a pending order and clean up ────────────────────────
 async function activatePendingOrder(
-  pending: { orderTrackingId: string; planId: string; planName: string; amount: number; days: number; userId: string },
+  pending: { orderTrackingId: string; planId: string; planName: string; amount: number; days: number; durationHours?: number; userId: string },
   status: { statusCode: number; paymentMethod: string; confirmationCode: string; paymentAccount: string; amount: number }
 ) {
   localStorage.removeItem('pendingSubscription')
   await activateSubscription(
     pending.userId,
-    { id: pending.planId, name: pending.planName, price: pending.amount, days: pending.days },
+    { id: pending.planId, name: pending.planName, price: pending.amount, days: pending.days, durationHours: pending.durationHours },
     pending.orderTrackingId,
     status
   )
@@ -95,7 +95,7 @@ async function handlePpDoneCallback() {
   let pending: any
   try { pending = JSON.parse(raw) } catch { localStorage.removeItem('pendingSubscription'); return true }
 
-  const { orderTrackingId, planId, planName, amount, days, userId } = pending
+  const { orderTrackingId, planId, planName, amount, days, durationHours, userId } = pending
   if (!orderTrackingId) { localStorage.removeItem('pendingSubscription'); return true }
 
   await waitForAuth()
@@ -121,7 +121,7 @@ async function handlePpDoneCallback() {
       if (status?.statusCode === 1) {
         const uid = userId || currentUser.value?.uid
         if (!uid) return
-        await activatePendingOrder({ orderTrackingId, planId, planName, amount, days, userId: uid }, status)
+        await activatePendingOrder({ orderTrackingId, planId, planName, amount, days, durationHours, userId: uid }, status)
         showToast('Payment confirmed! Your subscription is now active.')
       } else if (status && (status.statusCode === 2 || status.statusCode === 3)) {
         localStorage.removeItem('pendingSubscription')
@@ -143,7 +143,7 @@ async function checkPendingPaymentSilently() {
   let pending: any
   try { pending = JSON.parse(raw) } catch { localStorage.removeItem('pendingSubscription'); return }
 
-  const { orderTrackingId, planId, planName, amount, days, userId } = pending
+  const { orderTrackingId, planId, planName, amount, days, durationHours, userId } = pending
   if (!orderTrackingId || !userId) { localStorage.removeItem('pendingSubscription'); return }
 
   // Wait for auth
@@ -191,7 +191,7 @@ async function checkPendingPaymentSilently() {
       if (status.statusCode === 1) {
         // Payment was successful — activate silently
         cancelled = true
-        await activatePendingOrder({ orderTrackingId, planId, planName, amount, days, userId }, status)
+        await activatePendingOrder({ orderTrackingId, planId, planName, amount, days, durationHours, userId }, status)
         showToast('Payment confirmed! Your subscription is now active.')
       } else if (status.statusCode === 2 || status.statusCode === 3) {
         // Payment definitively failed or reversed

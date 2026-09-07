@@ -15,18 +15,21 @@ export const isSubscribed = computed(() => {
 
 export async function activateSubscription(
   userId: string,
-  plan: { id: string; name: string; price: number; days: number },
+  plan: { id: string; name: string; price: number; days: number; durationHours?: number },
   orderTrackingId: string,
   status: { paymentMethod: string; confirmationCode: string; paymentAccount: string; amount: number }
 ) {
   const startDate = new Date()
-  const endDate = new Date()
-  endDate.setDate(endDate.getDate() + plan.days)
+  const durationHours = Number(plan.durationHours) > 0
+    ? Number(plan.durationHours)
+    : plan.days * 24
+  const endDate = new Date(startDate.getTime() + durationHours * 60 * 60 * 1000)
   await set(dbRef(db, `subscriptions/${userId}`), {
     planId: plan.id,
     planName: plan.name,
     amount: status.amount || plan.price,
-    days: plan.days,
+    days: durationHours / 24,
+    durationHours,
     orderTrackingId,
     confirmationCode: status.confirmationCode || '',
     paymentMethod: status.paymentMethod || 'PesaPal',

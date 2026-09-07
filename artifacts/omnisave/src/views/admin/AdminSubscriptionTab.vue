@@ -30,7 +30,7 @@
           <span class="price-ugx">UGX</span>
         </div>
         <div class="plan-duration">{{ plan.duration }}</div>
-        <div class="plan-days">{{ plan.days }} day{{ plan.days !== 1 ? 's' : '' }} access</div>
+        <div class="plan-days">{{ formatAccess(plan) }} access</div>
         <div class="plan-actions">
           <button class="btn-edit" @click="openEdit(plan)">
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
@@ -71,14 +71,20 @@
             <input v-model.number="form.price" type="number" min="0" class="form-input" placeholder="25000" />
           </div>
           <div class="form-field">
-            <label class="form-label">Duration (days) *</label>
-            <input v-model.number="form.days" type="number" min="1" class="form-input" placeholder="7" @input="autoDuration" />
+            <label class="form-label">Duration *</label>
+            <div class="duration-input">
+              <input v-model.number="form.durationValue" type="number" min="1" step="1" class="form-input" placeholder="7" @input="autoDuration" />
+              <select v-model="form.durationUnit" class="form-input duration-unit" @change="autoDuration">
+                <option value="days">Days</option>
+                <option value="hours">Hours</option>
+              </select>
+            </div>
           </div>
         </div>
         <div class="form-field">
           <label class="form-label">Duration Label</label>
           <input v-model="form.duration" class="form-input" placeholder="e.g. 1 Week" />
-          <span class="form-hint">Auto-filled from days. You can customize.</span>
+          <span class="form-hint">Choose days or hours. The label is auto-filled, but you can customize it.</span>
         </div>
         <div class="form-checks">
           <label class="check-label">
@@ -135,7 +141,8 @@ const deleteTarget = ref<SubPlan | null>(null)
 const form = ref({
   name: '',
   price: 0,
-  days: 1,
+  durationValue: 1,
+  durationUnit: 'days' as 'days' | 'hours',
   duration: '',
   popular: false,
   active: true,
@@ -147,18 +154,31 @@ function showToast(msg: string) {
 }
 
 function autoDuration() {
-  const d = form.value.days
-  if (!d || d < 1) return
-  if (d === 1) form.value.duration = '1 Day'
-  else if (d === 7) form.value.duration = '1 Week'
-  else if (d === 14) form.value.duration = '2 Weeks'
-  else if (d === 30) form.value.duration = '1 Month'
-  else form.value.duration = `${d} Days`
+  const value = form.value.durationValue
+  if (!value || value < 1) return
+  if (form.value.durationUnit === 'hours') {
+    form.value.duration = `${value} Hour${value !== 1 ? 's' : ''}`
+    return
+  }
+  if (value === 1) form.value.duration = '1 Day'
+  else if (value === 7) form.value.duration = '1 Week'
+  else if (value === 14) form.value.duration = '2 Weeks'
+  else if (value === 30) form.value.duration = '1 Month'
+  else form.value.duration = `${value} Days`
+}
+
+function formatAccess(plan: SubPlan): string {
+  const hours = Number(plan.durationHours) || Math.max(1, plan.days) * 24
+  if (hours % 24 === 0) {
+    const days = hours / 24
+    return `${days} day${days !== 1 ? 's' : ''}`
+  }
+  return `${hours} hour${hours !== 1 ? 's' : ''}`
 }
 
 function openAdd() {
   editKey.value = null
-  form.value = { name: '', price: 0, days: 1, duration: '1 Day', popular: false, active: true }
+  form.value = { name: '', price: 0, durationValue: 1, durationUnit: 'days', duration: '1 Day', popular: false, active: true }
   formError.value = ''
   showForm.value = true
 }
@@ -168,7 +188,10 @@ function openEdit(plan: SubPlan) {
   form.value = {
     name: plan.name,
     price: plan.price,
-    days: plan.days,
+    durationValue: (plan.durationHours || plan.days * 24) % 24 === 0
+      ? (plan.durationHours || plan.days * 24) / 24
+      : (plan.durationHours || plan.days * 24),
+    durationUnit: (plan.durationHours || plan.days * 24) % 24 === 0 ? 'days' : 'hours',
     duration: plan.duration,
     popular: plan.popular,
     active: plan.active,
@@ -186,17 +209,24 @@ function closeForm() {
 async function savePlan() {
   if (!form.value.name.trim()) { formError.value = 'Plan name is required.'; return }
   if (!form.value.price || form.value.price < 0) { formError.value = 'Enter a valid price.'; return }
-  if (!form.value.days || form.value.days < 1) { formError.value = 'Duration must be at least 1 day.'; return }
+  if (!form.value.durationValue || form.value.durationValue < 1 || !Number.isFinite(form.value.durationValue)) {
+    formError.value = 'Duration must be at least 1 hour.'
+    return
+  }
   if (!form.value.duration.trim()) autoDuration()
 
+  const durationHours = form.value.durationUnit === 'hours'
+    ? form.value.durationValue
+    : form.value.durationValue * 24
   saving.value = true
   formError.value = ''
   try {
     const data = {
       name: form.value.name.trim(),
       price: form.value.price,
-      days: form.value.days,
-      duration: form.value.duration.trim() || `${form.value.days} Days`,
+      days: durationHours / 24,
+      durationHours,
+      duration: form.value.duration.trim() || `${form.value.durationValue} ${form.value.durationUnit === 'hours' ? 'Hours' : 'Days'}`,
       popular: form.value.popular,
       active: form.value.active,
       createdAt: new Date().toISOString(),
@@ -331,6 +361,8 @@ async function doDelete() {
 .form-sub { font-size: 0.82rem; color: rgba(255,255,255,0.5); margin-bottom: 20px; line-height: 1.5; }
 .form-sub strong { color: #fff; }
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.duration-input { display: grid; grid-template-columns: 1fr 0.9fr; gap: 6px; }
+.duration-unit { min-width: 0; appearance: auto; }
 .form-field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
 .form-label { font-size: 0.7rem; font-weight: 600; color: rgba(255,255,255,0.4); letter-spacing: 0.04em; }
 .form-input {

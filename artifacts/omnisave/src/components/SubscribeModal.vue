@@ -157,6 +157,7 @@ const PLANS = computed(() => getActivePlans().map(p => ({
   duration: p.duration,
   price: p.price,
   days: p.days,
+  durationHours: p.durationHours,
   popular: p.popular,
 })))
 
@@ -276,6 +277,7 @@ async function startPayment() {
       planName: plan.name,
       amount: plan.price,
       days: plan.days,
+      durationHours: plan.durationHours,
       merchantReference: order.merchantReference,
       createdAt: new Date().toISOString(),
     })
@@ -286,6 +288,7 @@ async function startPayment() {
       planName: plan.name,
       amount: plan.price,
       days: plan.days,
+      durationHours: plan.durationHours,
       userId: user.uid,
     }))
 
@@ -304,7 +307,7 @@ function startPolling(
   token: string,
   tId: string,
   userId: string,
-  plan: { id: string; name: string; price: number; days: number; duration: string; popular: boolean }
+  plan: { id: string; name: string; price: number; days: number; durationHours: number; duration: string; popular: boolean }
 ) {
   stopPolling()
   let attempts = 0

@@ -7,6 +7,7 @@ export interface SubPlan {
   name: string
   price: number
   days: number
+  durationHours: number
   duration: string
   popular: boolean
   active: boolean
@@ -18,8 +19,8 @@ export const subPlansLoading = ref(true)
 
 // Default fallback plans if none configured in Firebase
 export const DEFAULT_PLANS: SubPlan[] = [
-  { key: 'default-1day',  name: '1 Day Pass',  price: 5000,  days: 1,  duration: '1 Day',  popular: false, active: true, createdAt: '' },
-  { key: 'default-1week', name: '1 Week Pass', price: 25000, days: 7,  duration: '1 Week', popular: true,  active: true, createdAt: '' },
+  { key: 'default-1day',  name: '1 Day Pass',  price: 5000,  days: 1, durationHours: 24,  duration: '1 Day',  popular: false, active: true, createdAt: '' },
+  { key: 'default-1week', name: '1 Week Pass', price: 25000, days: 7, durationHours: 168, duration: '1 Week', popular: true,  active: true, createdAt: '' },
 ]
 
 onValue(dbRef(db, 'subscriptionPlans'), (snap) => {
@@ -31,18 +32,22 @@ onValue(dbRef(db, 'subscriptionPlans'), (snap) => {
   const list: SubPlan[] = []
   snap.forEach((child) => {
     const d = child.val()
+    const durationHours = Number(d.durationHours) > 0
+      ? Number(d.durationHours)
+      : Math.max(1, Number(d.days) || 1) * 24
     list.push({
       key: child.key!,
       name: d.name || '',
       price: Number(d.price) || 0,
       days: Number(d.days) || 1,
+      durationHours,
       duration: d.duration || `${d.days} Day(s)`,
       popular: !!d.popular,
       active: d.active !== false,
       createdAt: d.createdAt || '',
     })
   })
-  list.sort((a, b) => a.days - b.days)
+   list.sort((a, b) => a.durationHours - b.durationHours)
   dbSubPlans.value = list
   subPlansLoading.value = false
 }, () => { subPlansLoading.value = false })
