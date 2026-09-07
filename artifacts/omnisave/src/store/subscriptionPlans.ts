@@ -23,6 +23,23 @@ export const DEFAULT_PLANS: SubPlan[] = [
   { key: 'default-1week', name: '1 Week Pass', price: 25000, days: 7, durationHours: 168, duration: '1 Week', popular: true,  active: true, createdAt: '' },
 ]
 
+function readDurationHours(data: any): number {
+  const explicitHours = Number(data?.durationHours)
+  if (Number.isFinite(explicitHours) && explicitHours > 0) return explicitHours
+
+  const days = Number(data?.days)
+  if (Number.isFinite(days) && days > 0) return days * 24
+
+  const label = String(data?.duration || '')
+  const hourMatch = label.match(/(\d+(?:\.\d+)?)\s*(?:hours?|hrs?|h)\b/i)
+  if (hourMatch) return Number(hourMatch[1])
+
+  const dayMatch = label.match(/(\d+(?:\.\d+)?)\s*(?:days?|d)\b/i)
+  if (dayMatch) return Number(dayMatch[1]) * 24
+
+  return 24
+}
+
 onValue(dbRef(db, 'subscriptionPlans'), (snap) => {
   if (!snap.exists()) {
     dbSubPlans.value = []
@@ -32,14 +49,12 @@ onValue(dbRef(db, 'subscriptionPlans'), (snap) => {
   const list: SubPlan[] = []
   snap.forEach((child) => {
     const d = child.val()
-    const durationHours = Number(d.durationHours) > 0
-      ? Number(d.durationHours)
-      : Math.max(1, Number(d.days) || 1) * 24
+    const durationHours = readDurationHours(d)
     list.push({
       key: child.key!,
       name: d.name || '',
       price: Number(d.price) || 0,
-      days: Number(d.days) || 1,
+      days: Number(d.days) > 0 ? Number(d.days) : durationHours / 24,
       durationHours,
       duration: d.duration || `${d.days} Day(s)`,
       popular: !!d.popular,

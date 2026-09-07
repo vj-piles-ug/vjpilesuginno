@@ -173,12 +173,29 @@ function setDurationUnit(unit: 'days' | 'hours') {
 }
 
 function formatAccess(plan: SubPlan): string {
-  const hours = Number(plan.durationHours) || Math.max(1, plan.days) * 24
+  const hours = durationHoursForPlan(plan)
   if (hours % 24 === 0) {
     const days = hours / 24
     return `${days} day${days !== 1 ? 's' : ''}`
   }
   return `${hours} hour${hours !== 1 ? 's' : ''}`
+}
+
+function durationHoursForPlan(plan: SubPlan): number {
+  const explicitHours = Number(plan.durationHours)
+  if (Number.isFinite(explicitHours) && explicitHours > 0) return explicitHours
+
+  const days = Number(plan.days)
+  if (Number.isFinite(days) && days > 0) return days * 24
+
+  const label = String(plan.duration || '')
+  const hourMatch = label.match(/(\d+(?:\.\d+)?)\s*(?:hours?|hrs?|h)\b/i)
+  if (hourMatch) return Number(hourMatch[1])
+
+  const dayMatch = label.match(/(\d+(?:\.\d+)?)\s*(?:days?|d)\b/i)
+  if (dayMatch) return Number(dayMatch[1]) * 24
+
+  return 24
 }
 
 function openAdd() {
@@ -190,13 +207,12 @@ function openAdd() {
 
 function openEdit(plan: SubPlan) {
   editKey.value = plan.key
+  const hours = durationHoursForPlan(plan)
   form.value = {
     name: plan.name,
     price: plan.price,
-    durationValue: (plan.durationHours || plan.days * 24) % 24 === 0
-      ? (plan.durationHours || plan.days * 24) / 24
-      : (plan.durationHours || plan.days * 24),
-    durationUnit: (plan.durationHours || plan.days * 24) % 24 === 0 ? 'days' : 'hours',
+    durationValue: hours % 24 === 0 ? hours / 24 : hours,
+    durationUnit: hours % 24 === 0 ? 'days' : 'hours',
     duration: plan.duration,
     popular: plan.popular,
     active: plan.active,
