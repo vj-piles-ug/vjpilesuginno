@@ -45,13 +45,19 @@ async function activatePendingOrder(
   pending: { orderTrackingId: string; planId: string; planName: string; amount: number; days: number; durationHours?: number; userId: string },
   status: { statusCode: number; paymentMethod: string; confirmationCode: string; paymentAccount: string; amount: number }
 ) {
-  localStorage.removeItem('pendingSubscription')
+  // Do not clear this until Firebase confirms the subscription write.
+  // If auth is still restoring after the payment redirect, keeping the
+  // pending order lets the next retry recover it safely.
+  if (!currentUser.value || currentUser.value.uid !== pending.userId) {
+    throw new Error('User authentication is not ready')
+  }
   await activateSubscription(
     pending.userId,
     { id: pending.planId, name: pending.planName, price: pending.amount, days: pending.days, durationHours: pending.durationHours },
     pending.orderTrackingId,
     status
   )
+  localStorage.removeItem('pendingSubscription')
   // Clean up Firebase pendingOrders node so other sessions won't re-process
   try { await remove(dbRef(db, `pendingOrders/${pending.orderTrackingId}`)) } catch { /* ok */ }
 }
@@ -63,11 +69,11 @@ function isAlreadyActivated(orderTrackingId: string): boolean {
 }
 
 // ── Wait helpers ─────────────────────────────────────────────────────────
-function waitForAuth(maxMs = 8000): Promise<void> {
+function waitForAuth(maxMs = 10000): Promise<boolean> {
   return new Promise((resolve) => {
-    if (currentUser.value) return resolve()
-    const timer = setInterval(() => { if (currentUser.value) { clearInterval(timer); resolve() } }, 200)
-    setTimeout(() => { clearInterval(timer); resolve() }, maxMs)
+    if (currentUser.value) return resolve(true)
+    const timer = setInterval(() => { if (currentUser.value) { clearInterval(timer); resolve(true) } }, 200)
+    setTimeout(() => { clearInterval(timer); resolve(!!currentUser.value) }, maxMs)
   })
 }
 
@@ -98,7 +104,8 @@ async function handlePpDoneCallback() {
   const { orderTrackingId, planId, planName, amount, days, durationHours, userId } = pending
   if (!orderTrackingId) { localStorage.removeItem('pendingSubscription'); return true }
 
-  await waitForAuth()
+  const authReady = await waitForAuth()
+  if (!authReady) return true
   await waitForSubLoaded()
 
   // Guard: already activated for this exact order
@@ -112,6 +119,11 @@ async function handlePpDoneCallback() {
   const check = async () => {
     attempts++
     try {
+      // Auth can be restored after the payment redirect. Check again before
+      // every activation attempt instead of retrying a denied Firebase write.
+      const ready = await waitForAuth(3000)
+      if (!ready) { if (attempts < 30) setTimeout(check, 2000); return }
+
       const token = await pesapalGetToken()
       if (!token) { if (attempts < 30) setTimeout(check, 2000); return }
 
@@ -147,7 +159,8 @@ async function checkPendingPaymentSilently() {
   if (!orderTrackingId || !userId) { localStorage.removeItem('pendingSubscription'); return }
 
   // Wait for auth
-  await waitForAuth(10000)
+  const authReady = await waitForAuth(10000)
+  if (!authReady) return
 
   // Must be the same user who initiated this payment
   if (!currentUser.value || currentUser.value.uid !== userId) return

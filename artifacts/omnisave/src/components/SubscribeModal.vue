@@ -107,9 +107,11 @@
               <div class="fail-icon">
                 <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
               </div>
-              <h2 class="hdr-title mt-3">Payment Failed</h2>
+               <h2 class="hdr-title mt-3">{{ activationPending ? 'Payment Received' : 'Payment Failed' }}</h2>
               <p class="center-sub mt-1">{{ errMsg || 'The payment was not completed. Please try again.' }}</p>
-              <button class="pay-btn pay-btn--retry mt-4" @click="retry">TRY AGAIN</button>
+               <button class="pay-btn pay-btn--retry mt-4" @click="activationPending ? reloadForActivation() : retry()">
+                 {{ activationPending ? 'REFRESH TO ACTIVATE' : 'TRY AGAIN' }}
+               </button>
             </div>
           </template>
 
@@ -146,6 +148,7 @@ const phoneInput = ref('')
 const iframeUrl = ref('')
 const iframeLoading = ref(false)
 const errMsg = ref('')
+const activationPending = ref(false)
 let pollTimer: ReturnType<typeof setInterval> | null = null
 let authToken = ''
 let trackingId = ''
@@ -175,6 +178,7 @@ function resetToPlans() {
   iframeUrl.value = ''
   iframeLoading.value = false
   errMsg.value = ''
+  activationPending.value = false
   authToken = ''
   trackingId = ''
 }
@@ -204,6 +208,10 @@ function retry() {
   step.value = 'phone'
   errMsg.value = ''
   iframeUrl.value = ''
+}
+
+function reloadForActivation() {
+  window.location.reload()
 }
 
 function normalizePhone(raw: string): string {
@@ -324,12 +332,21 @@ function startPolling(
 
       if (status.statusCode === 1) {
         stopPolling()
-        await activateSubscription(userId, plan, tId, status)
-        trackActivity('Payment Success', `${plan.name} - ${plan.price.toLocaleString()} UGX`)
-        localStorage.removeItem('pendingSubscription')
-        step.value = 'success'
-        // Auto-close after 2 seconds
-        setTimeout(() => emit('close'), 2000)
+        try {
+          await activateSubscription(userId, plan, tId, status)
+          trackActivity('Payment Success', `${plan.name} - ${plan.price.toLocaleString()} UGX`)
+          localStorage.removeItem('pendingSubscription')
+          step.value = 'success'
+          // Auto-close after 2 seconds
+          setTimeout(() => emit('close'), 2000)
+        } catch (e: any) {
+          // Keep the pending order so the App-level recovery can finish it
+          // after Firebase Auth has fully restored.
+          console.error('Subscription activation failed after successful payment:', e)
+          activationPending.value = true
+          errMsg.value = 'Your payment succeeded, but activation is still pending. Refresh this page to finish activating your account.'
+          step.value = 'failed'
+        }
       } else if (status.statusCode === 2 || status.statusCode === 3) {
         stopPolling()
         trackActivity('Payment Failed', `${plan.name} - code ${status.statusCode}`)
