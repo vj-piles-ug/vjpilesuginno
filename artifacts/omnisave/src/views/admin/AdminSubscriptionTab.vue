@@ -74,10 +74,10 @@
             <label class="form-label">Duration *</label>
             <div class="duration-input">
               <input v-model.number="form.durationValue" type="number" min="1" step="1" class="form-input" placeholder="7" @input="autoDuration" />
-              <select v-model="form.durationUnit" class="form-input duration-unit" @change="autoDuration">
-                <option value="days">Days</option>
-                <option value="hours">Hours</option>
-              </select>
+              <div class="duration-units" role="group" aria-label="Duration unit">
+                <button type="button" class="duration-unit-btn" :class="{ selected: form.durationUnit === 'days' }" @click="setDurationUnit('days')">Days</button>
+                <button type="button" class="duration-unit-btn" :class="{ selected: form.durationUnit === 'hours' }" @click="setDurationUnit('hours')">Hours</button>
+              </div>
             </div>
           </div>
         </div>
@@ -165,6 +165,11 @@ function autoDuration() {
   else if (value === 14) form.value.duration = '2 Weeks'
   else if (value === 30) form.value.duration = '1 Month'
   else form.value.duration = `${value} Days`
+}
+
+function setDurationUnit(unit: 'days' | 'hours') {
+  form.value.durationUnit = unit
+  autoDuration()
 }
 
 function formatAccess(plan: SubPlan): string {
@@ -361,8 +366,10 @@ async function doDelete() {
 .form-sub { font-size: 0.82rem; color: rgba(255,255,255,0.5); margin-bottom: 20px; line-height: 1.5; }
 .form-sub strong { color: #fff; }
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.duration-input { display: grid; grid-template-columns: 1fr 0.9fr; gap: 6px; }
-.duration-unit { min-width: 0; appearance: auto; }
+.duration-input { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px; }
+.duration-units { display: flex; gap: 3px; padding: 3px; border: 1px solid rgba(255,255,255,0.12); border-radius: 9px; background: rgba(255,255,255,0.04); }
+.duration-unit-btn { min-width: 51px; padding: 0 7px; border: 0; border-radius: 6px; background: transparent; color: rgba(255,255,255,0.45); font-size: 0.68rem; font-weight: 700; cursor: pointer; }
+.duration-unit-btn.selected { background: rgba(0,255,157,0.16); color: #00ff9d; }
 .form-field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
 .form-label { font-size: 0.7rem; font-weight: 600; color: rgba(255,255,255,0.4); letter-spacing: 0.04em; }
 .form-input {
