@@ -83,6 +83,10 @@
               <span class="sub-label">Plan</span>
               <span class="sub-val">{{ u.subscription?.planName || u.subscription?.planId }}</span>
             </div>
+              <div class="sub-col">
+                <span class="sub-label">Duration</span>
+                <span class="sub-val">{{ formatSubscriptionDuration(u.subscription) }}</span>
+              </div>
             <div class="sub-col">
               <span class="sub-label">Start</span>
               <span class="sub-val">{{ fmtDate(u.subscription?.startDate) }}</span>
@@ -125,6 +129,8 @@ interface Subscription {
   planName?: string
   startDate: string
   endDate: string
+  durationHours?: number
+  days?: number
   active: boolean
 }
 interface UserItem {
@@ -142,6 +148,8 @@ const error = ref('')
 const search = ref('')
 const toast = ref('')
 const actionLoading = ref<string | null>(null)
+const clock = ref(Date.now())
+let clockTimer: ReturnType<typeof setInterval> | null = null
 
 // Real-time listener state (mirrors TransactionsTab pattern)
 let unsubUsers: (() => void) | null = null
@@ -232,7 +240,7 @@ function isSubActive(sub?: any): boolean {
   if (!sub.endDate) return false
   // Don't gate on the `active` flag — it may be missing or stale.
   // A subscription is live if endDate is in the future.
-  return new Date(sub.endDate) > new Date()
+  return new Date(sub.endDate) > new Date(clock.value)
 }
 
 function fmtDate(d?: string): string {
@@ -242,13 +250,33 @@ function fmtDate(d?: string): string {
   return dt.toLocaleDateString('en-UG', { year: 'numeric', month: 'short', day: 'numeric' })
 }
 
+function formatSubscriptionDuration(sub?: Subscription): string {
+  if (!sub) return '—'
+  const hours = Number(sub.durationHours) > 0
+    ? Number(sub.durationHours)
+    : Number(sub.days) > 0
+      ? Number(sub.days) * 24
+      : 0
+  if (!hours) return '—'
+  if (hours % 24 === 0) {
+    const days = hours / 24
+    return `${days} day${days !== 1 ? 's' : ''}`
+  }
+  return `${hours} hour${hours !== 1 ? 's' : ''}`
+}
+
 function calcRemaining(endDate: string): string {
+  void clock.value
   if (!endDate) return '—'
-  const diff = new Date(endDate).getTime() - Date.now()
+  const diff = new Date(endDate).getTime() - clock.value
   if (diff <= 0) return 'Expired'
-  const days = Math.floor(diff / 86400000)
-  const hours = Math.floor((diff % 86400000) / 3600000)
-  return days > 0 ? `${days}d ${hours}h` : `${hours}h`
+  const totalMinutes = Math.ceil(diff / 60000)
+  const days = Math.floor(totalMinutes / 1440)
+  const hours = Math.floor((totalMinutes % 1440) / 60)
+  const minutes = totalMinutes % 60
+  if (days > 0) return `${days}d ${hours}h`
+  if (hours > 0) return `${hours}h ${minutes}m`
+  return `${minutes}m`
 }
 
 function showToast(msg: string) {
@@ -291,8 +319,14 @@ async function handleDeactivate(uid: string) {
 
 // Start real-time listeners when admin auth is confirmed
 watch(isAdmin, (val) => { if (val) startListeners(); else stopListeners() }, { immediate: false })
-onMounted(() => { if (isAdmin.value) startListeners() })
-onUnmounted(() => stopListeners())
+onMounted(() => {
+  if (isAdmin.value) startListeners()
+  clockTimer = setInterval(() => { clock.value = Date.now() }, 60_000)
+})
+onUnmounted(() => {
+  stopListeners()
+  if (clockTimer) clearInterval(clockTimer)
+})
 </script>
 
 <style scoped>
