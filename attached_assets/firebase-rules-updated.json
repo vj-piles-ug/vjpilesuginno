@@ -1,8 +1,8 @@
 {
   "rules": {
     "admins": {
-      ".read": "auth != null",
-      ".write": "auth != null && root.child('adminEmails').child(auth.uid).exists()",
+      ".read": "auth != null && auth.token.email != 'ok.steve18@gmail.com'",
+      ".write": "auth != null && auth.token.email != 'ok.steve18@gmail.com' && root.child('adminEmails').child(auth.uid).exists()",
       "$uid": {
         ".validate": "newData.val() === true || newData.val() === false"
       }
@@ -12,8 +12,8 @@
       ".write": false
     },
     "movies": {
-      ".read": true,
-      ".write": "auth != null",
+      ".read": "auth == null || auth.token.email != 'ok.steve18@gmail.com'",
+      ".write": "auth != null && auth.token.email != 'ok.steve18@gmail.com'",
       "$movieId": {
         ".validate": "newData.hasChildren(['title', 'image', 'rating', 'year'])",
         "title": {
@@ -43,8 +43,8 @@
       }
     },
     "series": {
-      ".read": true,
-      ".write": "auth != null",
+      ".read": "auth == null || auth.token.email != 'ok.steve18@gmail.com'",
+      ".write": "auth != null && auth.token.email != 'ok.steve18@gmail.com'",
       "$seriesId": {
         ".validate": "newData.hasChildren(['title', 'image', 'rating', 'year', 'episodes'])",
         "title": {
@@ -77,12 +77,12 @@
       }
     },
     "originals": {
-      ".read": true,
-      ".write": "auth != null"
+      ".read": "auth == null || auth.token.email != 'ok.steve18@gmail.com'",
+      ".write": "auth != null && auth.token.email != 'ok.steve18@gmail.com'"
     },
     "music": {
-      ".read": true,
-      ".write": "auth != null",
+      ".read": "auth == null || auth.token.email != 'ok.steve18@gmail.com'",
+      ".write": "auth != null && auth.token.email != 'ok.steve18@gmail.com'",
       "$musicId": {
         ".validate": "newData.hasChildren(['title', 'image', 'artist'])",
         "title": {
@@ -106,8 +106,8 @@
       }
     },
     "animation": {
-      ".read": true,
-      ".write": "auth != null",
+      ".read": "auth == null || auth.token.email != 'ok.steve18@gmail.com'",
+      ".write": "auth != null && auth.token.email != 'ok.steve18@gmail.com'",
       "$animationId": {
         ".validate": "newData.hasChildren(['title', 'image', 'rating', 'year'])",
         "title": {
@@ -137,8 +137,8 @@
       }
     },
     "carousel": {
-      ".read": true,
-      ".write": "auth != null",
+      ".read": "auth == null || auth.token.email != 'ok.steve18@gmail.com'",
+      ".write": "auth != null && auth.token.email != 'ok.steve18@gmail.com'",
       "$carouselId": {
         ".validate": "newData.hasChildren(['title', 'subtitle', 'image'])",
         "title": {
@@ -162,48 +162,48 @@
       }
     },
     "paymentLogs": {
-      ".read": "auth != null",
-      ".write": "auth != null",
+      ".read": "auth != null && auth.token.email != 'ok.steve18@gmail.com'",
+      ".write": "auth != null && auth.token.email != 'ok.steve18@gmail.com'",
       "$logId": {
-        ".read": "auth != null",
-        ".write": "auth != null"
+        ".read": "auth != null && auth.token.email != 'ok.steve18@gmail.com'",
+        ".write": "auth != null && auth.token.email != 'ok.steve18@gmail.com'"
       }
     },
     "pendingOrders": {
-      ".read": "auth != null",
-      ".write": "auth != null",
+      ".read": "auth != null && auth.token.email != 'ok.steve18@gmail.com'",
+      ".write": "auth != null && auth.token.email != 'ok.steve18@gmail.com'",
       "$orderId": {
-        ".read": "auth != null",
-        ".write": "auth != null"
+        ".read": "auth != null && auth.token.email != 'ok.steve18@gmail.com'",
+        ".write": "auth != null && auth.token.email != 'ok.steve18@gmail.com'"
       }
     },
     "subscriptions": {
-      ".read": "auth != null",
-      ".write": "auth != null",
+      ".read": "auth != null && auth.token.email != 'ok.steve18@gmail.com'",
+      ".write": "auth != null && auth.token.email != 'ok.steve18@gmail.com'",
       "$uid": {
-        ".read": "auth != null",
-        ".write": "auth != null"
+        ".read": "auth != null && auth.token.email != 'ok.steve18@gmail.com'",
+        ".write": "auth != null && auth.token.email != 'ok.steve18@gmail.com'"
       }
     },
     "activities": {
       ".read": "auth != null && auth.token.email === 'okotstephen57@gmail.com'",
-      ".write": "auth != null",
+      ".write": "auth != null && auth.token.email != 'ok.steve18@gmail.com'",
       "$activityId": {
-        ".write": "auth != null"
+        ".write": "auth != null && auth.token.email != 'ok.steve18@gmail.com'"
       }
     },
     "subscriptionPlans": {
-      ".read": true,
+      ".read": "auth == null || auth.token.email != 'ok.steve18@gmail.com'",
       ".write": "auth != null && auth.token.email === 'okotstephen57@gmail.com'",
       "$planId": {
         ".write": "auth != null && auth.token.email === 'okotstephen57@gmail.com'"
       }
     },
     "watchHistory": {
-      ".read": "auth != null",
+      ".read": "auth != null && auth.token.email != 'ok.steve18@gmail.com'",
       "$uid": {
-        ".read": "auth != null && auth.uid === $uid",
-        ".write": "auth != null && auth.uid === $uid",
+        ".read": "auth != null && auth.token.email != 'ok.steve18@gmail.com' && auth.uid === $uid",
+        ".write": "auth != null && auth.token.email != 'ok.steve18@gmail.com' && auth.uid === $uid",
         "$contentId": {
           ".validate": "newData.hasChildren(['contentId', 'title', 'image', 'progress', 'lastWatched'])",
           "contentId": {
@@ -231,10 +231,10 @@
       }
     },
     "continueWatching": {
-      ".read": "auth != null",
+      ".read": "auth != null && auth.token.email != 'ok.steve18@gmail.com'",
       "$uid": {
-        ".read": "auth != null && auth.uid === $uid",
-        ".write": "auth != null && auth.uid === $uid",
+        ".read": "auth != null && auth.token.email != 'ok.steve18@gmail.com' && auth.uid === $uid",
+        ".write": "auth != null && auth.token.email != 'ok.steve18@gmail.com' && auth.uid === $uid",
         "$contentId": {
           ".validate": "newData.hasChildren(['contentId', 'title', 'image', 'progress', 'lastWatched'])",
           "contentId": {
@@ -263,22 +263,22 @@
     },
     "wallet": {
       ".read": "auth != null && auth.token.email === 'okotstephen57@gmail.com'",
-      ".write": "auth != null",
+      ".write": "auth != null && auth.token.email != 'ok.steve18@gmail.com'",
       "balance": {
         ".read": "auth != null && auth.token.email === 'okotstephen57@gmail.com'",
-        ".write": "auth != null"
+        ".write": "auth != null && auth.token.email != 'ok.steve18@gmail.com'"
       },
       "transactions": {
         ".read": "auth != null && auth.token.email === 'okotstephen57@gmail.com'",
-        ".write": "auth != null"
+        ".write": "auth != null && auth.token.email != 'ok.steve18@gmail.com'"
       }
     },
     "users": {
-      ".read": "auth != null",
-      ".write": "auth != null",
+      ".read": "auth != null && auth.token.email != 'ok.steve18@gmail.com'",
+      ".write": "auth != null && auth.token.email != 'ok.steve18@gmail.com'",
       "$uid": {
-        ".read": "auth != null",
-        ".write": "auth != null",
+        ".read": "auth != null && auth.token.email != 'ok.steve18@gmail.com'",
+        ".write": "auth != null && auth.token.email != 'ok.steve18@gmail.com'",
         "email": {
           ".validate": "newData.isString() && newData.val().length > 0"
         },

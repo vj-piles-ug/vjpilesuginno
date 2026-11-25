@@ -171,6 +171,7 @@ async function handleGoogle() {
 
 function friendlyError(code: string): string {
   const map: Record<string, string> = {
+    'auth/access-blocked': 'This account is not allowed to access this website.',
     'auth/user-not-found': 'No account with that email.',
     'auth/wrong-password': 'Incorrect password.',
     'auth/email-already-in-use': 'Email already registered.',

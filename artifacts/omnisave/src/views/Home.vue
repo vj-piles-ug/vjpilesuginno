@@ -434,7 +434,7 @@ function particleStyle(n: number) {
 /* ─── Carousel arrows ─────────────────────────────────────── */
 .hero-arrow {
   position: absolute;
-  top: 56%;
+  top: 75%;
   transform: translateY(-50%);
   z-index: 20;
   background: rgba(0,0,0,0.45);
@@ -453,7 +453,7 @@ function particleStyle(n: number) {
 .hero-arrow--right { right: 10px; }
 @media (min-width: 768px) {
   .hero-arrow { width: 42px; height: 42px; }
-  .hero-arrow { top: 54%; }
+  .hero-arrow { top: 72%; }
   .hero-arrow--left  { left: 20px; }
   .hero-arrow--right { right: 20px; }
 }
